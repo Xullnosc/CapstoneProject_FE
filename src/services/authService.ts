@@ -1,0 +1,23 @@
+import api from './api';
+
+export interface LoginResponse {
+    token: string;
+    userInfo: {
+        fullName: string;
+        email: string;
+        avatar: string;
+        roleId: number;
+        studentCode: string;
+        campus: string;
+    };
+}
+
+export const authService = {
+    login: async (idToken: string, campus: string) => {
+        const response = await api.post<LoginResponse>('/Auth/login', {
+            idToken,
+            campus
+        });
+        return response.data;
+    }
+};
