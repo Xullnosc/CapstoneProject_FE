@@ -42,7 +42,12 @@
   padding: 2.5rem;
   width: 100%;
   max-width: 420px;
+}
 
+@media (max-width: 640px) {
+  .login-card {
+    padding: 1.5rem;
+  }
 }
 
 .login-input {
