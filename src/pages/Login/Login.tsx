@@ -54,9 +54,10 @@ const Login = () => {
           navigate('/home');
         });
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Backend login failed:", error);
-        const errorMessage = error.response?.data?.message || error.message || "Unknown error";
+        const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+        const errorMessage = axiosError.response?.data?.message || axiosError.message || "Unknown error";
         showAlert('error', 'Login Failed', errorMessage);
       }
     },
