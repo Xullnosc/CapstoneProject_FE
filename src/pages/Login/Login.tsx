@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { LoginMenu } from "./../../components/menus/LoginMenu";
 import { Dropdown } from 'primereact/dropdown';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -103,7 +102,7 @@ const Login = () => {
       <div className="blob-3 animate-blob animation-delay-4000"></div>
 
       {/* LoginMenu Component */}
-      <LoginMenu />
+      {/* <LoginMenu /> */}
 
       {/* Login Card */}
       <div className="login-card">
