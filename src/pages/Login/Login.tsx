@@ -56,8 +56,28 @@ const Login = () => {
 
       } catch (error: unknown) {
         console.error("Backend login failed:", error);
-        const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
-        const errorMessage = axiosError.response?.data?.message || axiosError.message || "Unknown error";
+
+        let errorMessage = "Unknown error";
+
+        // Check if error is an object with response property (Axios error)
+        if (error && typeof error === 'object' && 'response' in error) {
+          const errorWithResponse = error as Record<string, unknown>;
+          const response = errorWithResponse.response;
+          if (response && typeof response === 'object' && 'data' in response) {
+            const responseObj = response as Record<string, unknown>;
+            const data = responseObj.data;
+            if (data && typeof data === 'object' && 'message' in data) {
+              const dataObj = data as Record<string, unknown>;
+              errorMessage = String(dataObj.message);
+            }
+          }
+        }
+        // Check if error has message property (standard Error)
+        else if (error && typeof error === 'object' && 'message' in error) {
+          const errorObj = error as Record<string, unknown>;
+          errorMessage = String(errorObj.message);
+        }
+
         showAlert('error', 'Login Failed', errorMessage);
       }
     },
