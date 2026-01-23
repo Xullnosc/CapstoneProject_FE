@@ -103,7 +103,7 @@ const Login = () => {
       <div className="blob-3 animate-blob animation-delay-4000"></div>
 
       {/* LoginMenu Component */}
-      <LoginMenu />
+      {/* <LoginMenu /> */}
 
       {/* Login Card */}
       <div className="login-card">
