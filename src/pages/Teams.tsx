@@ -1,0 +1,160 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { teamService } from '../services/teamService';
+import type { TeamInvitation } from '../types/team';
+import InvitationCard from '../components/team/InvitationCard';
+
+const Teams: React.FC = () => {
+    const navigate = useNavigate();
+    const [teamName, setTeamName] = useState('');
+    const [invitations, setInvitations] = useState<TeamInvitation[]>([]); // Initial state is empty, will be populated by useEffect
+    const [loading, setLoading] = useState(true);
+    const [creating, setCreating] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const checkTeamStatus = async () => {
+            try {
+                setLoading(true);
+                // 1. Check if user has team
+                const myTeam = await teamService.getMyTeam();
+                if (myTeam) {
+                    navigate(`/teams/${myTeam.teamId}`);
+                    return;
+                }
+
+                // 2. Fetch invitations
+                const myInvitations = await teamService.getMyInvitations();
+                setInvitations(myInvitations);
+            } catch (err) {
+                console.error("Failed to load team data", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkTeamStatus();
+    }, [navigate]);
+
+    const handleCreateTeam = async () => {
+        if (!teamName.trim() || teamName.length < 3) {
+            setError("Team name must be at least 3 characters");
+            return;
+        }
+
+        try {
+            setCreating(true);
+            setError('');
+            const newTeam = await teamService.createTeam({ teamName, description: '' });
+            navigate(`/teams/${newTeam.teamId}`);
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Failed to create team");
+        } finally {
+            setCreating(false);
+        }
+    };
+
+    const handleAccept = async (id: number) => {
+        try {
+            await teamService.acceptInvitation(id);
+            // After accepting, we should probably redirect to the team
+            // But let's fetch myTeam again to be sure and redirect
+            const myTeam = await teamService.getMyTeam();
+            if (myTeam) {
+                navigate(`/teams/${myTeam.teamId}`);
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to accept invitation");
+        }
+    };
+
+    const handleDecline = async (id: number) => {
+        try {
+            await teamService.declineInvitation(id);
+            setInvitations(prev => prev.filter(inv => inv.invitationId !== id));
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Failed to decline invitation");
+        }
+    };
+
+    if (loading) return <div className="p-10 text-center">Loading...</div>;
+
+    return (
+        <div className="layout-container flex h-full grow flex-col bg-background-light dark:bg-background-dark min-h-screen text-neutral-dark dark:text-white transition-colors duration-200">
+            {/* Main Content */}
+            <main className="flex flex-1 justify-center py-12 px-4">
+                <div className="layout-content-container flex flex-col max-w-[600px] flex-1">
+                    {/* Info Badge */}
+                    <div className="flex justify-center mb-6">
+                        <div className="flex h-9 items-center justify-center gap-x-2 rounded-full bg-[#f97415]/10 dark:bg-[#f97415]/20 px-4 border border-[#f97415]/20">
+                            <span className="material-symbols-outlined text-[#f97415] text-[18px]">info</span>
+                            <p className="text-[#f97415] text-sm font-semibold leading-normal">You haven't joined a team yet</p>
+                        </div>
+                    </div>
+
+                    {/* Headline */}
+                    <h1 className="text-neutral-dark dark:text-white tracking-tight text-[32px] md:text-[40px] font-extrabold leading-tight text-center pb-8">
+                        Ready to kick off your Capstone?<br />Give your team a name.
+                    </h1>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-4 text-center text-red-500 font-semibold">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Team Creation Form */}
+                    <div className="space-y-4 mb-10">
+                        <div className="flex flex-col gap-4">
+                            <label className="flex flex-col w-full">
+                                <input
+                                    className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-neutral-dark dark:text-white focus:outline-0 focus:ring-2 focus:ring-[#f97415]/50 border border-[#e5e7eb] dark:border-[#3d2c21] bg-white dark:bg-[#1a110a] h-24 placeholder:text-[#9e6b47] px-6 text-lg font-normal leading-normal transition-all"
+                                    placeholder="e.g., The Visionaries"
+                                    value={teamName}
+                                    onChange={(e) => setTeamName(e.target.value)}
+                                />
+                            </label>
+                            <button
+                                onClick={handleCreateTeam}
+                                disabled={creating}
+                                className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-6 bg-[#f97415] hover:bg-[#f97415]/90 text-white text-lg font-bold leading-normal tracking-wide shadow-lg shadow-[#f97415]/20 transition-all active:scale-[0.98] disabled:opacity-50"
+                            >
+                                <span className="truncate">{creating ? 'Creating...' : 'Create & Start Recruiting'}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative flex items-center py-5 mb-8">
+                        <div className="flex-grow border-t border-[#e5e7eb] dark:border-[#3d2c21]"></div>
+                        <span className="flex-shrink mx-4 text-xs font-bold text-neutral-400 uppercase tracking-[0.2em]">OR</span>
+                        <div className="flex-grow border-t border-[#e5e7eb] dark:border-[#3d2c21]"></div>
+                    </div>
+
+                    {/* Invitations Section */}
+                    {invitations.length > 0 && (
+                        <div className="flex flex-col gap-4">
+                            <h3 className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest px-1 mb-2">Pending Invitations</h3>
+                            {invitations.map(invitation => (
+                                <InvitationCard
+                                    key={invitation.invitationId}
+                                    invitation={invitation}
+                                    onAccept={handleAccept}
+                                    onDecline={handleDecline}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    {invitations.length === 0 && (
+                        <div className="text-center text-neutral-400 italic">
+                            No pending invitations
+                        </div>
+                    )}
+                </div>
+            </main>
+        </div>
+    );
+};
+
+export default Teams;

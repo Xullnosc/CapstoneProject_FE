@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+    role: string | string[];
+}
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const decoded: DecodedToken = jwtDecode(token);
+                console.log("🔍 Decoded Token in Home:", decoded); // DEBUG LOG
+                // Simple handling for single role scenario, adjust if multiple roles are common
+                if (Array.isArray(decoded.role)) {
+                    setUserRole(decoded.role[0]);
+                } else {
+                    setUserRole(decoded.role);
+                }
+            } catch (error) {
+                console.error("Invalid token", error);
+            }
+        }
+    }, []);
 
     const handleLogout = () => {
-        // Implement logout logic here (e.g., clear token)
+        localStorage.removeItem('token');
         navigate('/');
     };
 
@@ -22,7 +46,10 @@ const Home: React.FC = () => {
                 <p className="m-0 mb-6 text-gray-600">
                     You have successfully logged in!
                 </p>
-                <div className="flex justify-center">
+                <div className="flex flex-col gap-3 justify-center">
+                    {/* {userRole === 'HOD' && (
+                        <Button label="Quản lý Học kỳ (Semester)" icon="pi pi-calendar" severity="info" onClick={() => navigate('/semesters')} className="w-full" />
+                    )} */}
                     <Button label="Logout" icon="pi pi-sign-out" severity="warning" onClick={handleLogout} className="w-full" />
                 </div>
             </Card>

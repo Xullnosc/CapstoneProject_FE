@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+    --color-fpt-orange: #F27124;
+    --color-fpt-dark: #333333;
+    --color-fpt-light: #f4f4f4;
+}
+
+:root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light dark;
+    color: #333;
+    background-color: #ffffff;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: var(--color-fpt-light);
+}
+
+.p-button {
+    background-color: var(--color-fpt-orange) !important;
+    border-color: var(--color-fpt-orange) !important;
+}
+
+.p-button.p-button-outlined {
+    background-color: transparent !important;
+    color: var(--color-fpt-orange) !important;
+}
+
+.p-button:hover {
+    background-color: #d65d1d !important;
+}
+
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.text-fpt-orange {
+    color: var(--color-fpt-orange);
+}
