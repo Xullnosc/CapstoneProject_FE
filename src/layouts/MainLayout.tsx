@@ -10,21 +10,32 @@ const MainLayout = () => {
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        setLoading(true);
-        setProgress(0);
+        let isMounted = true;
+
+        setTimeout(() => {
+            if (isMounted) {
+                setLoading(true);
+                setProgress(0);
+            }
+        }, 0);
 
         const interval = setInterval(() => {
             setProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval);
-                    setTimeout(() => setLoading(false), 800);
+                    if (isMounted) {
+                        setTimeout(() => setLoading(false), 800);
+                    }
                     return 100;
                 }
                 return prev + 20; // Increment
             });
         }, 100); // Speed of updates
 
-        return () => clearInterval(interval);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, [location]);
 
     return (
