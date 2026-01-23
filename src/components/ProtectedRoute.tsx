@@ -12,36 +12,42 @@ interface DecodedToken {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const [userRole, setUserRole] = useState<string | string[] | null>(null);
-
-    useEffect(() => {
+    // Helper to get initial state from token
+    const getInitialAuth = () => {
         const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const decoded: DecodedToken = jwtDecode(token);
-                // Check if token is expired
-                if (decoded.exp * 1000 < Date.now()) {
-                    localStorage.removeItem('token');
-                    setIsAuthenticated(false);
-                } else {
-                    console.log("🛡️ ProtectedRoute Check:", decoded); // DEBUG LOG
-                    setIsAuthenticated(true);
-                    // Standardize role to array for easier checking
-                    const roles = decoded.role ? (Array.isArray(decoded.role) ? decoded.role : [decoded.role]) : [];
-                    // Assuming the claim name is 'role' or similar standard claim
-                    // Note: You might need to adjust based on how your backend validates/issues claims.
-                    // In the provided JwtTokenGenerator, it uses ClaimTypes.Role which often maps to "role" or "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-                    // Let's assume standard 'role' or check both.
-                    setUserRole(roles);
-                }
-            } catch (error) {
+        if (!token) return { isAuth: false, role: null };
+        try {
+            const decoded: DecodedToken = jwtDecode(token);
+            if (decoded.exp * 1000 < Date.now()) {
                 localStorage.removeItem('token');
-                setIsAuthenticated(false);
+                return { isAuth: false, role: null };
             }
-        } else {
-            setIsAuthenticated(false);
+            const roles = decoded.role ? (Array.isArray(decoded.role) ? decoded.role : [decoded.role]) : [];
+            return { isAuth: true, role: roles };
+        } catch {
+            localStorage.removeItem('token');
+            return { isAuth: false, role: null };
         }
+    };
+
+    const [{ isAuthenticated, userRole }, setAuthState] = useState<{
+        isAuthenticated: boolean;
+        userRole: string | string[] | null;
+    }>(() => {
+        const initial = getInitialAuth();
+        return { isAuthenticated: initial.isAuth, userRole: initial.role };
+    });
+
+    // Check on mount and token change if needed, but since it's a one-time check for now,
+    // lazy init handles the initial load perfectly without cascading renders.
+    useEffect(() => {
+        // We can add a listener for storage events if we want to handle token removal in other tabs
+        const handleStorageChange = () => {
+            const current = getInitialAuth();
+            setAuthState({ isAuthenticated: current.isAuth, userRole: current.role });
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     if (isAuthenticated === null) {

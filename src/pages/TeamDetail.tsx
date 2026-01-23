@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import Swal from 'sweetalert2';
@@ -8,12 +8,13 @@ import TeamBanner from '../components/team/TeamBanner';
 import ProjectStatusSection from '../components/team/ProjectStatusSection';
 import TeamRoster from '../components/team/TeamRoster';
 import DangerZone from '../components/team/DangerZone';
+import axios from 'axios';
 
 interface DecodedToken {
     nameid?: string;
     sub?: string;
     role: string | string[];
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 const TeamDetail: React.FC = () => {
@@ -23,17 +24,34 @@ const TeamDetail: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
+    const loadTeam = useCallback(async (id: number) => {
+        try {
+            setLoading(true);
+            const data = await teamService.getTeamById(id);
+            if (!data) {
+                navigate('/teams');
+                return;
+            }
+            setTeam(data);
+        } catch (err) {
+            console.error("Failed to load team", err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load team details'
+            });
+            navigate('/teams');
+        } finally {
+            setLoading(false);
+        }
+    }, [navigate]);
+
     useEffect(() => {
-        // Decode token to get current user ID
         const token = localStorage.getItem('token');
         if (token) {
             try {
                 const decoded = jwtDecode<DecodedToken>(token);
-                // Based on backend ClaimTypes.NameIdentifier usually maps to sub or nameid
-                // Use the same logic as ProtectedRoute if possible or standard mapping
-                // Assuming 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier' or similar
-                // We'll try common fields
-                const userIdStr = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || decoded.nameid || decoded.sub;
+                const userIdStr = (decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] as string) || decoded.nameid || decoded.sub;
                 if (userIdStr) {
                     setCurrentUserId(parseInt(userIdStr));
                 }
@@ -47,31 +65,7 @@ const TeamDetail: React.FC = () => {
         if (teamId) {
             loadTeam(parseInt(teamId));
         }
-    }, [teamId]);
-
-    const loadTeam = async (id: number) => {
-        try {
-            setLoading(true);
-            const data = await teamService.getTeamById(id);
-            if (!data) {
-                // Team not found or user not authorized?
-                // For now, redirect to teams list
-                navigate('/teams');
-                return;
-            }
-            setTeam(data);
-        } catch (error) {
-            console.error("Failed to load team", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load team details'
-            });
-            navigate('/teams');
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [teamId, loadTeam]);
 
     const handleKick = async (userId: number) => {
         const result = await Swal.fire({
@@ -95,12 +89,12 @@ const TeamDetail: React.FC = () => {
                     );
                     loadTeam(team.teamId); // Reload
                 }
-            } catch (error: any) {
-                Swal.fire(
-                    'Error!',
-                    error.response?.data?.message || 'Failed to kick member.',
-                    'error'
-                );
+            } catch (err) {
+                let message = 'Failed to kick member.';
+                if (axios.isAxiosError(err)) {
+                    message = err.response?.data?.message || message;
+                }
+                Swal.fire('Error!', message, 'error');
             }
         }
     };
@@ -127,12 +121,12 @@ const TeamDetail: React.FC = () => {
                     );
                     navigate('/teams');
                 }
-            } catch (error: any) {
-                Swal.fire(
-                    'Error!',
-                    error.response?.data?.message || 'Failed to disband team.',
-                    'error'
-                );
+            } catch (err) {
+                let message = 'Failed to disband team.';
+                if (axios.isAxiosError(err)) {
+                    message = err.response?.data?.message || message;
+                }
+                Swal.fire('Error!', message, 'error');
             }
         }
     };

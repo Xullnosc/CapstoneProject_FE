@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from './api';
 import type { CreateTeamRequest, Team, TeamInvitation } from '../types/team';
 
@@ -6,8 +7,8 @@ export const teamService = {
         try {
             const response = await api.get<Team>('/team/my-team');
             return response.data;
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) {
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
                 return null;
             }
             throw error;
@@ -36,8 +37,8 @@ export const teamService = {
         try {
             const response = await api.get<Team>(`/team/${teamId}`);
             return response.data;
-        } catch (error: any) {
-            if (error.response && error.response.status === 404) return null;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) return null;
             throw error;
         }
     },

@@ -1,34 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-
-interface DecodedToken {
-    role: string | string[];
-}
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
-    const [userRole, setUserRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            try {
-                const decoded: DecodedToken = jwtDecode(token);
-                console.log("🔍 Decoded Token in Home:", decoded); // DEBUG LOG
-                // Simple handling for single role scenario, adjust if multiple roles are common
-                if (Array.isArray(decoded.role)) {
-                    setUserRole(decoded.role[0]);
-                } else {
-                    setUserRole(decoded.role);
-                }
-            } catch (error) {
-                console.error("Invalid token", error);
-            }
-        }
-    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');

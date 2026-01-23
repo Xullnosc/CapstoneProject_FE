@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from 'axios';
 import { LoginMenu } from "./../../components/menus/LoginMenu";
 import { Dropdown } from 'primereact/dropdown';
 import { useNavigate } from 'react-router-dom';
@@ -57,9 +58,14 @@ const Login = () => {
           navigate('/home');
         });
 
-      } catch (error: any) {
+      } catch (error) {
         console.error("Backend login failed:", error);
-        const errorMessage = error.response?.data?.message || error.message || "Unknown error";
+        let errorMessage = "Unknown error";
+        if (axios.isAxiosError(error)) {
+          errorMessage = error.response?.data?.message || error.message || "Unknown error";
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
         showAlert('error', 'Login Failed', errorMessage);
       }
     },

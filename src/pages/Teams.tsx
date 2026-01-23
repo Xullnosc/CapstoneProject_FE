@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { teamService } from '../services/teamService';
 import type { TeamInvitation } from '../types/team';
 import InvitationCard from '../components/team/InvitationCard';
+import axios from 'axios';
 
 const Teams: React.FC = () => {
     const navigate = useNavigate();
@@ -47,8 +48,12 @@ const Teams: React.FC = () => {
             setError('');
             const newTeam = await teamService.createTeam({ teamName, description: '' });
             navigate(`/teams/${newTeam.teamId}`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to create team");
+        } catch (err) {
+            let message = "Failed to create team";
+            if (axios.isAxiosError(err)) {
+                message = err.response?.data?.message || message;
+            }
+            setError(message);
         } finally {
             setCreating(false);
         }
@@ -63,8 +68,12 @@ const Teams: React.FC = () => {
             if (myTeam) {
                 navigate(`/teams/${myTeam.teamId}`);
             }
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to accept invitation");
+        } catch (err) {
+            let message = "Failed to accept invitation";
+            if (axios.isAxiosError(err)) {
+                message = err.response?.data?.message || message;
+            }
+            alert(message);
         }
     };
 
@@ -72,8 +81,12 @@ const Teams: React.FC = () => {
         try {
             await teamService.declineInvitation(id);
             setInvitations(prev => prev.filter(inv => inv.invitationId !== id));
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Failed to decline invitation");
+        } catch (err) {
+            let message = "Failed to decline invitation";
+            if (axios.isAxiosError(err)) {
+                message = err.response?.data?.message || message;
+            }
+            alert(message);
         }
     };
 
