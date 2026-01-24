@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import Swal from 'sweetalert2';
 import { teamService } from '../../services/teamService';
@@ -20,6 +20,7 @@ interface DecodedToken {
 const TeamDetail: React.FC = () => {
     const { teamId } = useParams<{ teamId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const [team, setTeam] = useState<Team | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -33,13 +34,30 @@ const TeamDetail: React.FC = () => {
                 return;
             }
             setTeam(data);
-        } catch (err) {
+        } catch (err: unknown) {
             console.error("Failed to load team", err);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load team details'
-            });
+
+            if (axios.isAxiosError(err) && err.response && err.response.status === 403) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Access Denied',
+                    text: err.response.data?.message || 'You are not a member of this team.',
+                    confirmButtonColor: '#F26F21'
+                });
+            } else if (axios.isAxiosError(err) && err.response && err.response.status === 404) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Not Found',
+                    text: 'Team not found.',
+                    confirmButtonColor: '#F26F21'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load team details'
+                });
+            }
             navigate('/teams');
         } finally {
             setLoading(false);
@@ -55,17 +73,49 @@ const TeamDetail: React.FC = () => {
                 if (userIdStr) {
                     setCurrentUserId(parseInt(userIdStr));
                 }
-            } catch (e) {
+            } catch (e: unknown) {
                 console.error("Failed to decode token", e);
             }
         }
     }, []);
 
     useEffect(() => {
+        // Case 1: URL has ID (e.g. /teams/123) -> Redirect to /teams/team (Mask the ID)
         if (teamId) {
-            loadTeam(parseInt(teamId));
+            navigate('/teams/team', {
+                state: { targetId: parseInt(teamId) },
+                replace: true
+            });
+            return;
         }
-    }, [teamId, loadTeam]);
+
+        // Case 2: Static URL /teams/team
+        const targetId = location.state?.targetId;
+
+        if (targetId) {
+            // Sub-case 2.1: Loading specific team from hidden state
+            loadTeam(targetId);
+        } else {
+            // Sub-case 2.2: Loading "My Team" (Default)
+            const loadMyTeam = async () => {
+                try {
+                    setLoading(true);
+                    const myTeam = await teamService.getMyTeam();
+                    if (myTeam) {
+                        setTeam(myTeam);
+                    } else {
+                        navigate('/teams');
+                    }
+                } catch (error) {
+                    console.error("Failed to load my team", error);
+                    navigate('/teams');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            loadMyTeam();
+        }
+    }, [teamId, loadTeam, navigate, location.state]);
 
     const handleKick = async (userId: number) => {
         const result = await Swal.fire({
@@ -137,7 +187,7 @@ const TeamDetail: React.FC = () => {
     const isLeader = !!(currentUserId && team.leaderId === currentUserId);
 
     return (
-        <div className="layout-container flex h-full grow flex-col bg-[#f8f7f5] dark:bg-[#23170f] min-h-screen transition-colors duration-200">
+        <div className="layout-container flex h-full grow flex-col min-h-full transition-colors duration-200">
             <main className="flex flex-1 justify-center py-8 px-4 md:px-8">
                 <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
 

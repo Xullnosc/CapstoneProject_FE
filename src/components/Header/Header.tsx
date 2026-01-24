@@ -66,10 +66,10 @@ const Header = () => {
                             <i className="pi pi-home text-xl"></i>
                             <span>Homepage</span>
                         </a>
-                        <a href="#" className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
+                        <div onClick={() => navigate('/teams/team')} className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
                             <i className="pi pi-users text-xl"></i>
                             <span>My Team</span>
-                        </a>
+                        </div>
                         <a href="#" className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
@@ -84,9 +84,9 @@ const Header = () => {
                     </div>
 
                     <div className="mt-auto">
-                        <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-200/50 hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
+                        <button onClick={() => navigate('/teams')} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-200/50 hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
                             <i className="pi pi-plus text-lg"></i>
-                            <span>Create New</span>
+                            <span>Create Team</span>
                         </button>
                     </div>
                 </div>
@@ -100,14 +100,14 @@ const Header = () => {
                         <i className="pi pi-home text-xl"></i>
                         <span className="hidden lg:block">Homepage</span>
                     </a>
-                    <a href="#" className="flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
+                    <div onClick={() => navigate('/teams/team')} className="flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer">
                         <i className="pi pi-users text-xl"></i>
                         <span className="hidden lg:block">My Team</span>
-                    </a>
+                    </div>
                 </nav>
 
                 {/* Center Action Button */}
-                <button className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none translate-y-0">
+                <button onClick={() => navigate('/teams')} className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none translate-y-0">
                     <i className="pi pi-plus text-xl lg:text-2xl font-bold"></i>
                 </button>
 

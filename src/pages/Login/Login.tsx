@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from 'axios';
 import { Dropdown } from 'primereact/dropdown';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +11,13 @@ import { authService } from '../../services/authService';
 const Login = () => {
   const [campus, setCampus] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/home');
+    }
+  }, [navigate]);
 
   const cities = [
     { name: 'FU-Hòa Lạc', code: 'HN' },

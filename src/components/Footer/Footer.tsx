@@ -9,9 +9,9 @@ const Footer = () => {
                         &copy; 2026 University Project Management System. All rights reserved.
                     </div>
                     <div className="flex gap-6">
-                        <a href="#" className="hover:text-orange-500 transition-colors">Help Center</a>
-                        <a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-orange-500 transition-colors">Contact Support</a>
+                        <span className="cursor-pointer hover:text-orange-500 transition-colors">Help Center</span>
+                        <span className="cursor-pointer hover:text-orange-500 transition-colors">Privacy Policy</span>
+                        <span className="cursor-pointer hover:text-orange-500 transition-colors">Contact Support</span>
                     </div>
                 </div>
             </div>
