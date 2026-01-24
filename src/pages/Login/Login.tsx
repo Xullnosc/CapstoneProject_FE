@@ -1,9 +1,10 @@
 import { useState } from "react";
+import axios from 'axios';
 import { Dropdown } from 'primereact/dropdown';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import fptLogo from "../../assets/images/LogoFPT.jpg";
-import "./Login.css";
+import styles from "./Login.module.css";
 import { useGoogleLogin } from '@react-oauth/google';
 import { authService } from '../../services/authService';
 
@@ -42,6 +43,9 @@ const Login = () => {
         const response = await authService.login(tokenResponse.access_token, campus);
         console.log("Backend login success:", response);
 
+        // Save token to localStorage
+        localStorage.setItem('token', response.token);
+
         // Success Alert with Timer
         Swal.fire({
           icon: 'success',
@@ -53,30 +57,14 @@ const Login = () => {
           navigate('/home');
         });
 
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Backend login failed:", error);
-
         let errorMessage = "Unknown error";
-
-        // Check if error is an object with response property (Axios error)
-        if (error && typeof error === 'object' && 'response' in error) {
-          const errorWithResponse = error as Record<string, unknown>;
-          const response = errorWithResponse.response;
-          if (response && typeof response === 'object' && 'data' in response) {
-            const responseObj = response as Record<string, unknown>;
-            const data = responseObj.data;
-            if (data && typeof data === 'object' && 'message' in data) {
-              const dataObj = data as Record<string, unknown>;
-              errorMessage = String(dataObj.message);
-            }
-          }
+        if (axios.isAxiosError(error)) {
+          errorMessage = error.response?.data?.message || error.message || "Unknown error";
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
         }
-        // Check if error has message property (standard Error)
-        else if (error && typeof error === 'object' && 'message' in error) {
-          const errorObj = error as Record<string, unknown>;
-          errorMessage = String(errorObj.message);
-        }
-
         showAlert('error', 'Login Failed', errorMessage);
       }
     },
@@ -95,17 +83,17 @@ const Login = () => {
   }
 
   return (
-    <div className="login-container">
+    <div className={styles.loginContainer}>
       {/* Background Decorations */}
-      <div className="blob-1 animate-blob"></div>
-      <div className="blob-2 animate-blob animation-delay-2000"></div>
-      <div className="blob-3 animate-blob animation-delay-4000"></div>
+      <div className={`${styles['blob-1']} ${styles['animate-blob']}`}></div>
+      <div className={`${styles['blob-2']} ${styles['animate-blob']} ${styles['animation-delay-2000']}`}></div>
+      <div className={`${styles['blob-3']} ${styles['animate-blob']} ${styles['animation-delay-4000']}`}></div>
 
       {/* LoginMenu Component */}
       {/* <LoginMenu /> */}
 
       {/* Login Card */}
-      <div className="login-card">
+      <div className={styles.loginCard}>
         {/* Header */}
         <div className="text-center mb-6">
           <img
@@ -141,7 +129,7 @@ const Login = () => {
           </div>
         </div>
 
-        <button onClick={handleCustomLogin} className="google-button">
+        <button onClick={handleCustomLogin} className={styles.googleButton}>
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
