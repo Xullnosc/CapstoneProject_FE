@@ -26,7 +26,7 @@
     animation-delay: 4s;
 }
 
-.login-container {
+.loginContainer {
     min-height: 100vh;
     background: linear-gradient(to bottom right, #fff7ed, #ffffff, #f0fdf4);
     display: flex;
@@ -37,7 +37,7 @@
     padding: 2rem 1rem;
 }
 
-.login-card {
+.loginCard {
     position: relative;
     z-index: 10;
     background: white;
@@ -49,12 +49,12 @@
 }
 
 @media (max-width: 640px) {
-    .login-card {
+    .loginCard {
         padding: 1.5rem;
     }
 }
 
-.login-input {
+.loginInput {
     width: 100%;
     padding-left: 3rem;
     padding-right: 1rem;
@@ -66,13 +66,13 @@
     transition: all 0.2s;
 }
 
-.login-input:focus {
+.loginInput:focus {
     outline: none;
     box-shadow: 0 0 0 2px #f97316;
     border-color: transparent;
 }
 
-.login-button {
+.loginButton {
     width: 100%;
     background: linear-gradient(to right, #f97316, #22c55e);
     color: white;
@@ -84,12 +84,12 @@
     cursor: pointer;
 }
 
-.login-button:hover {
+.loginButton:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
     transform: scale(1.02);
 }
 
-.google-button {
+.googleButton {
     width: 100%;
     display: flex;
     align-items: center;
@@ -104,7 +104,7 @@
     cursor: pointer;
 }
 
-.google-button:hover {
+.googleButton:hover {
     background-color: #f9fafb;
     border-color: #d1d5db;
 }
