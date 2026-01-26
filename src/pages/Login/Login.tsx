@@ -1,87 +1,95 @@
 import { useState } from "react";
-import axios from 'axios';
-import { LoginMenu } from "./../../components/menus/LoginMenu";
-import { Dropdown } from 'primereact/dropdown';
-import { useNavigate } from 'react-router-dom';
-import Swal from 'sweetalert2';
+import axios from "axios";
+import { Dropdown } from "primereact/dropdown";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import fptLogo from "../../assets/images/LogoFPT.jpg";
 import "./Login.css";
-import { useGoogleLogin } from '@react-oauth/google';
-import { authService } from '../../services/authService';
+import { useGoogleLogin } from "@react-oauth/google";
+import { authService } from "../../services/authService";
 
 const Login = () => {
   const [campus, setCampus] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const cities = [
-    { name: 'FU-Hòa Lạc', code: 'HN' },
-    { name: 'FU-Hồ Chí Minh', code: 'HCM' },
-    { name: 'FU-Cần Thơ', code: 'CT' },
-    { name: 'FU-Đà Nẵng', code: 'DN' },
-    { name: 'FU-Quy Nhơn', code: 'QN' }
+    { name: "FU-Hòa Lạc", code: "HN" },
+    { name: "FU-Hồ Chí Minh", code: "HCM" },
+    { name: "FU-Cần Thơ", code: "CT" },
+    { name: "FU-Đà Nẵng", code: "DN" },
+    { name: "FU-Quy Nhơn", code: "QN" },
   ];
 
-  const showAlert = (icon: 'success' | 'warning' | 'error', title: string, text: string) => {
+  const showAlert = (
+    icon: "success" | "warning" | "error",
+    title: string,
+    text: string,
+  ) => {
     Swal.fire({
       icon: icon,
       title: title,
       text: text,
-      confirmButtonColor: '#F26F21', // FPT Orange
-      confirmButtonText: 'OK'
+      confirmButtonColor: "#F26F21", // FPT Orange
+      confirmButtonText: "OK",
     });
   };
 
   const loginGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log('Google login success:', tokenResponse);
+      console.log("Google login success:", tokenResponse);
       if (!campus) {
-        showAlert('warning', 'Choose Campus', 'Please select a campus first!');
+        showAlert("warning", "Choose Campus", "Please select a campus first!");
         return;
       }
 
       try {
-        console.log(`Attempting login with: idToken=${tokenResponse.access_token}, campus=${campus}`);
-        const response = await authService.login(tokenResponse.access_token, campus);
+        console.log(
+          `Attempting login with: idToken=${tokenResponse.access_token}, campus=${campus}`,
+        );
+        const response = await authService.login(
+          tokenResponse.access_token,
+          campus,
+        );
         console.log("Backend login success:", response);
 
         // Save token to localStorage
-        localStorage.setItem('token', response.token);
+        localStorage.setItem("token", response.token);
 
         // Success Alert with Timer
         Swal.fire({
-          icon: 'success',
-          title: 'Login Successful!',
+          icon: "success",
+          title: "Login Successful!",
           text: `Welcome, ${response.userInfo.fullName}`,
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
         }).then(() => {
-          navigate('/home');
+          navigate("/home");
         });
-
       } catch (error) {
         console.error("Backend login failed:", error);
         let errorMessage = "Unknown error";
         if (axios.isAxiosError(error)) {
-          errorMessage = error.response?.data?.message || error.message || "Unknown error";
+          errorMessage =
+            error.response?.data?.message || error.message || "Unknown error";
         } else if (error instanceof Error) {
           errorMessage = error.message;
         }
-        showAlert('error', 'Login Failed', errorMessage);
+        showAlert("error", "Login Failed", errorMessage);
       }
     },
     onError: () => {
-      console.log('Google login failed');
-      showAlert('error', 'Error', 'Google login failed');
-    }
+      console.log("Google login failed");
+      showAlert("error", "Error", "Google login failed");
+    },
   });
 
   const handleCustomLogin = () => {
     if (!campus) {
-      showAlert('warning', 'Choose Campus', 'Please select a campus first!');
+      showAlert("warning", "Choose Campus", "Please select a campus first!");
       return;
     }
     loginGoogle();
-  }
+  };
 
   return (
     <div className="login-container">
@@ -91,7 +99,7 @@ const Login = () => {
       <div className="blob-3 animate-blob animation-delay-4000"></div>
 
       {/* LoginMenu Component */}
-      <LoginMenu />
+      {/* <LoginMenu /> */}
 
       {/* Login Card */}
       <div className="login-card">
@@ -109,7 +117,6 @@ const Login = () => {
           <Dropdown
             value={campus}
             onChange={(e) => setCampus(e.value)}
-
             options={cities}
             optionLabel="name"
             optionValue="name"
@@ -154,10 +161,7 @@ const Login = () => {
 
         {/* Register Link */}
         <div className="text-center mt-5">
-          <p className="text-gray-600 text-sm">
-            Powered by FPT University ©{" "}
-
-          </p>
+          <p className="text-gray-600 text-sm">Powered by FPT University © </p>
         </div>
       </div>
     </div>
