@@ -8,6 +8,7 @@ import TeamBanner from '../../components/team/TeamBanner';
 import ProjectStatusSection from '../../components/team/ProjectStatusSection';
 import TeamRoster from '../../components/team/TeamRoster';
 import DangerZone from '../../components/team/DangerZone';
+import EditTeamModal from '../../components/team/EditTeamModal';
 import axios from 'axios';
 
 interface DecodedToken {
@@ -24,6 +25,7 @@ const TeamDetail: React.FC = () => {
     const [team, setTeam] = useState<Team | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const loadTeam = useCallback(async (id: number) => {
         try {
@@ -195,7 +197,14 @@ const TeamDetail: React.FC = () => {
                     <TeamBanner
                         team={team}
                         isLeader={isLeader}
-                        onEdit={() => Swal.fire('Info', 'Edit functionality coming soon!', 'info')}
+                        onEdit={() => setIsEditModalOpen(true)}
+                    />
+
+                    <EditTeamModal
+                        isOpen={isEditModalOpen}
+                        closeModal={() => setIsEditModalOpen(false)}
+                        team={team}
+                        onUpdateSuccess={() => loadTeam(team.teamId)}
                     />
 
                     {/* Project Status */}

@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
 import { Menu } from 'primereact/menu';
 import { Sidebar } from 'primereact/sidebar';
 import { useNavigate } from 'react-router-dom';
 import 'primeicons/primeicons.css';
+import { authService } from '../../services/authService';
+import Swal from 'sweetalert2';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -19,7 +21,15 @@ const Header = () => {
                     label: 'Log out',
                     icon: 'pi pi-sign-out',
                     command: () => {
+                        authService.logout();
                         navigate('/');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Logged Out',
+                            text: 'You have been logged out successfully.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
                     }
                 }
             ]
@@ -98,11 +108,11 @@ const Header = () => {
                 <nav className="flex items-center gap-4 lg:gap-10">
                     <a href="/home" className="flex items-center gap-2 text-orange-600 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
                         <i className="pi pi-home text-xl"></i>
-                        <span className="hidden lg:block">Homepage</span>
+                        <span className="hidden lg:block whitespace-nowrap">Homepage</span>
                     </a>
                     <div onClick={() => navigate('/teams/team')} className="flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer">
                         <i className="pi pi-users text-xl"></i>
-                        <span className="hidden lg:block">My Team</span>
+                        <span className="hidden lg:block whitespace-nowrap">My Team</span>
                     </div>
                 </nav>
 
@@ -115,14 +125,14 @@ const Header = () => {
                 <nav className="flex items-center gap-4 lg:gap-10">
                     <a href="#" className="flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
                         <i className="pi pi-book text-xl"></i>
-                        <span className="hidden lg:block">Thesis List</span>
+                        <span className="hidden lg:block whitespace-nowrap">Thesis List</span>
                     </a>
                     <div className="relative flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer">
                         <div className="relative">
                             <i className="pi pi-bell text-xl"></i>
                             <Badge value="" severity="danger" className="p-0 w-2.5 h-2.5 min-w-0 absolute top-0 right-0 rounded-full border-2 border-white"></Badge>
                         </div>
-                        <span className="hidden lg:block">Notifications</span>
+                        <span className="hidden lg:block whitespace-nowrap">Notifications</span>
                     </div>
                 </nav>
             </div>
@@ -130,11 +140,27 @@ const Header = () => {
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 <div className="text-right hidden sm:block cursor-pointer" onClick={(e) => menuRef.current?.toggle(e)}>
-                    <div className="text-sm font-bold text-gray-800">Alex Johnson</div>
-                    <div className="text-xs text-gray-500">Student</div>
+                    <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
+                    <div className="text-xs text-gray-500">
+                        {(() => {
+                            const roleId = authService.getUser()?.roleId;
+                            switch (roleId) {
+                                case 1: return 'Admin';
+                                case 2: return 'Staff';
+                                case 3: return 'Lecturer';
+                                case 4: return 'Student';
+                                default: return 'Student';
+                            }
+                        })()}
+                    </div>
                 </div>
                 <div className="cursor-pointer" onClick={(e) => menuRef.current?.toggle(e)}>
-                    <Avatar image="" shape="circle" size="normal" className="border border-gray-200" />
+                    <Avatar
+                        image={authService.getUser()?.avatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
+                        shape="circle"
+                        size="normal"
+                        className="border border-gray-200"
+                    />
                 </div>
                 <Menu model={menuItems} popup ref={menuRef} id="popup_menu" />
             </div>

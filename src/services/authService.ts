@@ -19,5 +19,16 @@ export const authService = {
             campus
         });
         return response.data;
+    },
+
+    logout: () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    },
+
+    getUser: () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) return JSON.parse(userStr);
+        return null;
     }
 };
