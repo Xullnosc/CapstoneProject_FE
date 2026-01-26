@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# React
+Frontend/node_modules/
+Frontend/build/
+
+# General
+*.log
+.env
