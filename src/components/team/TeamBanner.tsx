@@ -12,7 +12,7 @@ const TeamBanner: React.FC<TeamBannerProps> = ({ team, isLeader, onEdit }) => {
 
     return (
         <section className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="flex gap-6 items-start">
                     <div className="relative">
                         <div
@@ -53,6 +53,13 @@ const TeamBanner: React.FC<TeamBannerProps> = ({ team, isLeader, onEdit }) => {
                             </div>
                         )}
                     </div>
+                </div>
+                {/* Description Zone */}
+                <div className="flex-1 max-w-lg text-right pl-6 border-l border-gray-100 hidden md:block">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description</p>
+                    <p className="text-gray-600 text-sm leading-relaxed italic break-all whitespace-pre-line">
+                        {team.description || "No description provided."}
+                    </p>
                 </div>
             </div>
         </section>

@@ -50,8 +50,9 @@ const Login = () => {
         const response = await authService.login(tokenResponse.access_token, campus);
         console.log("Backend login success:", response);
 
-        // Save token to localStorage
+        // Save token and user info to localStorage
         localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.userInfo));
 
         // Success Alert with Timer
         Swal.fire({

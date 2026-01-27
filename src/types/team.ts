@@ -22,6 +22,7 @@ export interface Team {
     members: TeamMember[];
     topicId?: number;
     topicName?: string;
+    description?: string;
 }
 
 export interface TeamInvitation {
@@ -47,4 +48,10 @@ export interface TeamInvitation {
 export interface CreateTeamRequest {
     teamName: string;
     description?: string;
+}
+
+export interface UpdateTeamRequest {
+    teamName: string;
+    description: string;
+    avatarFile?: File;
 }

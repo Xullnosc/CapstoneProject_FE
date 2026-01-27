@@ -1,5 +1,6 @@
 import React from 'react';
 import type { TeamMember } from '../../types/team';
+import MemberAvatar from './MemberAvatar';
 
 interface TeamRosterProps {
     members: TeamMember[];
@@ -23,7 +24,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                         onClick={onInvite}
                         className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
                     >
-                        <span className="material-symbols-outlined text-sm">person_add</span>
+                              <i className="pi pi-user-plus"></i>
                         Invite Member
                     </button>
                 )}
@@ -43,10 +44,12 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                             <tr key={member.studentId} className="group hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div
-                                            className="size-10 rounded-full bg-cover bg-center border border-gray-100"
-                                            style={{ backgroundImage: `url("${member.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.fullName)}&background=random&color=fff`}")` }}
-                                        ></div>
+                                        <MemberAvatar
+                                            email={member.email || ''}
+                                            fullName={member.fullName}
+                                            avatarUrl={member.avatar}
+                                            className="size-10 rounded-full object-cover border border-gray-100"
+                                        />
                                         <div>
                                             <p className="text-gray-900 font-bold text-sm">
                                                 {member.fullName}
