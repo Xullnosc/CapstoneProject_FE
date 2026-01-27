@@ -1,13 +1,13 @@
 name: React Vite CI
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
+  push:
+    branches: ["master"]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ---- Code Quality ----
       - name: Run ESLint
         run: npm run lint
 
-      - name: Build (TypeScript + Vite)
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      # ---- Build ----
+      - name: Build (Vite + Tailwind)
         run: npm run build
