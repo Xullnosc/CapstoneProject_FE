@@ -121,7 +121,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                                     className="w-full h-full object-cover rounded-full border border-gray-100"
                                 />
                             </div>
-                            <label className="absolute bottom-1 right-1 bg-white text-gray-700 rounded-full p-2.5 shadow-lg cursor-pointer border border-gray-100 hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 transform group-hover:scale-105 group-hover:-translate-y-1">
+                            <label className="absolute bottom-1 right-1 bg-white text-gray-700 rounded-full p-1.5 shadow-lg cursor-pointer border border-gray-100 hover:bg-orange-50 hover:text-orange-600 transition-all duration-300 transform group-hover:scale-105 group-hover:-translate-y-1">
                                 <span className="material-symbols-outlined text-sm font-bold flex items-center justify-center">camera_alt</span>
                                 <input
                                     type="file"
