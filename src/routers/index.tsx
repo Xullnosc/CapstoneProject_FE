@@ -11,7 +11,7 @@ const AppRouter = () => {
     <Routes>
       <Route path="/" element={<Login />} />
 
-      <Route element={<ProtectedRoute />}>
+      {/* <Route element={<ProtectedRoute />}> */}
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
           <Route path="/teams" element={<TeamCreate />} />
@@ -19,7 +19,7 @@ const AppRouter = () => {
           <Route path="/teams/:teamId" element={<TeamDetail />} />
           <Route path="/thesis" element={<div className="p-8 text-center text-gray-500">Thesis List Page (Under Construction)</div>} />
         </Route>
-      </Route>
+      {/* </Route> */}
     </Routes>
   );
 };

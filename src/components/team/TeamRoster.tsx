@@ -24,7 +24,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                         onClick={onInvite}
                         className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
                     >
-                        <span className="material-symbols-outlined text-sm">person_add</span>
+                        <i className="pi pi-user-plus"></i>
                         Invite Member
                     </button>
                 )}

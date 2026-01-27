@@ -3,3 +3,7 @@
 :root {
     color-scheme: light;
 }
+
+html {
+    scrollbar-gutter: stable;
+}
