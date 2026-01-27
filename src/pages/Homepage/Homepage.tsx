@@ -2,66 +2,16 @@ import { Avatar } from 'primereact/avatar';
 import { Button } from 'primereact/button';
 import { Badge } from 'primereact/badge';
 import { Tag } from 'primereact/tag';
-import { useEffect, useState } from 'react';
-import { teamService } from '../../services/teamService';
-import { authService } from '../../services/authService';
 
 const Homepage = () => {
-    const [teamMembers, setTeamMembers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchTeamData = async () => {
-            try {
-                const currentUser = authService.getUser();
-                const team = await teamService.getMyTeam();
-
-                let members: any[] = [];
-
-                if (team) {
-                    members = team.members.map(member => ({
-                        id: member.studentId,
-                        name: member.studentCode === currentUser?.studentCode ? `${member.fullName} (You)` : member.fullName,
-                        role: member.role === 'Leader' ? 'TEAM LEAD' : 'MEMBER',
-                        image: member.avatar || 'https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png',
-                        isEmpty: false
-                    }));
-                }
-
-                // Fill remaining slots
-                const totalSlots = 5;
-                const emptySlots = totalSlots - members.length;
-
-                for (let i = 0; i < emptySlots; i++) {
-                    members.push({
-                        id: `empty-${i}`,
-                        name: 'Empty Slot',
-                        role: 'Invite Member',
-                        image: '',
-                        isEmpty: true
-                    });
-                }
-
-                setTeamMembers(members);
-            } catch (error) {
-                console.error("Failed to fetch team data", error);
-
-                // Fallback to empty slots on error
-                const members = Array(5).fill(null).map((_, i) => ({
-                    id: `empty-${i}`,
-                    name: 'Empty Slot',
-                    role: 'Invite Member',
-                    image: '',
-                    isEmpty: true
-                }));
-                setTeamMembers(members);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTeamData();
-    }, []);
+    // Mock Data for Team Members
+    const teamMembers = [
+        { id: 1, name: 'Alex (You)', role: 'TEAM LEAD', image: 'https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png', isEmpty: false },
+        { id: 2, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
+        { id: 3, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
+        { id: 4, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
+        { id: 5, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
+    ];
 
     // Mock Data for Recent Activity
     const activities = [
@@ -131,37 +81,28 @@ const Homepage = () => {
                         <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                             <i className="pi pi-users text-orange-500"></i> My Team
                         </h3>
-                        <span className="text-sm text-gray-500 font-medium">{teamMembers.filter(m => !m.isEmpty).length} / 5 Members</span>
+                        <span className="text-sm text-gray-500 font-medium">1 / 5 Members</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                        {loading ? (
-                            // Loading Skeleton
-                            Array(5).fill(0).map((_, i) => (
-                                <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-48 flex items-center justify-center">
-                                    <i className="pi pi-spin pi-spinner text-3xl text-orange-500"></i>
-                                </div>
-                            ))
-                        ) : (
-                            teamMembers.map((member) => (
-                                <div key={member.id} className={`bg-white p-4 rounded-2xl border ${member.isEmpty ? 'border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50' : 'border-gray-100 shadow-sm'} flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer`}>
-                                    {member.isEmpty ? (
-                                        <>
-                                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400 group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
-                                                <i className="pi pi-plus text-xl"></i>
-                                            </div>
-                                            <div className="font-bold text-gray-400 text-sm mb-3 group-hover:text-gray-600">Available</div>
-                                            <Button label="Invite" size="small" outlined severity="warning" className="w-full text-xs" />
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Avatar image={member.image} size="large" shape="circle" className="mb-3 border-2 border-orange-100" />
-                                            <div className="font-bold text-gray-800 text-sm mb-1">{member.name}</div>
-                                            <Tag value={member.role} severity="warning" className="text-[10px] px-2 py-0.5" rounded></Tag>
-                                        </>
-                                    )}
-                                </div>
-                            ))
-                        )}
+                        {teamMembers.map((member) => (
+                            <div key={member.id} className={`bg-white p-4 rounded-2xl border ${member.isEmpty ? 'border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50' : 'border-gray-100 shadow-sm'} flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer`}>
+                                {member.isEmpty ? (
+                                    <>
+                                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400 group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
+                                            <i className="pi pi-plus text-xl"></i>
+                                        </div>
+                                        <div className="font-bold text-gray-400 text-sm mb-3 group-hover:text-gray-600">Available</div>
+                                        <Button label="Invite" size="small" outlined severity="warning" className="w-full text-xs" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <Avatar image={member.image} size="large" shape="circle" className="mb-3 border-2 border-orange-100" />
+                                        <div className="font-bold text-gray-800 text-sm mb-1">{member.name}</div>
+                                        <Tag value={member.role} severity="warning" className="text-[10px] px-2 py-0.5" rounded></Tag>
+                                    </>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </div>
 
