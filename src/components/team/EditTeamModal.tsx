@@ -183,7 +183,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                         <button
                             type="button"
                             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200"
-                            onClick={handleClose}
+                            onClick={closeModal}
                         >
                             Cancel
                         </button>
