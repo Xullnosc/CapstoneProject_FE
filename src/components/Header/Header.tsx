@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import  { useRef, useState } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
 import { Menu } from 'primereact/menu';
