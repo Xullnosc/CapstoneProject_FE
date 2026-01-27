@@ -1,4 +1,4 @@
-import  { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
 import { Menu } from 'primereact/menu';
@@ -73,18 +73,18 @@ const Header = () => {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        <a href="/home" className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 ${location.pathname === '/home' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                        <div onClick={() => navigate('/home')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/home' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                             <i className="pi pi-home text-xl"></i>
                             <span>Homepage</span>
-                        </a>
+                        </div>
                         <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                             <i className="pi pi-users text-xl"></i>
                             <span>My Team</span>
                         </div>
-                        <a href="#" className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
+                        <div onClick={() => navigate('/thesis')} className="cursor-pointer flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
-                        </a>
+                        </div>
                         <div className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
                             <div className="relative">
                                 <i className="pi pi-bell text-xl"></i>
@@ -107,10 +107,10 @@ const Header = () => {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:flex items-center gap-8 lg:gap-16">
                 {/* Left Navigation */}
                 <nav className="flex items-center gap-4 lg:gap-10">
-                    <a href="/home" className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 ${location.pathname === '/home' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                    <div onClick={() => navigate('/home')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname === '/home' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-home text-xl"></i>
                         <span className="hidden lg:block whitespace-nowrap">Homepage</span>
-                    </a>
+                    </div>
                     <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-users text-xl"></i>
                         <span className="hidden lg:block whitespace-nowrap">My Team</span>
@@ -124,10 +124,10 @@ const Header = () => {
 
                 {/* Right Navigation */}
                 <nav className="flex items-center gap-4 lg:gap-10">
-                    <a href="#" className="flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
+                    <div onClick={() => navigate('/thesis')} className="cursor-pointer flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
                         <i className="pi pi-book text-xl"></i>
                         <span className="hidden lg:block whitespace-nowrap">Thesis List</span>
-                    </a>
+                    </div>
                     <div className="relative flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer">
                         <div className="relative">
                             <i className="pi pi-bell text-xl"></i>
