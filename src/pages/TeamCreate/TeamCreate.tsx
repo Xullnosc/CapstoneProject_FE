@@ -123,6 +123,8 @@ const TeamCreate: React.FC = () => {
                             <div className="relative group">
                                 <div className="absolute -inset-1 bg-gradient-to-r from-orange-200 to-orange-100 rounded-[2rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                                 <input
+                                    type="text"
+                                    aria-label="Team Name"
                                     className="relative block w-full rounded-[2rem] border-0 bg-white py-6 px-10 text-gray-900 placeholder:text-gray-300 focus:ring-4 focus:ring-orange-500/20 text-3xl md:text-4xl font-bold shadow-xl shadow-orange-500/5 transition-all text-center placeholder:font-bold h-24 sm:h-28"
                                     placeholder="e.g. The Visionaries"
                                     value={teamName}
@@ -132,6 +134,7 @@ const TeamCreate: React.FC = () => {
                             </div>
 
                             <button
+                                type="button"
                                 onClick={handleCreateTeam}
                                 disabled={creating}
                                 className="group relative flex w-full md:w-2/3 mx-auto cursor-pointer items-center justify-center overflow-hidden rounded-[2rem] h-16 bg-gradient-to-r from-[#F26F21] to-orange-600 text-white text-xl font-bold tracking-wide shadow-xl shadow-orange-500/30 transition-all hover:scale-[1.02] hover:shadow-orange-500/50 active:scale-[0.98] disabled:opacity-70 disabled:grayscale disabled:scale-100"
