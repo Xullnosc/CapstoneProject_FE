@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from 'primereact/dialog';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import { teamService } from '../../services/teamService';
 import type { Team, UpdateTeamRequest } from '../../types/team';
@@ -13,7 +13,6 @@ interface EditTeamModalProps {
 }
 
 const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team, onUpdateSuccess }) => {
-    const [preview, setPreview] = useState<string | null>(team.teamAvatar || null);
     const [file, setFile] = useState<File | null>(null);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<UpdateTeamRequest>({
@@ -29,14 +28,18 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
             teamName: team.teamName,
             description: team.description || "",
         });
-        setPreview(team.teamAvatar || null);
-    }, [team, reset, isOpen]);
+        // Removed setFile(null) from here to avoid setState in effect warning
+    }, [team, reset]); // Removed isOpen from dependency as we want to reset mainly on team change
+
+    const handleClose = () => {
+        setFile(null);
+        closeModal();
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             setFile(selectedFile);
-            setPreview(URL.createObjectURL(selectedFile));
         }
     };
 
@@ -54,7 +57,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                 confirmButtonColor: '#F26F21'
             });
             onUpdateSuccess();
-            closeModal();
+            handleClose();
         } catch (error) {
             console.error(error);
             Swal.fire({
@@ -66,21 +69,23 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
         }
     };
 
-    const onError = (errors: any) => {
+    const onError = (errors: FieldErrors<UpdateTeamRequest>) => {
         if (errors.description) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Limit Exceeded',
-                text: errors.description.message,
+                text: errors.description?.message,
                 confirmButtonColor: '#F26F21'
             });
         }
     };
 
+    const avatarPreview = file ? URL.createObjectURL(file) : (team.teamAvatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png");
+
     return (
         <Dialog
             visible={isOpen}
-            onHide={closeModal}
+            onHide={handleClose}
             className="w-full max-w-lg"
             contentClassName="!rounded-2xl bg-white shadow-2xl border border-gray-100 [&::-webkit-scrollbar]:hidden"
             maskClassName="bg-black/40 backdrop-blur-sm z-[9999]"
@@ -95,7 +100,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                 {/* Close Button */}
                 <div className="absolute top-4 right-4 z-10">
                     <button
-                        onClick={closeModal}
+                        onClick={handleClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100 focus:outline-none"
                     >
                         <span className="material-symbols-outlined text-xl">close</span>
@@ -116,7 +121,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                         <div className="relative group">
                             <div className="relative size-28 rounded-full p-1 bg-white shadow-xl ring-4 ring-orange-50">
                                 <img
-                                    src={preview || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
+                                    src={avatarPreview}
                                     alt="Team Avatar"
                                     className="w-full h-full object-cover rounded-full border border-gray-100"
                                 />
@@ -178,7 +183,7 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                         <button
                             type="button"
                             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200"
-                            onClick={closeModal}
+                            onClick={handleClose}
                         >
                             Cancel
                         </button>
