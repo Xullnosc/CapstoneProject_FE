@@ -1,17 +1,55 @@
+import { useState, useEffect } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Button } from 'primereact/button';
 import { Badge } from 'primereact/badge';
 import { Tag } from 'primereact/tag';
+import { useNavigate } from 'react-router-dom';
+import { teamService } from '../../services/teamService';
+import { authService } from '../../services/authService';
+import type { Team, TeamMember } from '../../types/team';
 
 const Homepage = () => {
-    // Mock Data for Team Members
-    const teamMembers = [
-        { id: 1, name: 'Alex (You)', role: 'TEAM LEAD', image: 'https://primefaces.org/cdn/primereact/images/avatar/amyelsner.png', isEmpty: false },
-        { id: 2, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
-        { id: 3, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
-        { id: 4, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
-        { id: 5, name: 'Empty Slot', role: 'Invite Member', image: '', isEmpty: true },
-    ];
+    const navigate = useNavigate();
+    const [team, setTeam] = useState<Team | null>(null);
+    const [loading, setLoading] = useState(true);
+    const currentUser = authService.getUser();
+
+    useEffect(() => {
+        const fetchTeam = async () => {
+            try {
+                const myTeam = await teamService.getMyTeam();
+                setTeam(myTeam);
+            } catch (error) {
+                console.error("Failed to fetch team", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTeam();
+    }, []);
+
+    // Generate Team Display Data
+    const getTeamDisplay = () => {
+        const maxMembers = 5;
+        const members: (TeamMember | { isEmpty: true })[] = [];
+
+        if (team) {
+            // Add existing members
+            team.members.forEach(member => {
+                members.push(member);
+            });
+        }
+
+        // Fill remaining slots
+        while (members.length < maxMembers) {
+            members.push({ isEmpty: true });
+        }
+
+        return members;
+    };
+
+    const displayMembers = getTeamDisplay();
 
     // Mock Data for Recent Activity
     const activities = [
@@ -77,33 +115,69 @@ const Homepage = () => {
 
                 {/* My Team Section */}
                 <div>
-                    <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                            <i className="pi pi-users text-orange-500"></i> My Team
-                        </h3>
-                        <span className="text-sm text-gray-500 font-medium">1 / 5 Members</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                        {teamMembers.map((member) => (
-                            <div key={member.id} className={`bg-white p-4 rounded-2xl border ${member.isEmpty ? 'border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50' : 'border-gray-100 shadow-sm'} flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer`}>
-                                {member.isEmpty ? (
-                                    <>
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i className="pi pi-users text-orange-500"></i> My Team {team && <span className="text-gray-400 font-normal text-sm">({team.teamName})</span>}
+                    </h3>
+                    <span className="text-sm text-gray-500 font-medium">{team ? team.memberCount : 0} / 5 Members</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    {loading ? (
+                        // Loading Skeletons
+                        Array(5).fill(0).map((_, i) => (
+                            <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 h-48 animate-pulse flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 bg-gray-200 rounded-full mb-3"></div>
+                                <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+                                <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                            </div>
+                        ))
+                    ) : !team ? (
+                        // No Team State
+                        <div className="col-span-full bg-orange-50 rounded-2xl p-8 text-center border border-dashed border-orange-200">
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-orange-500 mx-auto mb-4 shadow-sm">
+                                <i className="pi pi-users text-2xl"></i>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">You haven't joined a team yet</h3>
+                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Join an existing team or create your own to start your capstone journey.</p>
+                            <div className="flex justify-center gap-4">
+                                <Button label="Create Team" icon="pi pi-plus" className="p-button-warning" onClick={() => navigate('/teams')} />
+                                <Button label="Find Team" icon="pi pi-search" outlined severity="warning" />
+                            </div>
+                        </div>
+                    ) : (
+                        displayMembers.map((member, index) => {
+                            // Check if it's a real member or empty slot
+                            if ('isEmpty' in member) {
+                                return (
+                                    <div key={`empty-${index}`} className="bg-white p-4 rounded-2xl border border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50 flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer"
+                                        onClick={() => navigate('/teams/team')}>
                                         <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400 group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
                                             <i className="pi pi-plus text-xl"></i>
                                         </div>
                                         <div className="font-bold text-gray-400 text-sm mb-3 group-hover:text-gray-600">Available</div>
                                         <Button label="Invite" size="small" outlined severity="warning" className="w-full text-xs" />
-                                    </>
-                                ) : (
-                                    <>
-                                        <Avatar image={member.image} size="large" shape="circle" className="mb-3 border-2 border-orange-100" />
-                                        <div className="font-bold text-gray-800 text-sm mb-1">{member.name}</div>
-                                        <Tag value={member.role} severity="warning" className="text-[10px] px-2 py-0.5" rounded></Tag>
-                                    </>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                                    </div>
+                                );
+                            } else {
+                                // Render Real Member
+                                const isMe = member.email === currentUser?.email;
+                                return (
+                                    <div key={member.studentId} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center h-48 transition-all duration-300 hover:shadow-md cursor-pointer"
+                                        onClick={() => navigate('/teams/team')}>
+                                        <Avatar
+                                            image={member.avatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
+                                            size="large"
+                                            shape="circle"
+                                            className="mb-3 border-2 border-orange-100"
+                                        />
+                                        <div className="font-bold text-gray-800 text-sm mb-1 line-clamp-1 w-full" title={member.fullName}>
+                                            {member.fullName} {isMe && <span className="text-orange-500">(You)</span>}
+                                        </div>
+                                        <Tag value={member.role} severity={member.role === 'Leader' ? 'warning' : 'info'} className="text-[10px] px-2 py-0.5" rounded></Tag>
+                                    </div>
+                                );
+                            }
+                        })
+                    )}
                 </div>
 
                 {/* Project Topics Section */}
