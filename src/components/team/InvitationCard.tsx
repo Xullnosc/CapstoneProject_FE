@@ -27,13 +27,13 @@ const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAccept, o
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => onAccept(invitation.invitationId)}
-                    className="px-6 py-2.5 bg-orange-500 text-white text-sm font-bold rounded-full hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/20"
+                    className="px-6 cursor-pointer py-2.5 bg-orange-500 text-white text-sm font-bold rounded-full hover:bg-orange-600 transition-colors shadow-sm shadow-orange-500/20"
                 >
                     Accept
                 </button>
                 <button
                     onClick={() => onDecline(invitation.invitationId)}
-                    className="px-3 py-2 text-gray-400 hover:text-red-500 text-sm font-semibold transition-colors"
+                    className="px-3 cursor-pointer py-2 text-gray-400 hover:text-red-500 text-sm font-semibold transition-colors"
                 >
                     Decline
                 </button>

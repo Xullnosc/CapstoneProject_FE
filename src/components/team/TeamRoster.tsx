@@ -9,9 +9,10 @@ interface TeamRosterProps {
     currentUserId: number | null;
     onKick?: (userId: number) => void;
     onInvite?: () => void;
+    onLeave?: () => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite, onLeave }) => {
     return (
         <section className="mb-10">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -24,7 +25,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                         onClick={onInvite}
                         className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
                     >
-                              <i className="pi pi-user-plus"></i>
+                        <i className="pi pi-user-plus"></i>
                         Invite Member
                     </button>
                 )}
@@ -71,17 +72,28 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    {isLeader && member.studentId !== leaderId ? (
-                                        <button
-                                            onClick={() => onKick && onKick(member.studentId)}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors group-hover:opacity-100 opacity-60"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">delete</span>
-                                            <span className="text-xs font-bold uppercase">Kick</span>
-                                        </button>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
-                                    )}
+                                    <div className="flex justify-end w-full">
+                                        {member.studentId === currentUserId ? (
+                                            <button
+                                                onClick={onLeave}
+                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                                title="Leave Team"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">logout</span>
+                                                <span className="text-xs font-bold uppercase">Leave</span>
+                                            </button>
+                                        ) : isLeader && member.studentId !== leaderId ? (
+                                            <button
+                                                onClick={() => onKick && onKick(member.studentId)}
+                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors group-hover:opacity-100 opacity-60 cursor-pointer"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">delete</span>
+                                                <span className="text-xs font-bold uppercase">Kick</span>
+                                            </button>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

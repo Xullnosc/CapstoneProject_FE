@@ -183,6 +183,48 @@ const TeamDetail: React.FC = () => {
         }
     };
 
+    const handleLeave = async () => {
+        if (isLeader) {
+            await Swal.fire({
+                title: 'Cannot Leave Team',
+                text: "You are the Team Leader. You must transfer leadership to another member before leaving.",
+                icon: 'error',
+                confirmButtonColor: '#F26F21'
+            });
+            return;
+        }
+
+        const result = await Swal.fire({
+            title: 'Leave Team?',
+            text: "Are you sure you want to leave this team?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, leave!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                if (team && team.teamId) {
+                    await teamService.leaveTeam(team.teamId);
+                    await Swal.fire(
+                        'Left!',
+                        'You have left the team.',
+                        'success'
+                    );
+                    navigate('/teams');
+                }
+            } catch (err) {
+                let message = 'Failed to leave team.';
+                if (axios.isAxiosError(err)) {
+                    message = err.response?.data?.message || message;
+                }
+                Swal.fire('Error!', message, 'error');
+            }
+        }
+    };
+
     if (loading) return <div className="p-10 text-center">Loading Team Details...</div>;
     if (!team) return null;
 
@@ -218,12 +260,15 @@ const TeamDetail: React.FC = () => {
                         leaderId={team.leaderId}
                         currentUserId={currentUserId}
                         onKick={handleKick}
+                        onLeave={handleLeave}
                         onInvite={() => Swal.fire('Info', 'Invite functionality coming soon!', 'info')}
                     />
 
                     {/* Danger Zone (Leader Only) */}
                     {isLeader && (
-                        <DangerZone onDisband={handleDisband} />
+                        <div className="mb-6">
+                            <DangerZone onAction={handleDisband} actionType="disband" />
+                        </div>
                     )}
 
                 </div>
