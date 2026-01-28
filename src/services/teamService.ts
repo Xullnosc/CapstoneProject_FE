@@ -51,6 +51,10 @@ export const teamService = {
         await api.delete(`/team/${teamId}/disband`);
     },
 
+    leaveTeam: async (teamId: number): Promise<void> => {
+        await api.delete(`/team/${teamId}/leave`);
+    },
+
     updateTeam: async (teamId: number, data: { teamName: string; description: string; avatarFile?: File }): Promise<Team> => {
         const formData = new FormData();
         formData.append('TeamName', data.teamName);
