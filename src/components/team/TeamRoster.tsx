@@ -12,9 +12,10 @@ interface TeamRosterProps {
     onKick?: (userId: number) => void;
     onInvite?: () => void; // We can keep this for external triggering or use internal state
     onLeave?: () => void;
+    onTransferRole?: (userId: number) => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole }) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
     const handleOpenInvite = () => {
@@ -32,7 +33,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 {isLeader && (
                     <button
                         onClick={handleOpenInvite}
-                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
+                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer"
                     >
                         <i className="pi pi-user-plus"></i>
                         Invite Member
@@ -92,13 +93,25 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                                 <span className="text-xs font-bold uppercase">Leave</span>
                                             </button>
                                         ) : isLeader && member.studentId !== leaderId ? (
-                                            <button
-                                                onClick={() => onKick && onKick(member.studentId)}
-                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors group-hover:opacity-100 opacity-60 cursor-pointer"
-                                            >
-                                                <span className="material-symbols-outlined text-xl">delete</span>
-                                                <span className="text-xs font-bold uppercase">Kick</span>
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {onTransferRole && (
+                                                    <button
+                                                        onClick={() => onTransferRole(member.studentId)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                        title="Transfer Leadership"
+                                                    >
+                                                        <span className="material-symbols-outlined text-xl">swap_horiz</span>
+                                                        <span className="text-xs font-bold uppercase">Transfer</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => onKick && onKick(member.studentId)}
+                                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                    <span className="text-xs font-bold uppercase">Kick</span>
+                                                </button>
+                                            </div>
                                         ) : (
                                             <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
                                         )}

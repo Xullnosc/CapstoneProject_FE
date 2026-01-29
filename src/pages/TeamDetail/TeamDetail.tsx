@@ -225,6 +225,41 @@ const TeamDetail: React.FC = () => {
         }
     };
 
+    const handleTransferRole = async (userId: number) => {
+        const member = team?.members.find(m => m.studentId === userId);
+        const memberName = member ? member.fullName : 'this member';
+
+        const result = await Swal.fire({
+            title: 'Transfer Leadership?',
+            text: `Are you sure you want to transfer leadership to ${memberName}? You will become a regular member.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, transfer!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                if (team && team.teamId) {
+                    await teamService.transferLeader(team.teamId, userId);
+                    await Swal.fire(
+                        'Transferred!',
+                        `Leadership has been transferred to ${memberName}.`,
+                        'success'
+                    );
+                    loadTeam(team.teamId); // Reload to reflect changes
+                }
+            } catch (err) {
+                let message = 'Failed to transfer leadership.';
+                if (axios.isAxiosError(err)) {
+                    message = err.response?.data?.message || message;
+                }
+                Swal.fire('Error!', message, 'error');
+            }
+        }
+    };
+
     if (loading) return <div className="p-10 text-center">Loading Team Details...</div>;
     if (!team) return null;
 
@@ -249,11 +284,11 @@ const TeamDetail: React.FC = () => {
                         onUpdateSuccess={() => loadTeam(team.teamId)}
                     />
 
-                    {/* Project Status */}
+
                     {/* Project Status */}
                     <ProjectStatusSection team={team} isLeader={isLeader} />
 
-                    {/* Roster */}
+
                     {/* Roster */}
                     <TeamRoster
                         members={team.members}
@@ -263,6 +298,7 @@ const TeamDetail: React.FC = () => {
                         teamId={team.teamId}
                         onKick={handleKick}
                         onLeave={handleLeave}
+                        onTransferRole={handleTransferRole}
                     />
 
                     {/* Danger Zone (Leader Only) */}
