@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
 import { Menu } from 'primereact/menu';
@@ -13,6 +13,43 @@ const Header = () => {
     const location = useLocation();
     const menuRef = useRef<Menu>(null);
     const [visible, setVisible] = useState(false);
+    const [currentSemesterCode, setCurrentSemesterCode] = useState<string>('');
+
+    // Auth & Permissions
+    const user = authService.getUser();
+    // Assuming HOD/Admin role check. Adjust strings/IDs as per your system
+    // Based on previous Context: "HOD" or "Admin".
+    // In Header, it used IDs. Let's use roleName if available, or IDs for safety if roleName is unreliable.
+    // However, I previously added roleName to authService.
+    const canManageSemesters = user?.roleName === 'HOD' || user?.roleName === 'Admin';
+
+    useEffect(() => {
+        const fetchCurrentSemester = async () => {
+            try {
+                // Dynamic import not strictly needed if we want to standard import, but keeping existing style
+                const { semesterService } = await import('../../services/semesterService');
+                // Ensure we get the *latest* active semester
+                const current = await semesterService.getCurrentSemester();
+                setCurrentSemesterCode(current ? current.semesterCode : '');
+            } catch (error) {
+                console.error("Failed to fetch semester context", error);
+            }
+        };
+
+        fetchCurrentSemester();
+
+        // Listen for updates
+        const handleSemesterChange = () => {
+            console.log("Semester changed event received. Refreshing Header...");
+            fetchCurrentSemester();
+        };
+
+        window.addEventListener('semesterChanged', handleSemesterChange);
+
+        return () => {
+            window.removeEventListener('semesterChanged', handleSemesterChange);
+        };
+    }, []);
 
     const menuItems = [
         {
@@ -57,6 +94,11 @@ const Header = () => {
                     <div className="text-xl font-bold text-gray-800">
                         FC<span className="text-orange-500">TMS</span>
                     </div>
+                    {currentSemesterCode && (
+                        <div className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded border border-orange-200">
+                            {currentSemesterCode}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -77,6 +119,12 @@ const Header = () => {
                             <i className="pi pi-home text-xl"></i>
                             <span>Homepage</span>
                         </div>
+                        {canManageSemesters && (
+                            <div onClick={() => navigate('/semesters')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-calendar text-xl"></i>
+                                <span>Semesters</span>
+                            </div>
+                        )}
                         <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                             <i className="pi pi-users text-xl"></i>
                             <span>My Team</span>
@@ -111,6 +159,12 @@ const Header = () => {
                         <i className="pi pi-home text-xl"></i>
                         <span className="hidden lg:block whitespace-nowrap">Homepage</span>
                     </div>
+                    {canManageSemesters && (
+                        <div onClick={() => navigate('/semesters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                            <i className="pi pi-calendar text-xl"></i>
+                            <span className="hidden lg:block whitespace-nowrap">Semesters</span>
+                        </div>
+                    )}
                     <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-users text-xl"></i>
                         <span className="hidden lg:block whitespace-nowrap">My Team</span>
