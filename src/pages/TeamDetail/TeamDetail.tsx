@@ -121,13 +121,13 @@ const TeamDetail: React.FC = () => {
 
     const handleKick = async (userId: number) => {
         const result = await Swal.fire({
-            title: 'Kick Member?',
+            title: 'Remove Member?',
             text: "Are you sure you want to remove this member from the team?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, kick them!'
+            confirmButtonText: 'Yes, remove them!'
         });
 
         if (result.isConfirmed) {
@@ -142,7 +142,7 @@ const TeamDetail: React.FC = () => {
                     loadTeam(team.teamId); // Reload
                 }
             } catch (err) {
-                let message = 'Failed to kick member.';
+                let message = 'Failed to remove member.';
                 if (axios.isAxiosError(err)) {
                     message = err.response?.data?.message || message;
                 }

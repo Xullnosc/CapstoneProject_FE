@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
 
@@ -13,6 +13,42 @@ interface TeamRosterProps {
 }
 
 const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite, onLeave }) => {
+    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const menuRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (openMenuId !== null) {
+                const menuElement = menuRefs.current[openMenuId];
+                if (menuElement && !menuElement.contains(event.target as Node)) {
+                    setOpenMenuId(null);
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openMenuId]);
+
+    const handleMenuToggle = (memberId: number) => {
+        setOpenMenuId(openMenuId === memberId ? null : memberId);
+    };
+
+    const handleTransferLeadership = () => {
+        // TODO: Implement transfer leadership functionality
+        setOpenMenuId(null);
+        alert('Transfer Leadership functionality coming soon!');
+    };
+
+    const handleRemove = (memberId: number) => {
+        setOpenMenuId(null);
+        if (onKick) {
+            onKick(memberId);
+        }
+    };
+
     return (
         <section className="mb-10">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -31,7 +67,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 )}
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-visible">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-50 border-b border-gray-100">
@@ -83,13 +119,33 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                                 <span className="text-xs font-bold uppercase">Leave</span>
                                             </button>
                                         ) : isLeader && member.studentId !== leaderId ? (
-                                            <button
-                                                onClick={() => onKick && onKick(member.studentId)}
-                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors group-hover:opacity-100 opacity-60 cursor-pointer"
-                                            >
-                                                <span className="material-symbols-outlined text-xl">delete</span>
-                                                <span className="text-xs font-bold uppercase">Kick</span>
-                                            </button>
+                                            <div className="relative" ref={(el) => { menuRefs.current[member.studentId] = el; }}>
+                                                <button
+                                                    onClick={() => handleMenuToggle(member.studentId)}
+                                                    className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                                                    title="More options"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl text-gray-600">more_vert</span>
+                                                </button>
+                                                {openMenuId === member.studentId && (
+                                                    <div className="absolute z-1 right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 animate-[fadeIn_0.2s_ease-out,slideDown_0.2s_ease-out]">
+                                                        <button
+                                                            onClick={handleTransferLeadership}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150 flex items-center gap-2 first:rounded-t-lg cursor-pointer hover:translate-x-0.5"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg transition-transform duration-150">swap_horiz</span>
+                                                            <span>Transfer Leadership</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRemove(member.studentId)}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-all duration-150 flex items-center gap-2 last:rounded-b-lg cursor-pointer hover:translate-x-0.5"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg transition-transform duration-150">delete</span>
+                                                            <span>Remove</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         ) : (
                                             <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
                                         )}
