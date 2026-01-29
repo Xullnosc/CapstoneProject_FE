@@ -254,14 +254,15 @@ const TeamDetail: React.FC = () => {
                     <ProjectStatusSection team={team} isLeader={isLeader} />
 
                     {/* Roster */}
+                    {/* Roster */}
                     <TeamRoster
                         members={team.members}
                         isLeader={isLeader}
                         leaderId={team.leaderId}
                         currentUserId={currentUserId}
+                        teamId={team.teamId}
                         onKick={handleKick}
                         onLeave={handleLeave}
-                        onInvite={() => Swal.fire('Info', 'Invite functionality coming soon!', 'info')}
                     />
 
                     {/* Danger Zone (Leader Only) */}

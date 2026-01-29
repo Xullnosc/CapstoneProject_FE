@@ -1,18 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
+import InviteMemberModal from './InviteMemberModal';
 
 interface TeamRosterProps {
     members: TeamMember[];
     isLeader: boolean;
     leaderId: number;
     currentUserId: number | null;
+    teamId?: number; // Add teamId prop
     onKick?: (userId: number) => void;
-    onInvite?: () => void;
+    onInvite?: () => void; // We can keep this for external triggering or use internal state
     onLeave?: () => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite, onLeave }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave }) => {
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+    const handleOpenInvite = () => {
+        if (onInvite) onInvite();
+        setIsInviteModalOpen(true);
+    };
+
     return (
         <section className="mb-10">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -22,7 +31,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 </h2>
                 {isLeader && (
                     <button
-                        onClick={onInvite}
+                        onClick={handleOpenInvite}
                         className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
                     >
                         <i className="pi pi-user-plus"></i>
@@ -114,6 +123,14 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                     </div>
                 )}
             </div>
+
+            {teamId && (
+                <InviteMemberModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setIsInviteModalOpen(false)}
+                    teamId={teamId}
+                />
+            )}
         </section>
     );
 };
