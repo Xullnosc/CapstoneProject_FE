@@ -39,6 +39,8 @@ export interface TeamInvitation {
     invitedBy: {
         userId: number;
         name: string;
+        email: string;
+        avatar: string;
     };
     message?: string;
     status: "Pending" | "Accepted" | "Declined";

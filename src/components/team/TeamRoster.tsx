@@ -1,17 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
+import InviteMemberModal from './InviteMemberModal';
 
 interface TeamRosterProps {
     members: TeamMember[];
     isLeader: boolean;
     leaderId: number;
     currentUserId: number | null;
+    teamId?: number; // Add teamId prop
     onKick?: (userId: number) => void;
-    onInvite?: () => void;
+    onInvite?: () => void; // We can keep this for external triggering or use internal state
+    onLeave?: () => void;
+    onTransferRole?: (userId: number) => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole }) => {
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+    const handleOpenInvite = () => {
+        if (onInvite) onInvite();
+        setIsInviteModalOpen(true);
+    };
+
     return (
         <section className="mb-10">
             <div className="flex items-center justify-between mb-4 px-1">
@@ -21,10 +32,10 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 </h2>
                 {isLeader && (
                     <button
-                        onClick={onInvite}
-                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
+                        onClick={handleOpenInvite}
+                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer"
                     >
-                              <i className="pi pi-user-plus"></i>
+                        <i className="pi pi-user-plus"></i>
                         Invite Member
                     </button>
                 )}
@@ -71,17 +82,40 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    {isLeader && member.studentId !== leaderId ? (
-                                        <button
-                                            onClick={() => onKick && onKick(member.studentId)}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors group-hover:opacity-100 opacity-60"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">delete</span>
-                                            <span className="text-xs font-bold uppercase">Kick</span>
-                                        </button>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
-                                    )}
+                                    <div className="flex justify-end w-full">
+                                        {member.studentId === currentUserId ? (
+                                            <button
+                                                onClick={onLeave}
+                                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                                title="Leave Team"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">logout</span>
+                                                <span className="text-xs font-bold uppercase">Leave</span>
+                                            </button>
+                                        ) : isLeader && member.studentId !== leaderId ? (
+                                            <div className="flex items-center gap-2">
+                                                {onTransferRole && (
+                                                    <button
+                                                        onClick={() => onTransferRole(member.studentId)}
+                                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                        title="Transfer Leadership"
+                                                    >
+                                                        <span className="material-symbols-outlined text-xl">swap_horiz</span>
+                                                        <span className="text-xs font-bold uppercase">Transfer</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => onKick && onKick(member.studentId)}
+                                                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">delete</span>
+                                                    <span className="text-xs font-bold uppercase">Kick</span>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -102,6 +136,14 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                     </div>
                 )}
             </div>
+
+            {teamId && (
+                <InviteMemberModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setIsInviteModalOpen(false)}
+                    teamId={teamId}
+                />
+            )}
         </section>
     );
 };
