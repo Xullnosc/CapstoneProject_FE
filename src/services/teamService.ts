@@ -43,9 +43,7 @@ export const teamService = {
         }
     },
 
-    kickMember: async (teamId: number, userId: number): Promise<void> => {
-        await api.delete(`/team/${teamId}/members/${userId}`);
-    },
+
 
     disbandTeam: async (teamId: number): Promise<void> => {
         await api.delete(`/team/${teamId}/disband`);
@@ -69,5 +67,13 @@ export const teamService = {
             },
         });
         return response.data;
+    },
+
+    transferLeader: async (teamId: number, newLeaderId: number): Promise<void> => {
+        await api.put(`/Team/${teamId}/leader`, { newLeaderId });
+    },
+
+    kickMember: async (teamId: number, memberId: number): Promise<void> => {
+        await api.delete(`/Team/${teamId}/members/${memberId}`);
     }
 };
