@@ -7,6 +7,7 @@ export interface LoginResponse {
         email: string;
         avatar: string;
         roleId: number;
+        roleName: string;
         studentCode: string;
         campus: string;
     };

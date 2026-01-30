@@ -5,12 +5,23 @@ import MainLayout from '../layouts/MainLayout';
 import TeamDetail from '../pages/TeamDetail/TeamDetail';
 import TeamCreate from '../pages/TeamCreate/TeamCreate';
 import ProtectedRoute from './ProtectedRoute';
+import SemesterDashboardPage from '../pages/Semester/SemesterDashboardPage';
+import SemesterDetailPage from '../pages/Semester/SemesterDetailPage';
 
 const AppRouter = () => {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
 
+      {/* Semester Management - Only Admin/HOD */}
+      <Route element={<ProtectedRoute allowedRoles={['Admin', 'HOD']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/semesters" element={<SemesterDashboardPage />} />
+          <Route path="/semesters/semester" element={<SemesterDetailPage />} />
+        </Route>
+      </Route>
+
+      {/* General Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
