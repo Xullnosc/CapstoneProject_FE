@@ -13,14 +13,14 @@ const InvitationCard: React.FC<InvitationCardProps> = ({ invitation, onAccept, o
             <div className="flex items-center gap-4">
                 <div
                     className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-12 border border-gray-100"
-                    style={{ backgroundImage: `url("${invitation.team.teamAvatar || 'https://via.placeholder.com/100'}")` }}
+                    style={{ backgroundImage: `url("${invitation.invitedBy.avatar || 'https://via.placeholder.com/100'}")` }}
                 ></div>
                 <div className="flex flex-col">
                     <p className="text-gray-900 font-bold leading-tight">
                         <span className="text-orange-500">{invitation.team.teamName}</span>
                     </p>
                     <p className="text-gray-500 text-sm">
-                        {invitation.invitedBy.name} invited you
+                        {invitation.invitedBy.name} ({invitation.invitedBy.email}) invited you
                     </p>
                 </div>
             </div>

@@ -1,20 +1,29 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
+import InviteMemberModal from './InviteMemberModal';
 
 interface TeamRosterProps {
     members: TeamMember[];
     isLeader: boolean;
     leaderId: number;
     currentUserId: number | null;
+    teamId?: number; // Add teamId prop
     onKick?: (userId: number) => void;
-    onInvite?: () => void;
+    onInvite?: () => void; // We can keep this for external triggering or use internal state
     onLeave?: () => void;
+    onTransferRole?: (userId: number) => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, onKick, onInvite, onLeave }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole }) => {
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const menuRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+    const handleOpenInvite = () => {
+        if (onInvite) onInvite();
+        setIsInviteModalOpen(true);
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -36,12 +45,6 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
         setOpenMenuId(openMenuId === memberId ? null : memberId);
     };
 
-    const handleTransferLeadership = () => {
-        // TODO: Implement transfer leadership functionality
-        setOpenMenuId(null);
-        alert('Transfer Leadership functionality coming soon!');
-    };
-
     const handleRemove = (memberId: number) => {
         setOpenMenuId(null);
         if (onKick) {
@@ -58,8 +61,8 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 </h2>
                 {isLeader && (
                     <button
-                        onClick={onInvite}
-                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline"
+                        onClick={handleOpenInvite}
+                        className="text-[#f97415] text-sm font-bold flex items-center gap-1 hover:underline cursor-pointer"
                     >
                         <i className="pi pi-user-plus"></i>
                         Invite Member
@@ -129,13 +132,13 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                                 </button>
                                                 {openMenuId === member.studentId && (
                                                     <div className="absolute z-1 right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 animate-[fadeIn_0.2s_ease-out,slideDown_0.2s_ease-out]">
-                                                        <button
-                                                            onClick={handleTransferLeadership}
+                                                        {onTransferRole && (<button
+                                                            onClick={() => onTransferRole(member.studentId)}
                                                             className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-all duration-150 flex items-center gap-2 first:rounded-t-lg cursor-pointer hover:translate-x-0.5"
                                                         >
                                                             <span className="material-symbols-outlined text-lg transition-transform duration-150">swap_horiz</span>
                                                             <span>Transfer Leadership</span>
-                                                        </button>
+                                                        </button>)}
                                                         <button
                                                             onClick={() => handleRemove(member.studentId)}
                                                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-all duration-150 flex items-center gap-2 last:rounded-b-lg cursor-pointer hover:translate-x-0.5"
@@ -170,6 +173,14 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                     </div>
                 )}
             </div>
+
+            {teamId && (
+                <InviteMemberModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setIsInviteModalOpen(false)}
+                    teamId={teamId}
+                />
+            )}
         </section>
     );
 };
