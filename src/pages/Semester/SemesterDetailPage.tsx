@@ -5,9 +5,9 @@ import SemesterTeamsTable from '../../components/Semester/SemesterTeamsTable';
 import SemesterWhitelistsTable from '../../components/Semester/SemesterWhitelistsTable';
 import { semesterService } from '../../services/semesterService';
 import type { Semester } from '../../services/semesterService';
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 
-import EditSemesterModal from '../../components/Semester/EditSemesterModal';
+import SemesterModal from '../../components/Semester/SemesterModal';
 
 import { calculateSemesterStatus } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
@@ -207,7 +207,7 @@ const SemesterDetailPage = () => {
 
             </main>
             {semester && (
-                <EditSemesterModal
+                <SemesterModal
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
                     onSuccess={handleEditSuccess}

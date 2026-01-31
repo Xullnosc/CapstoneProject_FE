@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { useForm, type FieldErrors } from 'react-hook-form';
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 import { teamService } from '../../services/teamService';
 import type { Team, UpdateTeamRequest } from '../../types/team';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ActiveSemesterBanner from '../../components/Semester/ActiveSemesterBanner';
 import SemesterCard from '../../components/Semester/SemesterCard';
-import CreateSemesterModal from '../../components/Semester/CreateSemesterModal';
+import SemesterModal from '../../components/Semester/SemesterModal';
 import { semesterService } from '../../services/semesterService';
 import type { Semester } from '../../services/semesterService';
 
@@ -142,7 +142,7 @@ const SemesterDashboardPage = () => {
                 </div>
             </div>
 
-            <CreateSemesterModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchSemesters} />
+            <SemesterModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchSemesters} />
         </div>
     );
 };
