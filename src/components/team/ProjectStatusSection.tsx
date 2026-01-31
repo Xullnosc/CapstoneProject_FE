@@ -1,4 +1,4 @@
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 import type { Team } from '../../types/team';
 
 interface ProjectStatusSectionProps {
@@ -21,11 +21,7 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
             return;
         }
         // TODO: Handle actual navigation/action for Leader
-        Swal.fire({
-            title: 'Coming Soon',
-            text: `Leader function '${actionName}' is under development.`,
-            icon: 'info'
-        });
+
     };
 
     return (

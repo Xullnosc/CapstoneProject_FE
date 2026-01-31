@@ -6,7 +6,7 @@ import { Sidebar } from 'primereact/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'primeicons/primeicons.css';
 import { authService } from '../../services/authService';
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 
 const Header = () => {
     const navigate = useNavigate();
