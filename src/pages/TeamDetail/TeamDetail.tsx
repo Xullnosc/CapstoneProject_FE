@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 import { teamService } from '../../services/teamService';
 import type { Team } from '../../types/team';
 import TeamBanner from '../../components/team/TeamBanner';

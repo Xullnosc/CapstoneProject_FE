@@ -3,7 +3,7 @@ import { userService } from '../../services/userService';
 import { invitationService } from '../../services/invitationService';
 import MemberAvatar from './MemberAvatar';
 import { Dialog } from 'primereact/dialog';
-import Swal from 'sweetalert2';
+import Swal from '../../utils/swal';
 import axios from 'axios';
 
 interface UserInfo {
@@ -77,18 +77,19 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
 
 
 
+    const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
+
     const handleInvite = async (user: UserInfo) => {
         try {
+            setProcessingUsers(prev => ({ ...prev, [user.userId]: true }));
             const invitation = await invitationService.sendInvitation(teamId, user.studentCode || user.email);
+
+
+            setProcessingUsers(prev => ({ ...prev, [user.userId]: false }));
+
             setInvitedUsers(prev => ({ ...prev, [user.userId]: invitation.invitationId }));
-            Swal.fire({
-                icon: 'success',
-                title: 'Sent',
-                text: `Invitation sent to ${user.fullName}`,
-                timer: 1500,
-                showConfirmButton: false,
-                backdrop: false
-            });
+
+
         } catch (error) {
             console.error(error);
             let message = 'Failed to send invitation';
@@ -110,20 +111,14 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
         if (!invitationId) return;
 
         try {
+            setProcessingUsers(prev => ({ ...prev, [userId]: true }));
             await invitationService.cancelInvitation(invitationId);
             setInvitedUsers(prev => {
                 const newState = { ...prev };
                 delete newState[userId];
                 return newState;
             });
-            Swal.fire({
-                icon: 'info',
-                title: 'Cancelled',
-                text: 'Invitation cancelled',
-                timer: 1500,
-                showConfirmButton: false,
-                backdrop: false
-            });
+
         } catch (error) {
             console.error(error);
             let message = 'Failed to cancel invitation';
@@ -137,6 +132,8 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
                 timer: 2000,
                 backdrop: false
             });
+        } finally {
+            setProcessingUsers(prev => ({ ...prev, [userId]: false }));
         }
     };
 
@@ -193,7 +190,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
                 </form>
 
                 {/* Results List */}
-                <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+                <div className="space-y-2 max-h-100 overflow-y-auto custom-scrollbar">
                     {isLoading ? (
                         // Loading Skeleton
                         <div className="space-y-3">
@@ -213,6 +210,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
                     ) : searchResults.length > 0 ? (
                         searchResults.map(user => {
                             const isInvited = !!invitedUsers[user.userId];
+                            const isProcessing = processingUsers[user.userId];
                             return (
                                 <div key={user.userId} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group">
                                     <div className="flex items-center gap-3">
@@ -242,15 +240,19 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
                                     ) : (
                                         <button
                                             onClick={() => isInvited ? handleCancelInvite(user.userId) : handleInvite(user)}
+                                            disabled={isProcessing}
                                             className={`
                                                 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer
                                                 ${isInvited
                                                     ? 'bg-red-50 text-red-600 hover:bg-red-100'
                                                     : 'bg-orange-50 text-orange-600 hover:bg-orange-100 hover:shadow-orange-100'
                                                 }
+                                                ${isProcessing ? 'opacity-70 cursor-wait' : ''}
                                             `}
                                         >
-                                            {isInvited ? (
+                                            {isProcessing ? (
+                                                <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                                            ) : isInvited ? (
                                                 <>
                                                     <span className="material-symbols-outlined text-lg">close</span>
                                                     Cancel
