@@ -82,7 +82,12 @@ const SemesterModal: React.FC<SemesterModalProps> = ({ isOpen, onClose, onSucces
 
         try {
             if (isEditMode && semesterData) {
-                await semesterService.updateSemester(semesterData.semesterId, data as any); // Cast as any if DTO differs slightly, or match types
+                await semesterService.updateSemester(semesterData.semesterId, {
+                    semesterCode: data.semesterCode,
+                    semesterName: data.semesterName,
+                    startDate: data.startDate,
+                    endDate: data.endDate
+                });
             } else {
                 await semesterService.createSemester(data);
             }
