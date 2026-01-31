@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar } from 'primereact/avatar';
 import { Badge } from 'primereact/badge';
-import { Menu } from 'primereact/menu';
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { Sidebar } from 'primereact/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'primeicons/primeicons.css';
@@ -11,7 +11,6 @@ import Swal from '../../utils/swal';
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const menuRef = useRef<Menu>(null);
     const [visible, setVisible] = useState(false);
     const [currentSemesterCode, setCurrentSemesterCode] = useState<string>('');
 
@@ -50,29 +49,6 @@ const Header = () => {
             window.removeEventListener('semesterChanged', handleSemesterChange);
         };
     }, []);
-
-    const menuItems = [
-        {
-            label: 'Options',
-            items: [
-                {
-                    label: 'Log out',
-                    icon: 'pi pi-sign-out',
-                    command: () => {
-                        authService.logout();
-                        navigate('/');
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Logged Out',
-                            text: 'You have been logged out successfully.',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    }
-                }
-            ]
-        }
-    ];
 
     return (
         <header className="h-16 bg-white shadow-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 relative z-50">
@@ -194,30 +170,89 @@ const Header = () => {
 
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                <div className="text-right hidden sm:block cursor-pointer" onClick={(e) => menuRef.current?.toggle(e)}>
-                    <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
-                    <div className="text-xs text-gray-500">
-                        {(() => {
-                            const roleId = authService.getUser()?.roleId;
-                            switch (roleId) {
-                                case 1: return 'Admin';
-                                case 2: return 'Staff';
-                                case 3: return 'Lecturer';
-                                case 4: return 'Student';
-                                default: return 'Student';
-                            }
-                        })()}
-                    </div>
-                </div>
-                <div className="cursor-pointer" onClick={(e) => menuRef.current?.toggle(e)}>
-                    <Avatar
-                        image={authService.getUser()?.avatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
-                        shape="circle"
-                        size="normal"
-                        className="border border-gray-200"
-                    />
-                </div>
-                <Menu model={menuItems} popup ref={menuRef} id="popup_menu" />
+                <Menu as="div" className="relative">
+                    <MenuButton className="flex items-center gap-3 rounded-full hover:bg-gray-50 transition-colors p-1 pr-2 outline-none cursor-pointer">
+                        <div className="text-right hidden sm:block">
+                            <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
+                            <div className="text-xs text-gray-500">
+                                {authService.getUser()?.roleName || 'Student'}
+                            </div>
+                        </div>
+                        <Avatar
+                            image={authService.getUser()?.avatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
+                            shape="circle"
+                            size="normal"
+                            className="border border-gray-200"
+                        />
+                        <i className="pi pi-chevron-down text-gray-400 text-xs"></i>
+                    </MenuButton>
+
+                    <Transition
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                    >
+                        <MenuItems className="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-xl bg-white py-2 shadow-xl ring-1 ring-black/5 focus:outline-none">
+                            <div className="px-4 py-3 border-b border-gray-100 mb-1">
+                                <p className="text-xs text-gray-500">Signed in as</p>
+                                <p className="truncate text-sm font-bold text-gray-900">{authService.getUser()?.email || 'User'}</p>
+                            </div>
+
+                            <MenuItem>
+                                {({ focus }) => (
+                                    <button
+                                        onClick={() => navigate('/profile')}
+                                        className={`${focus ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                                            } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
+                                    >
+                                        <i className={`pi pi-user ${focus ? 'text-orange-500' : 'text-gray-400'}`}></i>
+                                        Account
+                                    </button>
+                                )}
+                            </MenuItem>
+                            <MenuItem>
+                                {({ focus }) => (
+                                    <button
+                                        onClick={() => navigate('/settings')}
+                                        className={`${focus ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                                            } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
+                                    >
+                                        <i className={`pi pi-cog ${focus ? 'text-orange-500' : 'text-gray-400'}`}></i>
+                                        Settings
+                                    </button>
+                                )}
+                            </MenuItem>
+
+                            <div className="my-1 border-t border-gray-100" />
+
+                            <MenuItem>
+                                {({ focus }) => (
+                                    <button
+                                        onClick={() => {
+                                            authService.logout();
+                                            navigate('/');
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Logged Out',
+                                                text: 'You have been logged out successfully.',
+                                                timer: 1500,
+                                                showConfirmButton: false
+                                            });
+                                        }}
+                                        className={`${focus ? 'bg-red-50 text-red-600' : 'text-gray-700'
+                                            } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
+                                    >
+                                        <i className={`pi pi-sign-out ${focus ? 'text-red-500' : 'text-gray-400'}`}></i>
+                                        Log out
+                                    </button>
+                                )}
+                            </MenuItem>
+                        </MenuItems>
+                    </Transition>
+                </Menu>
             </div>
         </header>
     );
