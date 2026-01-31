@@ -1,7 +1,8 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface ActiveSemesterBannerProps {
     semester?: {
+        id: number;
         name: string;
         startDate: string;
         endDate: string;
@@ -10,6 +11,7 @@ interface ActiveSemesterBannerProps {
 }
 
 const ActiveSemesterBanner: React.FC<ActiveSemesterBannerProps> = ({ semester }) => {
+    const navigate = useNavigate();
     if (!semester) return null; // Or show a default "No Active Semester" state
 
     return (
@@ -40,7 +42,10 @@ const ActiveSemesterBanner: React.FC<ActiveSemesterBannerProps> = ({ semester })
                             <span>{semester.totalTeams || 0} Active Teams</span>
                         </div>
                     </div>
-                    <button className="cursor-pointer px-6 py-3 rounded-xl bg-white text-orange-600 text-sm font-bold hover:bg-orange-50 transition-colors shadow-lg shadow-orange-900/20 flex items-center gap-2">
+                    <button
+                        onClick={() => navigate(`/semesters/semester?id=${semester.id}`)}
+                        className="cursor-pointer px-6 py-3 rounded-xl bg-white text-orange-600 text-sm font-bold hover:bg-orange-50 transition-all active:scale-95 shadow-lg shadow-orange-900/20 flex items-center gap-2"
+                    >
                         <span>Manage Live Details</span>
                         <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </button>

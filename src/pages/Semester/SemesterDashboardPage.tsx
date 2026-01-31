@@ -41,8 +41,10 @@ const SemesterDashboardPage = () => {
             name: sem.semesterName,
             startDate: formatSemesterDate(sem.startDate),
             endDate: formatSemesterDate(sem.endDate),
-            status: calculateSemesterStatus(sem.isActive, sem.startDate),
+            status: calculateSemesterStatus(sem.isActive, sem.startDate, sem.endDate, sem.isArchived),
             totalTeams: sem.teamCount, // Use optimized count from backend
+            totalWhitelists: sem.whitelistCount,
+            isArchived: sem.isArchived,
             season: season,
             seasonColor: getSeasonColor(season)
         };
@@ -52,7 +54,7 @@ const SemesterDashboardPage = () => {
         if (filterStatus === 'All') return semesters;
 
         return semesters.filter(s => {
-            const status = calculateSemesterStatus(s.isActive, s.startDate);
+            const status = calculateSemesterStatus(s.isActive, s.startDate, s.endDate, s.isArchived);
             return status === filterStatus;
         });
     };

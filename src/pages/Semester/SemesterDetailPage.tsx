@@ -9,6 +9,8 @@ import Swal from 'sweetalert2';
 
 import EditSemesterModal from '../../components/Semester/EditSemesterModal';
 
+import { calculateSemesterStatus } from '../../utils/semesterHelpers';
+import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
 import { authService } from '../../services/authService';
 
 const SemesterDetailPage = () => {
@@ -112,11 +114,15 @@ const SemesterDetailPage = () => {
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-gray-900 text-4xl font-black tracking-tight">{semester.semesterName}</h1>
-                                {semester.isActive ? (
-                                    <span className="px-3 py-1 rounded-full bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider shadow-sm">Active</span>
-                                ) : (
-                                    <span className="px-3 py-1 rounded-full bg-gray-100/80 backdrop-blur-sm border border-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider shadow-sm">Inactive</span>
-                                )}
+                                {(() => {
+                                    const status = calculateSemesterStatus(semester.isActive, semester.startDate, semester.endDate, semester.isArchived);
+                                    const colors = SEMESTER_STATUS_COLORS[status];
+                                    return (
+                                        <span className={`px-3 py-1 rounded-full ${colors.bg} ${colors.border} ${colors.text} text-xs font-bold uppercase tracking-wider shadow-sm border`}>
+                                            {status}
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <div className="flex items-center gap-4 text-gray-600">
                                 <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-md px-3 py-1 rounded-lg shadow-sm border border-gray-100">
@@ -132,13 +138,15 @@ const SemesterDetailPage = () => {
                         <div className="flex gap-3">
                             {canManage && (
                                 <>
-                                    <button
-                                        onClick={() => setIsEditModalOpen(true)}
-                                        className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-white/80 backdrop-blur-md border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-white hover:border-gray-300 transition-all shadow-sm hover:shadow"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">edit</span>
-                                        Edit Semester
-                                    </button>
+                                    {!semester.isArchived && (
+                                        <button
+                                            onClick={() => setIsEditModalOpen(true)}
+                                            className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-white/80 backdrop-blur-md border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-white hover:border-gray-300 transition-all shadow-sm hover:shadow"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                            Edit Semester
+                                        </button>
+                                    )}
                                     {semester.isActive && (
                                         <button onClick={handleEndSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all hover:translate-y-[-1px]">
                                             <span className="material-symbols-outlined text-lg">event_busy</span>

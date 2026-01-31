@@ -23,7 +23,9 @@ export interface Semester {
     startDate: string;
     endDate: string;
     isActive: boolean;
+    isArchived: boolean;
     teamCount: number; // Optimized field
+    whitelistCount: number; // Added field
     teams: TeamSimple[];
     whitelists: Whitelist[];
 }
@@ -57,5 +59,9 @@ export const semesterService = {
     getCurrentSemester: async (): Promise<Semester | undefined> => {
         const response = await api.get<Semester[]>('/semester');
         return response.data.find(s => s.isActive);
+    },
+
+    startSemester: async (id: number) => {
+        await api.post(`/semester/${id}/start`);
     }
 };

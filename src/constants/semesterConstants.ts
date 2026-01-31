@@ -42,15 +42,18 @@ export const SEMESTER_STATUS_COLORS = {
         bg: 'bg-orange-50',
         text: 'text-orange-700',
         dot: 'bg-orange-600',
+        border: 'border-orange-100',
     },
     [SEMESTER_STATUS.UPCOMING]: {
         bg: 'bg-green-50',
         text: 'text-green-700',
         dot: 'bg-green-600',
+        border: 'border-green-100',
     },
     [SEMESTER_STATUS.ENDED]: {
-        bg: 'bg-gray-50',
-        text: 'text-gray-500',
+        bg: 'bg-gray-100', // Changed to 100 for better visibility
+        text: 'text-gray-600',
         dot: 'bg-gray-400',
+        border: 'border-gray-200',
     },
 } as const;
