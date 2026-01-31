@@ -126,7 +126,7 @@ const SemesterDashboardPage = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {getFilteredSemesters().map(sem => (
-                                <SemesterCard key={sem.semesterId} semester={mapToCardProps(sem)} />
+                                <SemesterCard key={sem.semesterId} semester={mapToCardProps(sem)} onRefresh={fetchSemesters} />
                             ))}
                         </div>
                     )}
