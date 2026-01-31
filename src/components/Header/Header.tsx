@@ -175,16 +175,7 @@ const Header = () => {
                         <div className="text-right hidden sm:block">
                             <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
                             <div className="text-xs text-gray-500">
-                                {(() => {
-                                    const roleId = authService.getUser()?.roleId;
-                                    switch (roleId) {
-                                        case 1: return 'Admin';
-                                        case 2: return 'Staff';
-                                        case 3: return 'Lecturer';
-                                        case 4: return 'Student';
-                                        default: return 'Student';
-                                    }
-                                })()}
+                                {authService.getUser()?.roleName || 'Student'}
                             </div>
                         </div>
                         <Avatar
