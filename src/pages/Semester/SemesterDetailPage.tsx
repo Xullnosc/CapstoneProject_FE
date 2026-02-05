@@ -214,6 +214,7 @@ const SemesterDetailPage = () => {
                 )}
                 {activeTab === 'whitelists' && (
                     <SemesterWhitelistsTable
+                        key="whitelists"
                         whitelists={semester.whitelists || []}
                         headerAction={canManage ? (
                             <button
@@ -221,13 +222,15 @@ const SemesterDetailPage = () => {
                                 className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl text-sm font-bold hover:bg-green-100 transition-colors border border-green-200 shadow-sm cursor-pointer"
                             >
                                 <span className="material-symbols-outlined text-lg">upload_file</span>
-                                Import Whitelist
+                                "Import Whitelist"
                             </button>
                         ) : undefined}
+                        onUpdate={() => fetchSemester(semester.semesterId)}
                     />
                 )}
                 {activeTab === 'lecturers' && (
                     <SemesterWhitelistsTable
+                        key="lecturers"
                         whitelists={semester.whitelists?.filter(w => w.roleName === 'Lecturer') || []}
                         headerAction={canManage ? (
                             <button
@@ -238,10 +241,14 @@ const SemesterDetailPage = () => {
                                 Reviewer List
                             </button>
                         ) : undefined}
+                        onUpdate={() => fetchSemester(semester.semesterId)}
                     />
                 )}
                 {activeTab === 'students' && (
-                    <SemesterWhitelistsTable whitelists={semester.whitelists?.filter(w => w.roleName === 'Student') || []} />
+                    <SemesterWhitelistsTable
+                        key="students"
+                        whitelists={semester.whitelists?.filter(w => w.roleName === 'Student') || []}
+                    />
                 )}
 
                 {/* Warning Note */}
@@ -280,6 +287,7 @@ const SemesterDetailPage = () => {
                     isOpen={isReviewerModalOpen}
                     onClose={() => setIsReviewerModalOpen(false)}
                     lecturers={semester.whitelists?.filter(w => w.roleName === 'Lecturer') || []}
+                    onUpdate={() => fetchSemester(semester.semesterId)}
                 />
             )}
 

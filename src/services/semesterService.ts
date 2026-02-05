@@ -14,6 +14,8 @@ export interface Whitelist {
     email: string;
     fullName?: string;
     roleName?: string;
+    isReviewer?: boolean;
+    avatar?: string;
 }
 
 export interface Semester {
