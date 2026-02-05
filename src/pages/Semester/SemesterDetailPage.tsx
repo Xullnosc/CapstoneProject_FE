@@ -9,6 +9,8 @@ import Swal from '../../utils/swal';
 
 import SemesterModal from '../../components/Semester/SemesterModal';
 
+import ReviewerModal from '../../components/Semester/ReviewerModal';
+import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal';
 import { calculateSemesterStatus } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
 import { authService } from '../../services/authService';
@@ -22,7 +24,10 @@ const SemesterDetailPage = () => {
     const [semester, setSemester] = useState<Semester | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'teams' | 'whitelists'>('teams');
+    const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
+    const [showWarning, setShowWarning] = useState(true);
 
     useEffect(() => {
         if (id) {
@@ -93,7 +98,7 @@ const SemesterDetailPage = () => {
 
     return (
         <div className="min-h-screen bg-white">
-            <main className="max-w-[1200px] mx-auto w-full px-6 py-12">
+            <main className="max-w-[1200px] mx-auto w-full px-6 py-6">
 
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 mb-6">
@@ -169,40 +174,95 @@ const SemesterDetailPage = () => {
                 {/* Tabs */}
                 <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
                     <button
+                        onClick={() => setActiveTab('whitelists')}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'whitelists' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                    >
+                        <span className="material-symbols-outlined text-lg">verified_user</span>
+                        All Whitelist
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('lecturers')}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'lecturers' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                    >
+                        <span className="material-symbols-outlined text-lg">school</span>
+                        Lecturers
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('students')}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'students' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                    >
+                        <span className="material-symbols-outlined text-lg">person</span>
+                        Students
+                    </button>
+
+                    {/* Spacer to push Teams to right */}
+                    <div className="flex-1"></div>
+
+                    <button
                         onClick={() => setActiveTab('teams')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'teams' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'teams' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
                         <span className="material-symbols-outlined text-lg">groups</span>
                         Teams
                     </button>
-                    <button
-                        onClick={() => setActiveTab('whitelists')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'whitelists' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
-                    >
-                        <span className="material-symbols-outlined text-lg">verified_user</span>
-                        Whitelist
-                    </button>
                 </div>
 
                 {/* Content */}
-                {activeTab === 'teams' ? (
+                {activeTab === 'teams' && (
                     <SemesterTeamsTable teams={semester.teams || []} />
-                ) : (
-                    <SemesterWhitelistsTable whitelists={semester.whitelists || []} />
+                )}
+                {activeTab === 'whitelists' && (
+                    <SemesterWhitelistsTable
+                        whitelists={semester.whitelists || []}
+                        headerAction={canManage ? (
+                            <button
+                                onClick={() => setIsImportModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl text-sm font-bold hover:bg-green-100 transition-colors border border-green-200 shadow-sm cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-lg">upload_file</span>
+                                Import Whitelist
+                            </button>
+                        ) : undefined}
+                    />
+                )}
+                {activeTab === 'lecturers' && (
+                    <SemesterWhitelistsTable
+                        whitelists={semester.whitelists?.filter(w => w.roleName === 'Lecturer') || []}
+                        headerAction={canManage ? (
+                            <button
+                                onClick={() => setIsReviewerModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-lg">settings_account_box</span>
+                                Reviewer List
+                            </button>
+                        ) : undefined}
+                    />
+                )}
+                {activeTab === 'students' && (
+                    <SemesterWhitelistsTable whitelists={semester.whitelists?.filter(w => w.roleName === 'Student') || []} />
                 )}
 
                 {/* Warning Note */}
-                <div className="mt-8 p-5 bg-orange-50/80 rounded-2xl border border-orange-100 shadow-sm flex items-start gap-4">
-                    <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
-                        <span className="material-symbols-outlined text-xl">info</span>
+                {/* Warning Note */}
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden transform ${showWarning ? 'max-h-[200px] opacity-100 mt-8' : 'max-h-0 opacity-0 mt-0'}`}>
+                    <div className="p-5 bg-orange-50/80 rounded-2xl border border-orange-100 shadow-sm flex items-start gap-4">
+                        <div className="p-2 bg-orange-100 text-orange-600 rounded-lg shrink-0">
+                            <span className="material-symbols-outlined text-xl">info</span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold text-gray-900">Note regarding End Semester</h3>
+                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">Ending the semester will automatically freeze all team updates and finalize the whitelists. This action is <span className="font-semibold text-orange-700">irreversible</span> and should only be done after final grades are submitted.</p>
+                        </div>
+                        <button
+                            onClick={() => setShowWarning(false)}
+                            className="cursor-pointer text-xs font-bold text-orange-700 hover:text-white hover:bg-orange-500 px-3 py-1.5 rounded-lg transition-all"
+                            title="Dismiss this note"
+                        >
+                            Dismiss
+                        </button>
                     </div>
-                    <div className="flex-1">
-                        <h3 className="text-sm font-bold text-gray-900">Note regarding End Semester</h3>
-                        <p className="text-sm text-gray-600 mt-1 leading-relaxed">Ending the semester will automatically freeze all team updates and finalize the whitelists. This action is <span className="font-semibold text-orange-700">irreversible</span> and should only be done after final grades are submitted.</p>
-                    </div>
-                    <button className="cursor-pointer text-xs font-bold text-orange-700 hover:text-orange-800 hover:underline">
-                        Dismiss
-                    </button>
                 </div>
 
             </main>
@@ -214,6 +274,19 @@ const SemesterDetailPage = () => {
                     semesterData={semester}
                 />
             )}
+
+            {semester && (
+                <ReviewerModal
+                    isOpen={isReviewerModalOpen}
+                    onClose={() => setIsReviewerModalOpen(false)}
+                    lecturers={semester.whitelists?.filter(w => w.roleName === 'Lecturer') || []}
+                />
+            )}
+
+            <ImportWhitelistModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+            />
         </div>
     );
 };

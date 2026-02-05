@@ -7,6 +7,7 @@ import TeamCreate from '../pages/TeamCreate/TeamCreate';
 import ProtectedRoute from './ProtectedRoute';
 import SemesterDashboardPage from '../pages/Semester/SemesterDashboardPage';
 import SemesterDetailPage from '../pages/Semester/SemesterDetailPage';
+import ThesisPage from '../pages/Thesis/ThesisPage';
 
 const AppRouter = () => {
   return (
@@ -28,7 +29,7 @@ const AppRouter = () => {
           <Route path="/teams" element={<TeamCreate />} />
           <Route path="/teams/team" element={<TeamDetail />} />
           <Route path="/teams/:teamId" element={<TeamDetail />} />
-          <Route path="/thesis" element={<div className="p-8 text-center text-gray-500">Thesis List Page (Under Construction)</div>} />
+          <Route path="/thesis" element={<ThesisPage />} />
         </Route>
       </Route>
     </Routes>

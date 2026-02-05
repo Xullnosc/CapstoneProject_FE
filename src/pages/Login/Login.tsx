@@ -15,8 +15,19 @@ const Login = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/home');
+    const userStr = localStorage.getItem('user');
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.roleName === 'HOD' || user.roleName === 'Head of Department') {
+          navigate('/semesters');
+        } else {
+          navigate('/home');
+        }
+      } catch (e) {
+        console.error("Error parsing user info from local storage", e);
+        navigate('/home');
+      }
     }
   }, [navigate]);
 
@@ -64,7 +75,11 @@ const Login = () => {
           timer: 1500,
           showConfirmButton: false
         }).then(() => {
-          navigate('/home');
+          if (response.userInfo.roleName === 'HOD' || response.userInfo.roleName === 'Head of Department') {
+            navigate('/semesters');
+          } else {
+            navigate('/home');
+          }
         });
 
       } catch (error) {
