@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ChangeEvent, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 
@@ -14,12 +14,12 @@ interface PreviewRow {
     studentCode?: string;
 }
 
-const ImportWhitelistModal: React.FC<ImportWhitelistModalProps> = ({ isOpen, onClose }) => {
+const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose }) => {
     const [file, setFile] = useState<File | null>(null);
     const [previewData, setPreviewData] = useState<PreviewRow[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
             setFile(selectedFile);
@@ -137,7 +137,7 @@ const ImportWhitelistModal: React.FC<ImportWhitelistModalProps> = ({ isOpen, onC
                                 <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{previewData.length} rows</span>
                             </h4>
                         </div>
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1 max-h-[600px] min-h-[400px] overflow-auto custom-scrollbar relative">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1 max-h-150 min-h-100  custom-scrollbar relative">
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50/80 border-b border-gray-200 sticky top-0 z-10 backdrop-blur-sm">
                                     <tr>
@@ -164,7 +164,7 @@ const ImportWhitelistModal: React.FC<ImportWhitelistModalProps> = ({ isOpen, onC
                                                     {row.role}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500 font-mono text-xs">{row.studentCode || '-'}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500 font-mono">{row.studentCode || '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

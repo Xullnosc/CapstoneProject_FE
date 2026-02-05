@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSeasonGradient } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
@@ -22,7 +22,7 @@ interface SemesterCardProps {
     onRefresh?: () => void;
 }
 
-const SemesterCard: React.FC<SemesterCardProps> = ({ semester, onRefresh }) => {
+const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
 

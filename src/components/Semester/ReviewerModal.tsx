@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import type { Whitelist } from '../../services/semesterService';
@@ -10,7 +10,7 @@ interface ReviewerModalProps {
     lecturers: Whitelist[];
 }
 
-const ReviewerModal: React.FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) => {
+const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) => {
     // Mock state for reviewers - in real app this would come from backend
     const [reviewers, setReviewers] = useState<Whitelist[]>([]);
     const [selectedLecturer, setSelectedLecturer] = useState<Whitelist | null>(null);

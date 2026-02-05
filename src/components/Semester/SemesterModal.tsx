@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/incompatible-library */
-import React, { useEffect } from 'react';
+import { useEffect, type FC } from 'react';
 import { useForm } from 'react-hook-form';
 import { semesterService } from '../../services/semesterService';
 import type { Semester } from '../../services/semesterService';
@@ -22,7 +22,7 @@ interface SemesterFormInputs {
     isActive: boolean;
 }
 
-const SemesterModal: React.FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, semesterData }) => {
+const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, semesterData }) => {
     const isEditMode = !!semesterData;
     const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = useForm<SemesterFormInputs>();
     const startDate = watch('startDate');

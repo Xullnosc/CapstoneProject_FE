@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
@@ -6,7 +6,7 @@ import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
-import { semesterService } from '../../services/semesterService';
+import { semesterService, type Semester } from '../../services/semesterService';
 
 interface Thesis {
     id: string;
@@ -24,8 +24,8 @@ interface Criteria {
 
 const ThesisPage = () => {
     // State
-    const [semesters, setSemesters] = useState<any[]>([]);
-    const [selectedSemester, setSelectedSemester] = useState<any>(null);
+    const [semesters, setSemesters] = useState<Semester[]>([]);
+    const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null);
     const [criteriaDialogVisible, setCriteriaDialogVisible] = useState(false);
     const [criteriaList, setCriteriaList] = useState<Criteria[]>([
         { id: '1', content: 'Topic matches the semester theme.' },

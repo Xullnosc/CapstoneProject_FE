@@ -1,13 +1,13 @@
-import React from 'react';
+import { type FC, type ReactNode } from 'react';
 import type { Whitelist } from '../../services/semesterService';
 
 interface SemesterWhitelistsTableProps {
     whitelists?: Whitelist[];
     isLoading?: boolean;
-    headerAction?: React.ReactNode;
+    headerAction?: ReactNode;
 }
 
-const SemesterWhitelistsTable: React.FC<SemesterWhitelistsTableProps> = ({ whitelists = [], isLoading = false, headerAction }) => {
+const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({ whitelists = [], isLoading = false, headerAction }) => {
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
