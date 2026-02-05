@@ -23,8 +23,8 @@ const MemberAvatar: React.FC<MemberAvatarProps> = ({ email, fullName, avatarUrl,
         setImgSrc(avatarUrl || (email ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404` : null));
     }, [avatarUrl, email]);
 
-    const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        const target = e.currentTarget;
+    const handleError = () => {
+
 
         // Use a flag or check logic to verify what failed
         if (imgSrc === avatarUrl && avatarUrl) {
