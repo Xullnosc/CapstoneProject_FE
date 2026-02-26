@@ -139,7 +139,7 @@ const ProposeThesisPage = () => {
             }
         } catch (err: unknown) {
             console.error('Submit error:', err);
-            const axiosError = err as AxiosError<{ message?: string, errors?: any }>;
+            const axiosError = err as AxiosError<{ message?: string, errors?: Record<string, unknown> }>;
 
             let errorText = 'There was an error submitting your proposal. Please try again.';
             if (axiosError.response?.data) {

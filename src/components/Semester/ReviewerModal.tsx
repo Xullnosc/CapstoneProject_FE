@@ -21,7 +21,7 @@ const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) =
             // Just for demo, maybe pick the first one as a reviewer
             // setReviewers([lecturers[0]]); 
         }
-    }, [isOpen, lecturers]);
+    }, [isOpen, lecturers, reviewers.length]);
 
     const handleAddReviewer = () => {
         if (!selectedLecturer) return;
