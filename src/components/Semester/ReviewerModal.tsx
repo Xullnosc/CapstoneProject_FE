@@ -1,55 +1,95 @@
-import { useState, useEffect, type FC } from 'react';
+import { useState, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import type { Whitelist } from '../../services/semesterService';
+import { whitelistService } from '../../services/whitelistService';
 import Swal from '../../utils/swal';
+import MemberAvatar from '../team/MemberAvatar';
 
 interface ReviewerModalProps {
     isOpen: boolean;
     onClose: () => void;
     lecturers: Whitelist[];
+    onUpdate?: () => void;
 }
 
-const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) => {
-    // Mock state for reviewers - in real app this would come from backend
-    const [reviewers, setReviewers] = useState<Whitelist[]>([]);
+const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers, onUpdate }) => {
     const [selectedLecturer, setSelectedLecturer] = useState<Whitelist | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    // Initialize some mock reviewers if empty
-    useEffect(() => {
-        if (isOpen && reviewers.length === 0 && lecturers.length > 0) {
-            // Just for demo, maybe pick the first one as a reviewer
-            // setReviewers([lecturers[0]]); 
-        }
-    }, [isOpen, lecturers, reviewers.length]);
+    // Derived state from props
+    const reviewers = lecturers.filter(l => l.isReviewer);
+    const availableLecturers = lecturers.filter(l => !l.isReviewer);
 
-    const handleAddReviewer = () => {
+    const handleAddReviewer = async () => {
         if (!selectedLecturer) return;
 
-        if (reviewers.some(r => r.email === selectedLecturer.email)) {
-            Swal.fire('Warning', 'This lecturer is already a reviewer.', 'warning');
-            return;
+        try {
+            setIsProcessing(true);
+            await whitelistService.updateReviewerStatus(selectedLecturer.whitelistId, true);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `${selectedLecturer.fullName || selectedLecturer.email} added as reviewer`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            setSelectedLecturer(null);
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Failed to add reviewer', 'error');
+        } finally {
+            setIsProcessing(false);
         }
-
-        setReviewers([...reviewers, selectedLecturer]);
-        setSelectedLecturer(null);
-        Swal.fire('Success', 'Lecturer added to reviewer list.', 'success');
     };
 
-    const handleRemoveReviewer = (email: string) => {
-        setReviewers(reviewers.filter(r => r.email !== email));
-        Swal.fire('Success', 'Lecturer removed from reviewer list.', 'success');
-    };
+    const handleRemoveReviewer = async (reviewer: Whitelist) => {
+        try {
+            // Confirm removal
+            const result = await Swal.fire({
+                title: 'Remove Reviewer?',
+                text: `Are you sure you want to remove ${reviewer.fullName || reviewer.email} from reviewers?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove'
+            });
 
-    // Filter out lecturers who are already reviewers for the dropdown
-    const availableLecturers = lecturers.filter(l => !reviewers.some(r => r.email === l.email));
+            if (result.isConfirmed) {
+                setIsProcessing(true);
+                await whitelistService.updateReviewerStatus(reviewer.whitelistId, false);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Removed!',
+                    text: 'Reviewer permission revoked.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                if (onUpdate) onUpdate();
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Failed to remove reviewer', 'error');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     const lecturerOptionTemplate = (option: Whitelist) => {
         return (
             <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
-                    {option.fullName?.charAt(0) || option.email.charAt(0)}
-                </div>
+                <MemberAvatar
+                    email={option.email}
+                    fullName={option.fullName || option.email}
+                    avatarUrl={option.avatar}
+                    className="w-6 h-6 rounded-full object-cover"
+                />
                 <span>{option.fullName || option.email}</span>
             </div>
         );
@@ -93,13 +133,19 @@ const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) =
                             className="w-full md:w-14rem p-inputtext-sm border-gray-300 rounded-xl"
                             itemTemplate={lecturerOptionTemplate}
                             filter
+                            disabled={isProcessing}
+                            emptyMessage="No available lecturers"
                         />
                         <button
                             onClick={handleAddReviewer}
-                            disabled={!selectedLecturer}
-                            className="bg-orange-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-orange-500/20 flex items-center gap-2 active:scale-95 cursor-pointer"
+                            disabled={!selectedLecturer || isProcessing}
+                            className="bg-orange-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-orange-500/20 flex items-center gap-2 active:scale-95 cursor-pointer shrink-0"
                         >
-                            <span className="material-symbols-outlined text-lg">add</span>
+                            {isProcessing ? (
+                                <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                            ) : (
+                                <span className="material-symbols-outlined text-lg">add</span>
+                            )}
                             Add
                         </button>
                     </div>
@@ -125,19 +171,23 @@ const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers }) =
                     ) : (
                         <div className="flex flex-col gap-3 max-h-87.5 overflow-y-auto pr-1 custom-scrollbar">
                             {reviewers.map(reviewer => (
-                                <div key={reviewer.email} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md hover:border-orange-100 transition-all group">
+                                <div key={reviewer.whitelistId} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md hover:border-orange-100 transition-all group">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-white">
-                                            {reviewer.fullName?.charAt(0) || reviewer.email.charAt(0)}
-                                        </div>
+                                        <MemberAvatar
+                                            email={reviewer.email}
+                                            fullName={reviewer.fullName || reviewer.email}
+                                            avatarUrl={reviewer.avatar}
+                                            className="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-white"
+                                        />
                                         <div>
                                             <p className="text-sm font-bold text-gray-900 leading-tight">{reviewer.fullName || 'Unknown Name'}</p>
                                             <p className="text-xs text-gray-500 mt-0.5">{reviewer.email}</p>
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => handleRemoveReviewer(reviewer.email)}
-                                        className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                                        onClick={() => handleRemoveReviewer(reviewer)}
+                                        disabled={isProcessing}
+                                        className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all opacity-0 group-hover:opacity-100 cursor-pointer disabled:opacity-50"
                                         title="Remove Reviewer"
                                     >
                                         <span className="material-symbols-outlined text-xl">delete</span>
