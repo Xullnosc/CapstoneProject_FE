@@ -9,6 +9,8 @@ import SemesterDashboardPage from '../pages/Semester/SemesterDashboardPage';
 import SemesterDetailPage from '../pages/Semester/SemesterDetailPage';
 import ThesisPage from '../pages/Thesis/ThesisPage';
 import ProposeThesisPage from '../pages/ProposeThesis/ProposeThesisPage';
+import MyThesisPage from '../pages/Thesis/MyThesisPage';
+import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 
 const AppRouter = () => {
   return (
@@ -31,6 +33,8 @@ const AppRouter = () => {
           <Route path="/teams/team" element={<TeamDetail />} />
           <Route path="/teams/:teamId" element={<TeamDetail />} />
           <Route path="/thesis" element={<ThesisPage />} />
+          <Route path="/my-thesis" element={<MyThesisPage />} />
+          <Route path="/thesis/:id" element={<ThesisDetailPage />} />
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
         </Route>
       </Route>

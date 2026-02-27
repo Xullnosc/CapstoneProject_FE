@@ -110,7 +110,7 @@ const Header = () => {
                                 <span>My Team</span>
                             </div>
                         )}
-                        <div onClick={() => navigate('/thesis')} className="cursor-pointer flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
+                        <div onClick={() => navigate('/my-thesis')} className="cursor-pointer flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
                         </div>

@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+    --color-primary: #f97415;
+}
+
 :root {
     color-scheme: light;
-
 }
 
 html {
