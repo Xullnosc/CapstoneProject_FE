@@ -110,7 +110,7 @@ const Header = () => {
                                 <span>My Team</span>
                             </div>
                         )}
-                        <div onClick={() => navigate('/thesis')} className="cursor-pointer flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200">
+                        <div onClick={() => navigate('/my-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/my-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
                         </div>
@@ -162,7 +162,7 @@ const Header = () => {
 
                     {/* Right Navigation */}
                     <nav className="flex items-center gap-4 lg:gap-10">
-                        <div onClick={() => navigate('/thesis')} className="cursor-pointer flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200">
+                        <div onClick={() => navigate('/my-thesis')} className={`cursor-pointer flex items-center gap-2 font-medium hover:text-orange-600 px-3 py-2 rounded-xl transition-all duration-200 ${location.pathname === '/my-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:bg-orange-50'}`}>
                             <i className="pi pi-book text-xl"></i>
                             <span className="hidden lg:block whitespace-nowrap">Thesis List</span>
                         </div>
