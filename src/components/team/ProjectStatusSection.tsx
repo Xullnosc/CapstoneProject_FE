@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import Swal from '../../utils/swal';
 import type { Team } from '../../types/team';
 
@@ -7,6 +8,7 @@ interface ProjectStatusSectionProps {
 }
 
 const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLeader }) => {
+    const navigate = useNavigate();
     if (!team) return null;
     const hasTopic = !!team.topicId;
 
@@ -20,8 +22,12 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
             });
             return;
         }
-        // TODO: Handle actual navigation/action for Leader
 
+        if (actionName === 'propose a thesis idea') {
+            navigate('/propose-thesis');
+        } else {
+            // TODO: Handle other actions like register thesis
+        }
     };
 
     return (
