@@ -8,7 +8,7 @@ const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
     try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
         return dateStr;
     }

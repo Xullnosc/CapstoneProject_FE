@@ -18,6 +18,7 @@ const ThesisDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
+    const [evaluating, setEvaluating] = useState<string | null>(null);
 
     const fetchThesis = useCallback(async () => {
         if (!id) return;
@@ -58,6 +59,21 @@ const ThesisDetailPage = () => {
 
     // Submission date: upDate or updateDate
     const submissionDateStr = thesis?.upDate ?? thesis?.updateDate;
+
+    const handleEvaluate = async (status: 'Published' | 'Rejected' | 'Need Update') => {
+        if (!id || !thesis) return;
+        setEvaluating(status);
+        setError(null);
+        try {
+            await thesisService.evaluateThesis(id, status);
+            await fetchThesis();
+        } catch (err) {
+            console.error('Evaluate thesis failed', err);
+            setError('Could not save evaluation. Please try again.');
+        } finally {
+            setEvaluating(null);
+        }
+    };
 
     // ─── Loading ─────────────────────────────────────────────────────────────
     if (loading) {
@@ -221,6 +237,47 @@ const ThesisDetailPage = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Reviewer: Pass / Fail / Need Update (only when status is Reviewing) */}
+                            {isReviewer && thesis.status === 'Reviewing' && (
+                                <div className="mt-8 pt-6 border-t border-slate-200">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+                                        Evaluation
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Published')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">check_circle</span>
+                                            Pass
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Need Update')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">edit_note</span>
+                                            Need Update
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Rejected')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">cancel</span>
+                                            Fail
+                                        </button>
+                                    </div>
+                                    {evaluating && (
+                                        <p className="text-xs text-slate-500 mt-2 text-center">Saving...</p>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Upload new version button (students only) */}
                             {isStudent && (
