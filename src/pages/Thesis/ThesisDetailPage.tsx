@@ -12,6 +12,7 @@ const ThesisDetailPage = () => {
     const navigate = useNavigate();
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
+    const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
 
     const [thesis, setThesis] = useState<Thesis | null>(null);
     const [loading, setLoading] = useState(true);
@@ -85,10 +86,10 @@ const ThesisDetailPage = () => {
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Thesis not found</h2>
                     <p className="text-gray-500 text-sm mb-6">{error}</p>
                     <button
-                        onClick={() => navigate('/my-thesis')}
+                        onClick={() => navigate(isReviewer ? '/review-thesis' : '/my-thesis')}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
                     >
-                        Back to My Thesis
+                        {isReviewer ? 'Back to Review Thesis' : 'Back to My Thesis'}
                     </button>
                 </div>
             </div>
@@ -101,8 +102,8 @@ const ThesisDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <nav className="flex text-sm text-slate-500">
-                        <Link to="/my-thesis" className="hover:text-primary transition-colors cursor-pointer">
-                            My Thesis
+                        <Link to={isReviewer ? '/review-thesis' : '/my-thesis'} className="hover:text-primary transition-colors cursor-pointer">
+                            {isReviewer ? 'Review Thesis' : 'My Thesis'}
                         </Link>
                         <span className="mx-2">/</span>
                         <span className="text-primary font-medium">Detail</span>
