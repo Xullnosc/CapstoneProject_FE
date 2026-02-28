@@ -2,19 +2,24 @@ import api from './api';
 
 export interface ChecklistItem {
     checklistId: number;
+    title: string;
     content: string;
     displayOrder: number;
+    isCompleted: boolean;
     createdAt?: string;
 }
 
 export interface ChecklistCreatePayload {
+    title: string;
     content: string;
     displayOrder: number;
 }
 
 export interface ChecklistUpdatePayload {
+    title: string;
     content: string;
     displayOrder: number;
+    isCompleted: boolean;
 }
 
 export const checklistService = {

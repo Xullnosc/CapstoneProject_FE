@@ -7,6 +7,8 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { semesterService, type Semester } from '../../services/semesterService';
+import { checklistService, type ChecklistItem } from '../../services/checklistService';
+import Swal from '../../utils/swal';
 
 interface Thesis {
     id: string;
@@ -17,25 +19,21 @@ interface Thesis {
     date: string;
 }
 
-interface Criteria {
-    id: string;
-    content: string;
-}
+
 
 const ThesisPage = () => {
     // State
     const [semesters, setSemesters] = useState<Semester[]>([]);
     const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null);
     const [criteriaDialogVisible, setCriteriaDialogVisible] = useState(false);
-    const [criteriaList, setCriteriaList] = useState<Criteria[]>([
-        { id: '1', content: 'Topic matches the semester theme.' },
-        { id: '2', content: 'Feasibility of the technology stack.' },
-        { id: '3', content: 'Clear problem statement and solution.' },
-        { id: '4', content: 'Team members have required skills.' }
-    ]);
-    const [newCriteria, setNewCriteria] = useState('');
-    const [editingCriteriaId, setEditingCriteriaId] = useState<string | null>(null);
-    const [editingText, setEditingText] = useState('');
+    const [criteriaList, setCriteriaList] = useState<ChecklistItem[]>([]);
+    const [loadingCriteria, setLoadingCriteria] = useState(false);
+    const [newTitle, setNewTitle] = useState('');
+    const [newContent, setNewContent] = useState('');
+    const [editingCriteriaId, setEditingCriteriaId] = useState<number | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+    const [editingContent, setEditingContent] = useState('');
+    const [submittingCriteria, setSubmittingCriteria] = useState(false);
 
     // Mock Data
     const theses: Thesis[] = [
@@ -45,6 +43,18 @@ const ThesisPage = () => {
         { id: '4', title: 'E-Learning Platform for Kids', teamName: 'EduKid', supervisor: 'Mr. John Hammond', status: 'Rejected', date: '2023-10-25' },
         { id: '5', title: 'Mental Health Chatbot', teamName: 'MindCare', supervisor: 'Ms. Claire Dearing', status: 'Approved', date: '2023-11-01' },
     ];
+
+    const fetchCriteria = async () => {
+        try {
+            setLoadingCriteria(true);
+            const data = await checklistService.getAll();
+            setCriteriaList(data);
+        } catch (error) {
+            console.error("Failed to fetch criteria", error);
+        } finally {
+            setLoadingCriteria(false);
+        }
+    };
 
     useEffect(() => {
         const fetchSemesters = async () => {
@@ -62,33 +72,73 @@ const ThesisPage = () => {
             }
         };
         fetchSemesters();
+        fetchCriteria();
     }, []);
 
     // Criteria Handlers
-    const addCriteria = () => {
-        if (!newCriteria.trim()) return;
-        setCriteriaList([...criteriaList, { id: Date.now().toString(), content: newCriteria }]);
-        setNewCriteria('');
+    const addCriteria = async () => {
+        const t = newTitle.trim();
+        const c = newContent.trim();
+        if (!t || !c) return;
+        setSubmittingCriteria(true);
+        try {
+            await checklistService.create({
+                title: t,
+                content: c,
+                displayOrder: 0
+            });
+            setNewTitle('');
+            setNewContent('');
+            await fetchCriteria();
+        } catch (error) {
+            Swal.fire('Error', 'Failed to add criteria', 'error');
+        } finally {
+            setSubmittingCriteria(false);
+        }
     };
 
-    const deleteCriteria = (id: string) => {
-        setCriteriaList(criteriaList.filter(c => c.id !== id));
+    const deleteCriteria = async (id: number) => {
+        try {
+            await checklistService.delete(id);
+            await fetchCriteria();
+        } catch (error) {
+            Swal.fire('Error', 'Failed to delete criteria', 'error');
+        }
     };
 
-    const startEdit = (c: Criteria) => {
-        setEditingCriteriaId(c.id);
-        setEditingText(c.content);
+    const startEdit = (c: ChecklistItem) => {
+        setEditingCriteriaId(c.checklistId);
+        setEditingTitle(c.title);
+        setEditingContent(c.content);
     };
 
-    const saveEdit = () => {
-        setCriteriaList(criteriaList.map(c => c.id === editingCriteriaId ? { ...c, content: editingText } : c));
-        setEditingCriteriaId(null);
-        setEditingText('');
+    const saveEdit = async () => {
+        if (editingCriteriaId === null) return;
+        const t = editingTitle.trim();
+        const c = editingContent.trim();
+        if (!t || !c) return;
+        setSubmittingCriteria(true);
+        try {
+            const original = criteriaList.find(x => x.checklistId === editingCriteriaId);
+            await checklistService.update(editingCriteriaId, {
+                title: t,
+                content: c,
+                displayOrder: original?.displayOrder ?? 0,
+                isCompleted: original?.isCompleted ?? false
+            });
+            setEditingCriteriaId(null);
+            await fetchCriteria();
+        } catch (error) {
+            Swal.fire('Error', 'Failed to update criteria', 'error');
+        } finally {
+            setSubmittingCriteria(true);
+        }
     };
 
     const cancelEdit = () => {
         setEditingCriteriaId(null);
-        setEditingText('');
+        setEditingTitle('');
+        setEditingContent('');
     };
 
     // Render Helpers
@@ -182,7 +232,7 @@ const ThesisPage = () => {
                         <p className="text-orange-50 text-sm mb-6 opacity-90">Manage the checklist used to evaluate propose topics.</p>
                         <button
                             onClick={() => setCriteriaDialogVisible(true)}
-                            className="bg-white text-orange-600 px-4 py-3 rounded-xl font-semibold w-full hover:bg-orange-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+                            className="bg-white text-orange-600 px-4 py-3 rounded-xl font-semibold w-full hover:bg-orange-50 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                         >
                             <i className="pi pi-list"></i>
                             Manage Criteria
@@ -195,16 +245,23 @@ const ThesisPage = () => {
                             <h4 className="font-bold text-gray-700">Quick Preview</h4>
                             <span className="text-xs text-gray-400">{criteriaList.length} items</span>
                         </div>
-                        <ul className="space-y-3">
-                            {criteriaList.slice(0, 5).map((item, index) => (
-                                <li key={item.id} className="flex items-start gap-2 text-sm text-gray-600">
-                                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 mt-0.5 shrink-0">
-                                        {index + 1}
-                                    </span>
-                                    <span className="line-clamp-2">{item.content}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        {loadingCriteria ? (
+                            <div className="flex justify-center p-4"><i className="pi pi-spin pi-spinner text-orange-500"></i></div>
+                        ) : (
+                            <ul className="space-y-3">
+                                {criteriaList.slice(0, 5).map((item, index) => (
+                                    <li key={item.checklistId} className="flex items-start gap-2 text-sm text-gray-600">
+                                        <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 mt-0.5 shrink-0">
+                                            {index + 1}
+                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-800">{item.title}</span>
+                                            <span className="text-xs line-clamp-1">{item.content}</span>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
             </div>
@@ -223,43 +280,75 @@ const ThesisPage = () => {
             >
                 <div className="p-6">
                     {/* Add New Input */}
-                    <div className="flex gap-2 mb-6">
+                    <div className="flex flex-col gap-2 mb-6">
                         <InputText
-                            value={newCriteria}
-                            onChange={(e) => setNewCriteria(e.target.value)}
-                            placeholder="Add new criteria..."
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            placeholder="Title (e.g. Scope)"
                             className="w-full"
-                            onKeyDown={(e) => e.key === 'Enter' && addCriteria()}
                         />
-                        <Button icon="pi pi-plus" onClick={addCriteria} disabled={!newCriteria.trim()} className="!bg-orange-500 !border-orange-500" />
+                        <div className="flex gap-2">
+                            <InputText
+                                value={newContent}
+                                onChange={(e) => setNewContent(e.target.value)}
+                                placeholder="Description..."
+                                className="w-full"
+                                onKeyDown={(e) => e.key === 'Enter' && addCriteria()}
+                            />
+                            <Button
+                                icon={submittingCriteria ? "pi pi-spin pi-spinner" : "pi pi-plus"}
+                                onClick={addCriteria}
+                                disabled={!newTitle.trim() || !newContent.trim() || submittingCriteria}
+                                className="!bg-orange-500 !border-orange-500"
+                            />
+                        </div>
                     </div>
 
                     {/* List */}
                     <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-                        {criteriaList.map((item) => (
-                            <div key={item.id} className="group flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all">
-                                {editingCriteriaId === item.id ? (
-                                    <div className="flex gap-2 w-full">
+                        {loadingCriteria ? (
+                            <div className="flex justify-center p-10"><i className="pi pi-spin pi-spinner text-4xl text-orange-500"></i></div>
+                        ) : criteriaList.map((item) => (
+                            <div key={item.checklistId} className="group flex items-start gap-3 p-3 bg-gray-50 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all">
+                                {editingCriteriaId === item.checklistId ? (
+                                    <div className="flex flex-col gap-2 w-full">
                                         <InputText
-                                            value={editingText}
-                                            onChange={(e) => setEditingText(e.target.value)}
+                                            value={editingTitle}
+                                            onChange={(e) => setEditingTitle(e.target.value)}
                                             className="w-full text-sm py-1.5"
-                                            autoFocus
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') saveEdit();
-                                                if (e.key === 'Escape') cancelEdit();
-                                            }}
+                                            placeholder="Title"
                                         />
-                                        <Button icon="pi pi-check" rounded text severity="success" onClick={saveEdit} />
-                                        <Button icon="pi pi-times" rounded text severity="secondary" onClick={cancelEdit} />
+                                        <div className="flex gap-2">
+                                            <InputText
+                                                value={editingContent}
+                                                onChange={(e) => setEditingContent(e.target.value)}
+                                                className="w-full text-sm py-1.5"
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') saveEdit();
+                                                    if (e.key === 'Escape') cancelEdit();
+                                                }}
+                                                placeholder="Description"
+                                            />
+                                            <Button
+                                                icon={submittingCriteria ? "pi pi-spin pi-spinner" : "pi pi-check"}
+                                                rounded text severity="success"
+                                                onClick={saveEdit}
+                                                disabled={submittingCriteria}
+                                            />
+                                            <Button icon="pi pi-times" rounded text severity="secondary" onClick={cancelEdit} disabled={submittingCriteria} />
+                                        </div>
                                     </div>
                                 ) : (
                                     <>
-                                        <i className="pi pi-check-circle text-gray-400 group-hover:text-orange-500 transition-colors"></i>
-                                        <span className="flex-1 text-gray-700 text-sm">{item.content}</span>
+                                        <i className="pi pi-check-circle text-gray-400 group-hover:text-orange-500 transition-colors mt-1"></i>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-gray-800 text-sm">{item.title}</div>
+                                            <div className="text-gray-500 text-xs">{item.content}</div>
+                                        </div>
                                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button icon="pi pi-pencil" rounded text severity="info" size="small" onClick={() => startEdit(item)} />
-                                            <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deleteCriteria(item.id)} />
+                                            <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deleteCriteria(item.checklistId)} />
                                         </div>
                                     </>
                                 )}
