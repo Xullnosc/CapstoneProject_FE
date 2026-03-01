@@ -22,6 +22,7 @@ const Header = () => {
     // However, I previously added roleName to authService.
     const canManageSemesters = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
+    const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
 
     useEffect(() => {
         const fetchCurrentSemester = async () => {
@@ -104,6 +105,12 @@ const Header = () => {
                                 <span>Semesters</span>
                             </div>
                         )}
+                        {isHOD && (
+                            <div onClick={() => navigate('/checklists')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/checklists') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-list text-xl"></i>
+                                <span>Checklist</span>
+                            </div>
+                        )}
                         {!isHOD && (
                             <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-users text-xl"></i>
@@ -114,6 +121,12 @@ const Header = () => {
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
                         </div>
+                        {isReviewer && (
+                            <div onClick={() => navigate('/review-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/review-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-eye text-xl"></i>
+                                <span>Review Thesis</span>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
                             <div className="relative">
                                 <i className="pi pi-bell text-xl"></i>
@@ -166,6 +179,12 @@ const Header = () => {
                             <i className="pi pi-book text-xl"></i>
                             <span className="hidden lg:block whitespace-nowrap">Thesis List</span>
                         </div>
+                        {isReviewer && (
+                            <div onClick={() => navigate('/review-thesis')} className={`cursor-pointer flex items-center gap-2 font-medium hover:text-orange-600 px-3 py-2 rounded-xl transition-all duration-200 ${location.pathname === '/review-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:bg-orange-50'}`}>
+                                <i className="pi pi-eye text-xl"></i>
+                                <span className="hidden lg:block whitespace-nowrap">Review Thesis</span>
+                            </div>
+                        )}
                         <div className="relative flex items-center gap-2 text-gray-500 font-medium hover:text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer">
                             <div className="relative">
                                 <i className="pi pi-bell text-xl"></i>
@@ -182,6 +201,10 @@ const Header = () => {
                         <div onClick={() => navigate('/semesters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-calendar text-xl"></i>
                             <span className="hidden lg:block whitespace-nowrap">Semesters</span>
+                        </div>
+                        <div onClick={() => navigate('/checklists')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/checklists') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                            <i className="pi pi-list text-xl"></i>
+                            <span className="hidden lg:block whitespace-nowrap">Checklist</span>
                         </div>
                         <div onClick={() => navigate('/thesis')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/thesis') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-book text-xl"></i>
