@@ -39,7 +39,7 @@ const ThesisPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTitle, statusFilter === 'Verified' ? '' : statusFilter]);
+    }, [searchTitle, statusFilter]);
 
     useEffect(() => {
         fetchTheses();

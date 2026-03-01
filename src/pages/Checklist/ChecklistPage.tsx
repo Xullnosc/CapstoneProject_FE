@@ -118,7 +118,7 @@ const ChecklistPage = () => {
                 isCompleted: !row.isCompleted,
             });
             await fetchList();
-        } catch (e) {
+        } catch {
             Swal.fire('Error', 'Failed to update status', 'error');
         } finally {
             setTogglingId(null);
@@ -140,7 +140,7 @@ const ChecklistPage = () => {
             await checklistService.delete(row.checklistId);
             Swal.fire('Deleted', 'Item removed.', 'success');
             fetchList();
-        } catch (e) {
+        } catch {
             Swal.fire('Error', 'Failed to delete', 'error');
         }
     };
