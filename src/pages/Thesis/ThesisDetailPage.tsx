@@ -13,6 +13,7 @@ const ThesisDetailPage = () => {
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
+    const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
 
     const [thesis, setThesis] = useState<Thesis | null>(null);
     const [loading, setLoading] = useState(true);
@@ -102,10 +103,10 @@ const ThesisDetailPage = () => {
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Thesis not found</h2>
                     <p className="text-gray-500 text-sm mb-6">{error}</p>
                     <button
-                        onClick={() => navigate(isReviewer ? '/review-thesis' : '/my-thesis')}
+                        onClick={() => navigate(isHOD ? '/thesis' : isReviewer ? '/review-thesis' : '/my-thesis')}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
                     >
-                        {isReviewer ? 'Back to Review Thesis' : 'Back to My Thesis'}
+                        {isHOD ? 'Back to Thesis List' : isReviewer ? 'Back to Review Thesis' : 'Back to My Thesis'}
                     </button>
                 </div>
             </div>
@@ -118,8 +119,8 @@ const ThesisDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <nav className="flex text-sm text-slate-500">
-                        <Link to={isReviewer ? '/review-thesis' : '/my-thesis'} className="hover:text-primary transition-colors cursor-pointer">
-                            {isReviewer ? 'Review Thesis' : 'My Thesis'}
+                        <Link to={isHOD ? '/thesis' : isReviewer ? '/review-thesis' : '/my-thesis'} className="hover:text-primary transition-colors cursor-pointer">
+                            {isHOD ? 'Thesis List' : isReviewer ? 'Review Thesis' : 'My Thesis'}
                         </Link>
                         <span className="mx-2">/</span>
                         <span className="text-primary font-medium">Detail</span>
@@ -293,25 +294,51 @@ const ThesisDetailPage = () => {
                             )}
                         </div>
 
-                        {/* Next Steps info box */}
+                        {/* Info box: student "Next Steps" vs lecturer "Review Info" */}
                         <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-                            <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
-                                <i className="pi pi-info-circle text-sm" />
-                                Next Steps
-                            </h4>
-                            <p className="text-sm text-slate-600 leading-relaxed">
-                                {thesis.status === 'Reviewing'
-                                    ? 'Your thesis is currently under review. You will be notified once feedback is available.'
-                                    : thesis.status === 'Need Update'
-                                        ? 'Your lecturer has requested updates. Please upload a revised version.'
-                                        : thesis.status === 'Rejected'
-                                            ? 'Your thesis was not approved. Please review feedback and consider revising.'
-                                            : thesis.status === 'Published'
-                                                ? 'Your thesis has been published. Congratulations!'
-                                                : thesis.status === 'Registered'
-                                                    ? 'Your thesis has been registered and is awaiting review.'
-                                                    : 'Keep track of your thesis status here.'}
-                            </p>
+                            {isReviewer || isHOD ? (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        {isReviewer ? 'Review Info' : 'Thesis Info'}
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'Reviewing'
+                                            ? (isReviewer
+                                                ? 'This thesis is pending your evaluation. Review the document above and use the evaluation buttons to Pass, Request updates, or Reject.'
+                                                : 'This thesis is under reviewer evaluation.')
+                                            : thesis.status === 'Need Update'
+                                                ? (isReviewer ? 'You have requested updates from the student.' : 'The reviewer has requested updates from the submitter.')
+                                                : thesis.status === 'Rejected'
+                                                    ? (isReviewer ? 'You have rejected this thesis.' : 'The reviewer has rejected this thesis.')
+                                                    : thesis.status === 'Published'
+                                                        ? (isReviewer ? 'You have approved this thesis (Published).' : 'This thesis has been approved and published.')
+                                                        : thesis.status === 'Registered'
+                                                            ? 'This thesis is registered and awaiting review.'
+                                                            : 'View thesis details and status above.'}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        Next Steps
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'Reviewing'
+                                            ? 'Your thesis is currently under review. You will be notified once feedback is available.'
+                                            : thesis.status === 'Need Update'
+                                                ? 'Your lecturer has requested updates. Please upload a revised version.'
+                                                : thesis.status === 'Rejected'
+                                                    ? 'Your thesis was not approved. Please review feedback and consider revising.'
+                                                    : thesis.status === 'Published'
+                                                        ? 'Your thesis has been published. Congratulations!'
+                                                        : thesis.status === 'Registered'
+                                                            ? 'Your thesis has been registered and is awaiting review.'
+                                                            : 'Keep track of your thesis status here.'}
+                                    </p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

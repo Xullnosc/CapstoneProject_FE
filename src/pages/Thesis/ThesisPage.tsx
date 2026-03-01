@@ -1,362 +1,218 @@
-import { useState, useEffect } from 'react';
-import { Dropdown } from 'primereact/dropdown';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { semesterService, type Semester } from '../../services/semesterService';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import type { Thesis, ThesisStatus } from '../../types/thesis';
+import { thesisService } from '../../services/thesisService';
 import { checklistService, type ChecklistItem } from '../../services/checklistService';
-import Swal from '../../utils/swal';
+import ThesisCard from '../../components/Thesis/ThesisCard';
 
-interface Thesis {
-    id: string;
-    title: string;
-    teamName: string;
-    supervisor: string;
-    status: 'Approved' | 'Pending' | 'Rejected';
-    date: string;
-}
+const VERIFIED_STATUSES: ThesisStatus[] = ['Published', 'Rejected', 'Need Update'];
 
-
+const STATUS_OPTIONS: { label: string; value: ThesisStatus | 'Verified' | '' }[] = [
+    { label: 'All', value: '' },
+    { label: 'Verified by reviewer', value: 'Verified' },
+    { label: 'Published', value: 'Published' },
+    { label: 'Rejected', value: 'Rejected' },
+    { label: 'Need Update', value: 'Need Update' },
+    { label: 'Reviewing', value: 'Reviewing' },
+    { label: 'Registered', value: 'Registered' },
+];
 
 const ThesisPage = () => {
-    // State
-    const [semesters, setSemesters] = useState<Semester[]>([]);
-    const [selectedSemester, setSelectedSemester] = useState<Semester | null>(null);
-    const [criteriaDialogVisible, setCriteriaDialogVisible] = useState(false);
+    const [theses, setTheses] = useState<Thesis[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTitle, setSearchTitle] = useState('');
+    const [statusFilter, setStatusFilter] = useState<ThesisStatus | 'Verified' | ''>('Verified');
     const [criteriaList, setCriteriaList] = useState<ChecklistItem[]>([]);
-    const [loadingCriteria, setLoadingCriteria] = useState(false);
-    const [newTitle, setNewTitle] = useState('');
-    const [newContent, setNewContent] = useState('');
-    const [editingCriteriaId, setEditingCriteriaId] = useState<number | null>(null);
-    const [editingTitle, setEditingTitle] = useState('');
-    const [editingContent, setEditingContent] = useState('');
-    const [submittingCriteria, setSubmittingCriteria] = useState(false);
+    const [criteriaDialogVisible, setCriteriaDialogVisible] = useState(false);
 
-    // Mock Data
-    const theses: Thesis[] = [
-        { id: '1', title: 'AI-Powered Traffic Management', teamName: 'UrbanFlow', supervisor: 'Dr. Alan Grant', status: 'Approved', date: '2023-10-15' },
-        { id: '2', title: 'Blockchain Voting System', teamName: 'SecureVote', supervisor: 'Prof. Sarah Connor', status: 'Pending', date: '2023-10-20' },
-        { id: '3', title: 'Smart Agriculture IoT', teamName: 'GreenTech', supervisor: 'Dr. Ellie Sattler', status: 'Approved', date: '2023-10-10' },
-        { id: '4', title: 'E-Learning Platform for Kids', teamName: 'EduKid', supervisor: 'Mr. John Hammond', status: 'Rejected', date: '2023-10-25' },
-        { id: '5', title: 'Mental Health Chatbot', teamName: 'MindCare', supervisor: 'Ms. Claire Dearing', status: 'Approved', date: '2023-11-01' },
-    ];
-
-    const fetchCriteria = async () => {
+    const fetchTheses = useCallback(async () => {
+        setLoading(true);
         try {
-            setLoadingCriteria(true);
-            const data = await checklistService.getAll();
-            setCriteriaList(data);
-        } catch (error) {
-            console.error("Failed to fetch criteria", error);
+            const data = await thesisService.getAllTheses({
+                searchTitle: searchTitle || undefined,
+                status: statusFilter === 'Verified' ? undefined : statusFilter || undefined,
+            });
+            setTheses(data);
+        } catch (err) {
+            console.error('Failed to fetch theses', err);
+            setTheses([]);
         } finally {
-            setLoadingCriteria(false);
+            setLoading(false);
         }
-    };
+    }, [searchTitle, statusFilter === 'Verified' ? '' : statusFilter]);
 
     useEffect(() => {
-        const fetchSemesters = async () => {
+        fetchTheses();
+    }, [fetchTheses]);
+
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    useEffect(() => {
+        const t = setTimeout(() => setSearchTitle(debouncedSearch), 400);
+        return () => clearTimeout(t);
+    }, [debouncedSearch]);
+
+    useEffect(() => {
+        const load = async () => {
             try {
-                const data = await semesterService.getAllSemesters();
-                setSemesters(data);
-                const current = await semesterService.getCurrentSemester();
-                if (current) {
-                    setSelectedSemester(current);
-                } else if (data.length > 0) {
-                    setSelectedSemester(data[0]);
-                }
-            } catch (error) {
-                console.error("Failed to fetch semesters", error);
+                const data = await checklistService.getAll();
+                setCriteriaList(data);
+            } catch (e) {
+                console.error('Failed to fetch criteria', e);
             }
         };
-        fetchSemesters();
-        fetchCriteria();
-    }, []);
+        load();
+    }, [criteriaDialogVisible]);
 
-    // Criteria Handlers
-    const addCriteria = async () => {
-        const t = newTitle.trim();
-        const c = newContent.trim();
-        if (!t || !c) return;
-        setSubmittingCriteria(true);
-        try {
-            await checklistService.create({
-                title: t,
-                content: c,
-                displayOrder: 0
-            });
-            setNewTitle('');
-            setNewContent('');
-            await fetchCriteria();
-        } catch (error) {
-            Swal.fire('Error', 'Failed to add criteria', 'error');
-        } finally {
-            setSubmittingCriteria(false);
-        }
-    };
+    const displayedTheses =
+        statusFilter === 'Verified'
+            ? theses.filter((t) => VERIFIED_STATUSES.includes(t.status))
+            : theses;
 
-    const deleteCriteria = async (id: number) => {
-        try {
-            await checklistService.delete(id);
-            await fetchCriteria();
-        } catch (error) {
-            Swal.fire('Error', 'Failed to delete criteria', 'error');
-        }
-    };
-
-    const startEdit = (c: ChecklistItem) => {
-        setEditingCriteriaId(c.checklistId);
-        setEditingTitle(c.title);
-        setEditingContent(c.content);
-    };
-
-    const saveEdit = async () => {
-        if (editingCriteriaId === null) return;
-        const t = editingTitle.trim();
-        const c = editingContent.trim();
-        if (!t || !c) return;
-        setSubmittingCriteria(true);
-        try {
-            const original = criteriaList.find(x => x.checklistId === editingCriteriaId);
-            await checklistService.update(editingCriteriaId, {
-                title: t,
-                content: c,
-                displayOrder: original?.displayOrder ?? 0,
-                isCompleted: original?.isCompleted ?? false
-            });
-            setEditingCriteriaId(null);
-            await fetchCriteria();
-        } catch (error) {
-            Swal.fire('Error', 'Failed to update criteria', 'error');
-        } finally {
-            setSubmittingCriteria(true);
-        }
-    };
-
-    const cancelEdit = () => {
-        setEditingCriteriaId(null);
-        setEditingTitle('');
-        setEditingContent('');
-    };
-
-    // Render Helpers
-    const statusBodyTemplate = (rowData: Thesis) => {
-        const severity = rowData.status === 'Approved' ? 'success' : rowData.status === 'Rejected' ? 'danger' : 'warning';
-        return <Tag value={rowData.status} severity={severity} rounded></Tag>;
-    };
+    const verifiedCount = theses.filter((t) => VERIFIED_STATUSES.includes(t.status)).length;
+    const reviewingCount = theses.filter((t) => t.status === 'Reviewing').length;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 lg:p-10 font-sans text-gray-800">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600">
-                        Thesis Management
-                    </h1>
-                    <p className="text-gray-500 mt-1">Overview and management of semester topics.</p>
-                </div>
-                <div className="w-full md:w-64">
-                    <Dropdown
-                        value={selectedSemester}
-                        onChange={(e) => setSelectedSemester(e.value)}
-                        options={semesters}
-                        optionLabel="semesterCode"
-                        placeholder="Select Semester"
-                        className="w-full shadow-sm border-gray-200"
-                        pt={{
-                            root: { className: 'rounded-xl border-none ring-1 ring-gray-200 hover:ring-orange-500 transition-all' },
-                            input: { className: 'text-gray-700 font-medium' },
-                            trigger: { className: 'text-gray-500' }
-                        }}
-                    />
-                </div>
-            </div>
+        <div className="min-h-screen bg-white">
+            <div className="max-w-[1200px] mx-auto p-8 lg:p-12 space-y-8">
+                {/* Breadcrumb */}
+                <nav className="flex text-sm text-slate-500">
+                    <Link to="/semesters" className="hover:text-orange-600 transition-colors">Semesters</Link>
+                    <span className="mx-2">/</span>
+                    <span className="font-medium text-orange-600">Thesis List</span>
+                </nav>
 
-            {/* Stats Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all duration-300">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Total Theses</p>
-                        <h2 className="text-3xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">124</h2>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                        <i className="pi pi-book text-xl"></i>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all duration-300">
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Pending Approval</p>
-                        <h2 className="text-3xl font-bold text-gray-800 group-hover:text-amber-600 transition-colors">18</h2>
-                    </div>
-                    <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                        <i className="pi pi-clock text-xl"></i>
-                    </div>
-                </div>
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all duration-300">
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Published</p>
-                        <h2 className="text-3xl font-bold text-gray-800 group-hover:text-green-600 transition-colors">86</h2>
-                    </div>
-                    <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
-                        <i className="pi pi-check-circle text-xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content Areas */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                {/* Published Theses Table (Takes up 2 cols) */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-gray-800">Published Theses</h3>
-                        <Button label="Export" icon="pi pi-external-link" size="small" outlined className="!text-xs !py-1 !px-3 !rounded-lg" />
-                    </div>
-                    <div className="p-2">
-                        <DataTable value={theses} paginator rows={5} className="text-sm" rowHover stripedRows tableStyle={{ minWidth: '40rem' }}>
-                            <Column field="title" header="Topic" sortable className="font-medium text-gray-700"></Column>
-                            <Column field="teamName" header="Team" sortable></Column>
-                            <Column field="supervisor" header="Supervisor" sortable className="hidden sm:table-cell"></Column>
-                            <Column field="status" header="Status" body={statusBodyTemplate} sortable></Column>
-                        </DataTable>
+                        <h1 className="text-3xl font-black tracking-tight text-gray-900">Thesis List</h1>
+                        <p className="text-gray-500 mt-1">View theses verified by reviewer (Published, Rejected, Need Update)</p>
                     </div>
                 </div>
 
-                {/* Actions & Checklist (Takes up 1 col) */}
-                <div className="flex flex-col gap-6">
-                    {/* Action Card */}
-                    <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl p-6 text-white shadow-lg shadow-orange-200">
-                        <h3 className="text-xl font-bold mb-2">Evaluation Criteria</h3>
-                        <p className="text-orange-50 text-sm mb-6 opacity-90">Manage the checklist used to evaluate propose topics.</p>
-                        <button
-                            onClick={() => setCriteriaDialogVisible(true)}
-                            className="bg-white text-orange-600 px-4 py-3 rounded-xl font-semibold w-full hover:bg-orange-50 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                {/* Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total</p>
+                            <p className="text-2xl font-bold text-gray-900">{theses.length}</p>
+                        </div>
+                        <span className="material-symbols-outlined text-3xl text-gray-300">description</span>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Verified by reviewer</p>
+                            <p className="text-2xl font-bold text-orange-600">{verifiedCount}</p>
+                        </div>
+                        <span className="material-symbols-outlined text-3xl text-orange-200">verified</span>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Reviewing</p>
+                            <p className="text-2xl font-bold text-amber-600">{reviewingCount}</p>
+                        </div>
+                        <span className="material-symbols-outlined text-3xl text-amber-200">schedule</span>
+                    </div>
+                </div>
+
+                {/* Filters + Criteria action */}
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex-1 flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                            <input
+                                type="text"
+                                value={debouncedSearch}
+                                onChange={(e) => setDebouncedSearch(e.target.value)}
+                                placeholder="Search by title..."
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value as ThesisStatus | 'Verified' | '')}
+                            className="min-w-[200px] py-2.5 px-4 border border-gray-200 rounded-xl text-gray-700 font-medium focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         >
-                            <i className="pi pi-list"></i>
-                            Manage Criteria
-                        </button>
+                            {STATUS_OPTIONS.map((opt) => (
+                                <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+                            ))}
+                        </select>
                     </div>
-
-                    {/* Mini List Preview (Optional) */}
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex-1">
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="font-bold text-gray-700">Quick Preview</h4>
-                            <span className="text-xs text-gray-400">{criteriaList.length} items</span>
-                        </div>
-                        {loadingCriteria ? (
-                            <div className="flex justify-center p-4"><i className="pi pi-spin pi-spinner text-orange-500"></i></div>
-                        ) : (
-                            <ul className="space-y-3">
-                                {criteriaList.slice(0, 5).map((item, index) => (
-                                    <li key={item.checklistId} className="flex items-start gap-2 text-sm text-gray-600">
-                                        <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-500 mt-0.5 shrink-0">
-                                            {index + 1}
-                                        </span>
-                                        <div className="flex flex-col">
-                                            <span className="font-bold text-gray-800">{item.title}</span>
-                                            <span className="text-xs line-clamp-1">{item.content}</span>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                    {/* <button
+                        type="button"
+                        onClick={() => setCriteriaDialogVisible(true)}
+                        className="cursor-pointer flex items-center justify-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all"
+                    >
+                        <span className="material-symbols-outlined text-xl">checklist</span>
+                        Evaluation criteria
+                    </button> */}
                 </div>
-            </div>
 
-            {/* Criteria Management Dialog */}
-            <Dialog
-                header="Evaluation Criteria"
-                visible={criteriaDialogVisible}
-                style={{ width: '90vw', maxWidth: '600px' }}
-                onHide={() => setCriteriaDialogVisible(false)}
-                className="font-sans"
-                pt={{
-                    header: { className: 'rounded-t-2xl border-b border-gray-100 bg-gray-50/50' },
-                    content: { className: 'p-0' }
-                }}
-            >
-                <div className="p-6">
-                    {/* Add New Input */}
-                    <div className="flex flex-col gap-2 mb-6">
-                        <InputText
-                            value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
-                            placeholder="Title (e.g. Scope)"
-                            className="w-full"
-                        />
-                        <div className="flex gap-2">
-                            <InputText
-                                value={newContent}
-                                onChange={(e) => setNewContent(e.target.value)}
-                                placeholder="Description..."
-                                className="w-full"
-                                onKeyDown={(e) => e.key === 'Enter' && addCriteria()}
-                            />
-                            <Button
-                                icon={submittingCriteria ? "pi pi-spin pi-spinner" : "pi pi-plus"}
-                                onClick={addCriteria}
-                                disabled={!newTitle.trim() || !newContent.trim() || submittingCriteria}
-                                className="!bg-orange-500 !border-orange-500"
-                            />
-                        </div>
-                    </div>
-
-                    {/* List */}
-                    <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-                        {loadingCriteria ? (
-                            <div className="flex justify-center p-10"><i className="pi pi-spin pi-spinner text-4xl text-orange-500"></i></div>
-                        ) : criteriaList.map((item) => (
-                            <div key={item.checklistId} className="group flex items-start gap-3 p-3 bg-gray-50 rounded-xl hover:bg-white hover:shadow-sm border border-transparent hover:border-gray-200 transition-all">
-                                {editingCriteriaId === item.checklistId ? (
-                                    <div className="flex flex-col gap-2 w-full">
-                                        <InputText
-                                            value={editingTitle}
-                                            onChange={(e) => setEditingTitle(e.target.value)}
-                                            className="w-full text-sm py-1.5"
-                                            placeholder="Title"
-                                        />
-                                        <div className="flex gap-2">
-                                            <InputText
-                                                value={editingContent}
-                                                onChange={(e) => setEditingContent(e.target.value)}
-                                                className="w-full text-sm py-1.5"
-                                                autoFocus
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') saveEdit();
-                                                    if (e.key === 'Escape') cancelEdit();
-                                                }}
-                                                placeholder="Description"
-                                            />
-                                            <Button
-                                                icon={submittingCriteria ? "pi pi-spin pi-spinner" : "pi pi-check"}
-                                                rounded text severity="success"
-                                                onClick={saveEdit}
-                                                disabled={submittingCriteria}
-                                            />
-                                            <Button icon="pi pi-times" rounded text severity="secondary" onClick={cancelEdit} disabled={submittingCriteria} />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <i className="pi pi-check-circle text-gray-400 group-hover:text-orange-500 transition-colors mt-1"></i>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-bold text-gray-800 text-sm">{item.title}</div>
-                                            <div className="text-gray-500 text-xs">{item.content}</div>
-                                        </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button icon="pi pi-pencil" rounded text severity="info" size="small" onClick={() => startEdit(item)} />
-                                            <Button icon="pi pi-trash" rounded text severity="danger" size="small" onClick={() => deleteCriteria(item.checklistId)} />
-                                        </div>
-                                    </>
-                                )}
+                {/* Thesis grid */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="bg-white rounded-2xl p-6 border border-gray-200 animate-pulse">
+                                <div className="h-5 bg-gray-200 rounded w-3/4 mb-4" />
+                                <div className="h-4 bg-gray-100 rounded w-1/2 mb-3" />
+                                <div className="h-3 bg-gray-100 rounded w-full mb-2" />
+                                <div className="h-3 bg-gray-100 rounded w-5/6" />
                             </div>
                         ))}
                     </div>
+                ) : displayedTheses.length === 0 ? (
+                    <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-16 text-center">
+                        <span className="material-symbols-outlined text-5xl text-gray-300 mb-4 block">description</span>
+                        <p className="text-gray-500 font-medium">
+                            {statusFilter === 'Verified'
+                                ? 'No theses verified by reviewer yet.'
+                                : 'No theses match the current filters.'}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {displayedTheses.map((t) => (
+                            <ThesisCard key={t.thesisId} thesis={t} canUpload={false} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Evaluation criteria dialog - reuse ChecklistPage style or simple list */}
+            {criteriaDialogVisible && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40" onClick={() => setCriteriaDialogVisible(false)}>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-gray-900">Evaluation criteria</h3>
+                            <button type="button" onClick={() => setCriteriaDialogVisible(false)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto max-h-[60vh]">
+                            <p className="text-sm text-gray-500 mb-4">Manage checklist in the dedicated Checklist page.</p>
+                            <Link
+                                to="/checklists"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-xl font-bold text-sm hover:bg-orange-600"
+                            >
+                                <span className="material-symbols-outlined text-lg">open_in_new</span>
+                                Open Checklist
+                            </Link>
+                            {criteriaList.length > 0 && (
+                                <ul className="mt-6 space-y-2">
+                                    {criteriaList.slice(0, 10).map((c) => (
+                                        <li key={c.checklistId} className="flex items-start gap-2 text-sm text-gray-700 p-2 rounded-lg bg-gray-50">
+                                            <span className="text-orange-500 font-bold">{c.displayOrder + 1}.</span>
+                                            <span className="font-medium">{c.title || c.content}</span>
+                                        </li>
+                                    ))}
+                                    {criteriaList.length > 10 && (
+                                        <li className="text-xs text-gray-400">+ {criteriaList.length - 10} more</li>
+                                    )}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
                 </div>
-            </Dialog>
+            )}
         </div>
     );
 };
