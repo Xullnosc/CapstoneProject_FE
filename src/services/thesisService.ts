@@ -36,6 +36,7 @@ export const thesisService = {
         if (filters?.status) params.status = filters.status;
         if (filters?.lecturerId) params.lecturerId = filters.lecturerId;
         if (filters?.semesterId) params.semesterId = filters.semesterId;
+        if (filters?.userId) params.userId = filters.userId;
         const response = await api.get<Thesis[]>('/thesis', { params });
         return response.data;
     },

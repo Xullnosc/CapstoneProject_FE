@@ -66,14 +66,14 @@ const ThesisCard = ({ thesis, onUploadClick, canUpload = false }: Props) => {
             <div className="px-6 pb-6 pt-2 flex flex-col sm:flex-row gap-3">
                 <button
                     onClick={() => navigate(`/thesis/${thesis.thesisId}`)}
-                    className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl hover:bg-orange-50 transition-colors text-sm"
+                    className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
                 >
                     View Details
                 </button>
                 {canUpload && (
                     <button
                         onClick={() => onUploadClick?.(thesis)}
-                        className="flex-1 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-sm text-sm"
+                        className="flex-1 py-2.5 bg-primary text-white cursor-pointer font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-sm text-sm"
                     >
                         Upload New
                     </button>

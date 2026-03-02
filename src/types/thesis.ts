@@ -38,5 +38,6 @@ export interface GetThesisFilters {
     status?: ThesisStatus | '';
     lecturerId?: number;
     semesterId?: number;
+    userId?: number;
 }
 

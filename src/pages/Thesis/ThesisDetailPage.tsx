@@ -226,9 +226,9 @@ const ThesisDetailPage = () => {
                                 <div className="mt-8">
                                     <button
                                         onClick={() => setUploadModalVisible(true)}
-                                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                                        className="w-full cursor-pointer bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
                                     >
-                                        <i className="pi pi-cloud-upload" />
+                                        <i className="pi pi-cloud-upload " />
                                         <span>Upload New Version</span>
                                     </button>
                                 </div>
