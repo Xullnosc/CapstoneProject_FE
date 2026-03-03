@@ -64,10 +64,7 @@ const MyThesisPage = () => {
         setUploadModalVisible(true);
     };
 
-    const handleClearFilters = () => {
-        setDebouncedSearch('');
-        setStatusFilter('');
-    };
+
 
     const hasFilters = debouncedSearch !== '' || statusFilter !== '';
 
@@ -134,15 +131,7 @@ const MyThesisPage = () => {
                                 }}
                             />
 
-                            {/* Clear */}
-                            {hasFilters && (
-                                <button
-                                    onClick={handleClearFilters}
-                                    className="text-slate-500 hover:text-primary px-4 py-3 font-medium transition-colors"
-                                >
-                                    Clear Filters
-                                </button>
-                            )}
+
                         </div>
                     </div>
                 </div>
