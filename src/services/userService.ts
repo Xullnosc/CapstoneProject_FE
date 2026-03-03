@@ -17,5 +17,12 @@ export const userService = {
             : `/users/search?term=${term}`;
         const response = await api.get<UserInfo[]>(url);
         return response.data;
+    },
+    searchLecturers: async (term: string, teamId?: number): Promise<UserInfo[]> => {
+        const url = teamId
+            ? `/mentor-invitation/search-mentors?term=${term}&teamId=${teamId}`
+            : `/mentor-invitation/search-mentors?term=${term}`;
+        const response = await api.get<UserInfo[]>(url);
+        return response.data;
     }
 };
