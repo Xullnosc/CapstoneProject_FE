@@ -6,8 +6,10 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { authService } from '../../services/authService';
 import { thesisService } from '../../services/thesisService';
 import { teamService } from '../../services/teamService';
+import { thesisFormService } from '../../services/thesisFormService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
+import type { ThesisForm } from '../../types/thesisForm';
 
 const ProposeThesisPage = () => {
     const navigate = useNavigate();
@@ -19,10 +21,20 @@ const ProposeThesisPage = () => {
     const [accessMessage, setAccessMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+    const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
+        const fetchLatestForm = async () => {
+            try {
+                const data = await thesisFormService.getLatestForm();
+                setLatestForm(data.data);
+            } catch (error) {
+                console.error("Failed to fetch latest thesis form", error);
+            }
+        };
+
         const checkAccess = async () => {
             setIsLoadingAccess(true);
             try {
@@ -75,7 +87,8 @@ const ProposeThesisPage = () => {
         };
 
         checkAccess();
-    }, []);
+        fetchLatestForm();
+    }, [navigate]);
 
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -212,11 +225,57 @@ const ProposeThesisPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-6 lg:p-10 font-sans text-gray-800">
             <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600 mb-2">
-                        Propose New Thesis
-                    </h1>
-                    <p className="text-gray-500">Submit a new thesis topic along with a detailed proposal document.</p>
+                <div className="mb-8 border-b border-gray-100 pb-8 flex flex-col gap-6">
+                    <div>
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600 mb-2 mt-2">
+                            Propose New Thesis
+                        </h1>
+                        <p className="text-gray-500">Submit a new thesis topic along with a detailed proposal document.</p>
+                    </div>
+
+                    {/* Download Global Thesis Form Section - Styled like Document Preview */}
+                    <div className="w-full">
+                        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                            <i className="pi pi-file"></i>
+                            Official Template
+                        </h3>
+                        {latestForm ? (
+                            <div
+                                className="border-2 border-dashed border-slate-200 rounded-xl p-5 md:p-6 flex flex-col sm:flex-row items-center justify-between bg-slate-50/50 transition-all hover:border-primary/50 group cursor-pointer relative overflow-hidden gap-4 shadow-sm hover:shadow"
+                                onClick={() => window.open(latestForm.fileUrl, '_blank')}
+                            >
+                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto text-center sm:text-left">
+                                    <div className="bg-white p-3 rounded-full shadow-sm border border-slate-100 flex-shrink-0">
+                                        <i className="pi pi-file-word text-4xl text-slate-300 group-hover:text-blue-500 transition-colors" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-slate-700 text-base mb-1">
+                                            Thesis_Form.docx
+                                        </p>
+                                        <p className="text-sm text-slate-500">
+                                            Please download and use this template for your proposal
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="w-full cursor-pointer sm:w-auto flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-primary/30 hover:bg-primary/5 text-primary px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md group-hover:-translate-y-0.5"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(latestForm.fileUrl, '_blank');
+                                    }}
+                                >
+                                    <i className="pi pi-download"></i>
+                                    <span>Download Template</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50/50 text-center">
+                                <i className="pi pi-info-circle text-2xl text-slate-300 mb-2" />
+                                <p className="text-sm text-slate-500 italic">No official template available yet.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
