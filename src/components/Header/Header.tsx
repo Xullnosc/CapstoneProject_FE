@@ -105,12 +105,6 @@ const Header = () => {
                                 <span>Semesters</span>
                             </div>
                         )}
-                        {isHOD && (
-                            <div onClick={() => navigate('/checklists')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/checklists') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-list text-xl"></i>
-                                <span>Checklist</span>
-                            </div>
-                        )}
                         {!isHOD && (
                             <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-users text-xl"></i>
@@ -201,10 +195,6 @@ const Header = () => {
                         <div onClick={() => navigate('/semesters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-calendar text-xl"></i>
                             <span className="hidden lg:block whitespace-nowrap">Semesters</span>
-                        </div>
-                        <div onClick={() => navigate('/checklists')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/checklists') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
-                            <i className="pi pi-list text-xl"></i>
-                            <span className="hidden lg:block whitespace-nowrap">Checklist</span>
                         </div>
                         <div onClick={() => navigate('/thesis')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/thesis') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-book text-xl"></i>

@@ -12,7 +12,6 @@ import ProposeThesisPage from '../pages/ProposeThesis/ProposeThesisPage';
 import MyThesisPage from '../pages/Thesis/MyThesisPage';
 import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
-import ChecklistPage from '../pages/Checklist/ChecklistPage';
 
 const AppRouter = () => {
   return (
@@ -24,7 +23,6 @@ const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
-          <Route path="/checklists" element={<ChecklistPage />} />
         </Route>
       </Route>
 
