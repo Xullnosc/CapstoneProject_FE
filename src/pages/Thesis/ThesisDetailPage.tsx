@@ -46,7 +46,7 @@ const ThesisDetailPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, isStudent]);
 
     useEffect(() => {
         fetchThesis();
@@ -59,9 +59,13 @@ const ThesisDetailPage = () => {
             await thesisService.cancelThesis(id);
             setCancelModalVisible(false);
             fetchThesis();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to cancel thesis', err);
-            alert(err?.response?.data?.Message || 'Failed to cancel thesis.');
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+            alert(message || 'Failed to cancel thesis.');
         } finally {
             setCancelling(false);
         }
