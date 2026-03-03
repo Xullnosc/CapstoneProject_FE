@@ -4,7 +4,8 @@ export type ThesisStatus =
     | 'Need Update'
     | 'Reviewing'
     | 'Rejected'
-    | 'Registered';
+    | 'Registered'
+    | 'Cancelled';
 
 // Matches ThesisHistoryDTO from backend
 export interface ThesisHistory {
@@ -38,5 +39,6 @@ export interface GetThesisFilters {
     status?: ThesisStatus | '';
     lecturerId?: number;
     semesterId?: number;
+    userId?: number;
 }
 

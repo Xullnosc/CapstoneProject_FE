@@ -264,6 +264,7 @@ const TeamDetail: React.FC = () => {
     if (!team) return null;
 
     const isLeader = !!(currentUserId && team.leaderId === currentUserId);
+    const isMentor = !!(currentUserId && team.mentorId === currentUserId);
 
     return (
         <div className="layout-container flex h-full grow flex-col min-h-full transition-colors duration-200">
@@ -274,6 +275,7 @@ const TeamDetail: React.FC = () => {
                     <TeamBanner
                         team={team}
                         isLeader={isLeader}
+                        isMentor={isMentor}
                         onEdit={() => setIsEditModalOpen(true)}
                     />
 
@@ -294,6 +296,10 @@ const TeamDetail: React.FC = () => {
                         members={team.members}
                         isLeader={isLeader}
                         leaderId={team.leaderId}
+                        mentorId={team.mentorId}
+                        mentorName={team.mentorName}
+                        mentorEmail={team.mentorEmail}
+                        mentorAvatar={team.mentorAvatar}
                         currentUserId={currentUserId}
                         teamId={team.teamId}
                         onKick={handleKick}

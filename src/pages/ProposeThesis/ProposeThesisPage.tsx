@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -9,6 +10,7 @@ import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
 
 const ProposeThesisPage = () => {
+    const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [file, setFile] = useState<File | null>(null);
@@ -40,11 +42,24 @@ const ProposeThesisPage = () => {
                         if (!myTeam) {
                             setHasAccess(false);
                             setAccessMessage('You must be in a team to propose a thesis.');
-                        } else if (myTeam.leaderId !== user.userId) {
-                            setHasAccess(false);
-                            setAccessMessage('Only the Team Leader can propose a thesis.');
                         } else {
-                            setHasAccess(true);
+                            // Check if the team leader has already proposed a thesis
+                            const leaderTheses = await thesisService.getAllTheses({ userId: myTeam.leaderId });
+                            const hasProposed = leaderTheses && leaderTheses.length > 0;
+
+                            if (hasProposed) {
+                                // If already proposed, direct the user to their thesis view page
+                                navigate('/my-thesis', { replace: true });
+                                return;
+                            }
+
+                            // If not proposed, only leader has access to the propose form
+                            if (myTeam.leaderId !== user.userId) {
+                                setHasAccess(false);
+                                setAccessMessage('Only the Team Leader can propose a thesis.');
+                            } else {
+                                setHasAccess(true);
+                            }
                         }
                     } catch {
                         setHasAccess(false);
@@ -133,6 +148,8 @@ const ProposeThesisPage = () => {
                 title: 'Success',
                 text: 'Thesis proposal submitted successfully!',
                 confirmButtonColor: '#f97415'
+            }).then(() => {
+                navigate('/my-thesis');
             });
 
             // Reset form

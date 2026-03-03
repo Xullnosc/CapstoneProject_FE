@@ -20,6 +20,10 @@ export interface Team {
     leaderName: string;
     leaderId: number;
     members: TeamMember[];
+    mentorId?: number;
+    mentorName?: string;
+    mentorEmail?: string;
+    mentorAvatar?: string;
     topicId?: number;
     topicName?: string;
     description?: string;

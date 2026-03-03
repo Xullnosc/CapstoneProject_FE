@@ -75,5 +75,10 @@ export const teamService = {
 
     kickMember: async (teamId: number, memberId: number): Promise<void> => {
         await api.delete(`/Team/${teamId}/members/${memberId}`);
+    },
+
+    getMentorTeams: async (): Promise<Team[]> => {
+        const response = await api.get<Team[]>('/team/my-mentor-teams');
+        return response.data;
     }
 };
