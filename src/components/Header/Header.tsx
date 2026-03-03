@@ -150,7 +150,7 @@ const Header = () => {
                             id: string;
                             label: string;
                             icon: string;
-                            path: string | null;
+                            path: string | undefined;
                             show: boolean;
                             isNotification?: boolean;
                             isExternal?: boolean;
@@ -162,7 +162,7 @@ const Header = () => {
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
                             { id: 'thesis', label: 'Thesis List', icon: 'pi pi-book', path: '/my-thesis', show: true },
-                            { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: null, show: true, isNotification: true },
+                            { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: undefined, show: true, isNotification: true },
                         ].filter(item => item.show);
 
                         // Dynamic Balancing: If odd, add FPT Logo as filler (immediately right of the + button)
@@ -182,7 +182,7 @@ const Header = () => {
                         const leftItems = navItems.slice(0, mid);
                         const rightItems = navItems.slice(mid);
 
-                        const renderItem = (item: any) => (
+                        const renderItem = (item: NavItem) => (
                             <div
                                 key={item.id}
                                 onClick={() => item.isExternal ? window.open(item.path, '_blank') : item.path && navigate(item.path)}
