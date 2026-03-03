@@ -5,6 +5,7 @@ import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import ThesisCard from '../../components/Thesis/ThesisCard';
 import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
+import { Dropdown } from 'primereact/dropdown';
 
 const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'All Statuses', value: '' },
@@ -21,7 +22,9 @@ const MyThesisPage = () => {
     const navigate = useNavigate();
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
+    const isLecturer = user?.roleName === 'Lecturer';
     const canUpload = isStudent; // Only students (team leader) upload
+    const canProposeNew = isLecturer; // Only lecturers can submit new theses from here
 
     const [theses, setTheses] = useState<Thesis[]>([]);
     const [loading, setLoading] = useState(true);
@@ -62,10 +65,7 @@ const MyThesisPage = () => {
         setUploadModalVisible(true);
     };
 
-    const handleClearFilters = () => {
-        setDebouncedSearch('');
-        setStatusFilter('');
-    };
+
 
     const hasFilters = debouncedSearch !== '' || statusFilter !== '';
 
@@ -88,7 +88,7 @@ const MyThesisPage = () => {
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Thesis</h1>
                     <p className="text-slate-500 mt-1">Manage and track your academic research progress</p>
                 </div>
-                {canUpload && (
+                {canProposeNew && (
                     <button
                         onClick={() => navigate('/propose-thesis')}
                         className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
@@ -100,46 +100,43 @@ const MyThesisPage = () => {
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-8">
-                <div className="flex flex-col lg:flex-row gap-4">
-                    {/* Search */}
-                    <div className="flex-1">
-                        <div className="relative">
-                            <i className="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input
-                                type="text"
-                                value={debouncedSearch}
-                                onChange={(e) => setDebouncedSearch(e.target.value)}
-                                placeholder="Search by title..."
-                                className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
+            {!isStudent && (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-8">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        {/* Search */}
+                        <div className="flex-1">
+                            <div className="relative">
+                                <i className="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={debouncedSearch}
+                                    onChange={(e) => setDebouncedSearch(e.target.value)}
+                                    placeholder="Search by title..."
+                                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 items-center">
+                            {/* Status dropdown */}
+                            <Dropdown
+                                value={statusFilter}
+                                options={THESIS_STATUSES}
+                                onChange={(e) => setStatusFilter(e.value as ThesisStatus | '')}
+                                placeholder="Filter Status"
+                                className="min-w-[170px] border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-slate-50 text-slate-900"
+                                pt={{
+                                    root: { className: 'h-[48px] flex items-center shadow-none' },
+                                    input: { className: 'font-medium py-0 px-4' },
+                                    trigger: { className: 'px-4' }
+                                }}
                             />
+
+
                         </div>
                     </div>
-
-                    <div className="flex flex-wrap gap-4 items-center">
-                        {/* Status dropdown */}
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value as ThesisStatus | '')}
-                            className="min-w-[170px] py-3 px-4 bg-slate-50 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 font-medium cursor-pointer"
-                        >
-                            {THESIS_STATUSES.map((s) => (
-                                <option key={s.value} value={s.value}>{s.label}</option>
-                            ))}
-                        </select>
-
-                        {/* Clear */}
-                        {hasFilters && (
-                            <button
-                                onClick={handleClearFilters}
-                                className="text-slate-500 hover:text-primary px-4 py-3 font-medium transition-colors"
-                            >
-                                Clear Filters
-                            </button>
-                        )}
-                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Content */}
             {loading ? (
