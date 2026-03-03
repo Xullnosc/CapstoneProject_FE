@@ -65,4 +65,10 @@ export const thesisService = {
         });
         return response.data;
     },
+
+    /** PUT /thesis/:id/cancel - cancel a thesis proposal */
+    cancelThesis: async (id: string) => {
+        const response = await api.put(`/thesis/${id}/cancel`);
+        return response.data;
+    },
 };
