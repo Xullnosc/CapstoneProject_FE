@@ -22,6 +22,8 @@ const Header = () => {
     // However, I previously added roleName to authService.
     const canManageSemesters = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
+    const isLecturer = user?.roleName === 'Lecturer';
+    const isStudent = user?.roleName === 'Student';
 
     useEffect(() => {
         const fetchCurrentSemester = async () => {
@@ -104,10 +106,16 @@ const Header = () => {
                                 <span>Semesters</span>
                             </div>
                         )}
-                        {!isHOD && (
-                            <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                        {(isStudent || isLecturer) && (
+                            <div onClick={() => navigate(isLecturer ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-users text-xl"></i>
-                                <span>My Team</span>
+                                <span>My Team{isLecturer ? 's' : ''}</span>
+                            </div>
+                        )}
+                        {isLecturer && (
+                            <div onClick={() => navigate('/mentor-invitations')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/mentor-invitations' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-envelope text-xl"></i>
+                                <span>Mentor Invitations</span>
                             </div>
                         )}
                         <div onClick={() => navigate('/my-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/my-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
@@ -123,7 +131,7 @@ const Header = () => {
                         </div>
                     </div>
 
-                    {!isHOD && (
+                    {(isStudent || isLecturer) && (
                         <div className="mt-auto">
                             <button onClick={() => navigate('/propose-thesis')} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-200/50 hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
                                 <i className="pi pi-plus text-lg"></i>
@@ -149,16 +157,26 @@ const Header = () => {
                                 <span className="hidden lg:block whitespace-nowrap">Semesters</span>
                             </div>
                         )}
-                        <div onClick={() => navigate('/teams/team')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
-                            <i className="pi pi-users text-xl"></i>
-                            <span className="hidden lg:block whitespace-nowrap">My Team</span>
-                        </div>
+                        {(isStudent || isLecturer) && (
+                            <div onClick={() => navigate(isLecturer ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                <i className="pi pi-users text-xl"></i>
+                                <span className="hidden lg:block whitespace-nowrap">My Team{isLecturer ? 's' : ''}</span>
+                            </div>
+                        )}
+                        {isLecturer && (
+                            <div onClick={() => navigate('/mentor-invitations')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname === '/mentor-invitations' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                <i className="pi pi-envelope text-xl"></i>
+                                <span className="hidden lg:block whitespace-nowrap">Invitations</span>
+                            </div>
+                        )}
                     </nav>
 
                     {/* Center Action Button */}
-                    <button onClick={() => navigate('/propose-thesis')} className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none translate-y-0">
-                        <i className="pi pi-plus text-xl lg:text-2xl font-bold"></i>
-                    </button>
+                    {(isStudent || isLecturer) && (
+                        <button onClick={() => navigate('/propose-thesis')} className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none translate-y-0">
+                            <i className="pi pi-plus text-xl lg:text-2xl font-bold"></i>
+                        </button>
+                    )}
 
                     {/* Right Navigation */}
                     <nav className="flex items-center gap-4 lg:gap-10">

@@ -4,10 +4,11 @@ import type { Team } from '../../types/team';
 interface TeamBannerProps {
     team: Team | null;
     isLeader: boolean;
+    isMentor?: boolean;
     onEdit?: () => void;
 }
 
-const TeamBanner: React.FC<TeamBannerProps> = ({ team, isLeader, onEdit }) => {
+const TeamBanner: React.FC<TeamBannerProps> = ({ team, isLeader, isMentor, onEdit }) => {
     if (!team) return null;
 
     return (
@@ -45,6 +46,11 @@ const TeamBanner: React.FC<TeamBannerProps> = ({ team, isLeader, onEdit }) => {
                             <div className="mt-2 inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
                                 <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>crown</span>
                                 Team Leader
+                            </div>
+                        ) : isMentor ? (
+                            <div className="mt-2 inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                                Mentor
                             </div>
                         ) : (
                             <div className="mt-2 inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
