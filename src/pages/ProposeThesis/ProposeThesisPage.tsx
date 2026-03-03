@@ -91,6 +91,11 @@ const ProposeThesisPage = () => {
             // Accept word documents
             if (selectedFile.type === 'application/msword' || selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || selectedFile.name.endsWith('.doc') || selectedFile.name.endsWith('.docx')) {
                 setFile(selectedFile);
+                // Autofill title if empty
+                if (!title.trim()) {
+                    const fileName = selectedFile.name.replace(/\.[^/.]+$/, "");
+                    setTitle(fileName);
+                }
             } else {
                 Swal.fire({
                     icon: 'error',
