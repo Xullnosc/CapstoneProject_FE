@@ -169,7 +169,7 @@ const ThesisDetailPage = () => {
                                         {thesis.fileUrl ? (
                                             <>
                                                 <p className="font-medium text-slate-700 mb-1 text-sm">
-                                                    {`thesis_v${latestVersion ?? 1}.pdf`}
+                                                    {thesis.title || 'thesis_document'}.{thesis.fileUrl?.split('.').pop() || 'pdf'}
                                                 </p>
                                                 {latestVersion && (
                                                     <p className="text-xs text-slate-400 mb-4">Version {latestVersion}</p>
