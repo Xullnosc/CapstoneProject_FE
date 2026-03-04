@@ -55,12 +55,14 @@ const ProposeThesisPage = () => {
                             setHasAccess(false);
                             setAccessMessage('You must be in a team to propose a thesis.');
                         } else {
-                            // Check if the team leader has already proposed a thesis
+                            // Check if the team leader has any ACTIVE thesis (not Cancelled/Rejected)
                             const leaderTheses = await thesisService.getAllTheses({ userId: myTeam.leaderId });
-                            const hasProposed = leaderTheses && leaderTheses.length > 0;
+                            const hasActiveThesis = leaderTheses && leaderTheses.some(
+                                t => t.status !== 'Cancelled' && t.status !== 'Rejected'
+                            );
 
-                            if (hasProposed) {
-                                // If already proposed, direct the user to their thesis view page
+                            if (hasActiveThesis) {
+                                // If there's an active thesis, redirect to the list view
                                 navigate('/my-thesis', { replace: true });
                                 return;
                             }

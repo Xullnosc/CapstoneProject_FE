@@ -266,7 +266,7 @@ const ThesisDetailPage = () => {
                                         <span>Upload New Version</span>
                                     </button>
 
-                                    {isLeader && (thesis.status === 'Reviewing' || thesis.status === 'Registered') && (
+                                    {isLeader && (thesis.status === 'Reviewing' || thesis.status === 'Registered' || thesis.status === 'On Mentor Inviting') && (
                                         <button
                                             onClick={() => setCancelModalVisible(true)}
                                             className="w-full bg-white hover:bg-red-50 text-red-600 border-2 border-red-100 hover:border-red-200 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
@@ -286,17 +286,19 @@ const ThesisDetailPage = () => {
                                 Next Steps
                             </h4>
                             <p className="text-sm text-slate-600 leading-relaxed">
-                                {thesis.status === 'Reviewing'
-                                    ? 'Your thesis is currently under review. You will be notified once feedback is available.'
-                                    : thesis.status === 'Need Update'
-                                        ? 'Your lecturer has requested updates. Please upload a revised version.'
-                                        : thesis.status === 'Rejected'
-                                            ? 'Your thesis was not approved. Please review feedback and consider revising.'
-                                            : thesis.status === 'Published'
-                                                ? 'Your thesis has been published. Congratulations!'
-                                                : thesis.status === 'Registered'
-                                                    ? 'Your thesis has been registered and is awaiting review.'
-                                                    : 'Keep track of your thesis status here.'}
+                                {thesis.status === 'On Mentor Inviting'
+                                    ? 'Your thesis is waiting for a mentor to accept the invitation. You can cancel this proposal if needed.'
+                                    : thesis.status === 'Reviewing'
+                                        ? 'Your thesis is currently under review. You will be notified once feedback is available.'
+                                        : thesis.status === 'Need Update'
+                                            ? 'Your lecturer has requested updates. Please upload a revised version.'
+                                            : thesis.status === 'Rejected'
+                                                ? 'Your thesis was not approved. Please review feedback and consider revising.'
+                                                : thesis.status === 'Published'
+                                                    ? 'Your thesis has been published. Congratulations!'
+                                                    : thesis.status === 'Registered'
+                                                        ? 'Your thesis has been registered and is awaiting review.'
+                                                        : 'Keep track of your thesis status here.'}
                             </p>
                         </div>
                     </div>
