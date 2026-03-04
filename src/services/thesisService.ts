@@ -67,6 +67,11 @@ export const thesisService = {
         return response.data;
     },
 
+    /** PUT /thesis/:id/review - reviewer only: set pass (Published) / fail (Rejected) / Need Update */
+    evaluateThesis: async (id: string, status: 'Published' | 'Rejected' | 'Need Update', note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/review`, { status, note });
+    },
+
     /** PUT /thesis/:id/cancel - cancel a thesis proposal */
     cancelThesis: async (id: string) => {
         const response = await api.put(`/thesis/${id}/cancel`);
