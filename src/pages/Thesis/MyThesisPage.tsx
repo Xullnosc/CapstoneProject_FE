@@ -15,6 +15,7 @@ const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'Updated', value: 'Updated' },
     { label: 'Published', value: 'Published' },
     { label: 'Rejected', value: 'Rejected' },
+    { label: 'Cancelled', value: 'Cancelled' },
 ];
 
 const MyThesisPage = () => {
