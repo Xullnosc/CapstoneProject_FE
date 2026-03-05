@@ -45,6 +45,7 @@ export const whitelistService = {
 
     deleteWhitelist: async (id: number): Promise<void> => {
         await api.delete(`/whitelist/${id}`);
+    },
     /**
      * upload file to server and return whatever the controller responds.
      * there is no dedicated preview endpoint on backend; the same route
