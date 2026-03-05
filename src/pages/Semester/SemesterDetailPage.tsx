@@ -294,6 +294,10 @@ const SemesterDetailPage = () => {
             <ImportWhitelistModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
+                semesterId={semester?.semesterId || 0}
+                onSuccess={() => { /* refresh semester data after import */
+                    if (semester) fetchSemester(semester.semesterId);
+                }}
             />
         </div>
     );
