@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import ActiveSemesterBanner from '../../components/Semester/ActiveSemesterBanner';
 import SemesterCard from '../../components/Semester/SemesterCard';
 import SemesterModal from '../../components/Semester/SemesterModal';
@@ -75,6 +76,13 @@ const SemesterDashboardPage = () => {
                                     <span className="material-symbols-outlined text-xl">ios_share</span>
                                     Export
                                 </button>
+                                <Link
+                                    to="/lecturers"
+                                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors shadow-sm"
+                                >
+                                    <span className="material-symbols-outlined text-xl">school</span>
+                                    Manage Lecturer Pool
+                                </Link>
                                 <button
                                     onClick={() => setIsCreateModalOpen(true)}
                                     className="cursor-pointer flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px]"

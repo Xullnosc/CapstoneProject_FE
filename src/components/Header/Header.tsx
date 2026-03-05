@@ -22,6 +22,7 @@ const Header = () => {
     // However, I previously added roleName to authService.
     const canManageSemesters = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
+    const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isLecturer = user?.roleName === 'Lecturer';
     const isStudent = user?.roleName === 'Student';
 
@@ -122,6 +123,12 @@ const Header = () => {
                             <i className="pi pi-book text-xl"></i>
                             <span>Thesis List</span>
                         </div>
+                        {isReviewer && (
+                            <div onClick={() => navigate('/review-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/review-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-eye text-xl"></i>
+                                <span>Review Thesis</span>
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
                             <div className="relative">
                                 <i className="pi pi-bell text-xl"></i>
@@ -190,7 +197,7 @@ const Header = () => {
                                     }`}
                             >
                                 {item.id === 'fpt-logo' ? (
-                                    <img src={item.icon} alt="FPT" className="w-5 h-5 object-contain" />
+                                    <img src={item.icon} alt="FPT" className="h-8 w-auto min-w-[100px] lg:h-9 lg:min-w-[130px] object-contain" />
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
@@ -199,7 +206,7 @@ const Header = () => {
                                         )}
                                     </div>
                                 )}
-                                <span className="hidden lg:block">{item.label}</span>
+                                {item.id !== 'fpt-logo' && <span className="hidden lg:block">{item.label}</span>}
                             </div>
                         );
 

@@ -4,13 +4,14 @@ import SemesterStats from '../../components/Semester/SemesterStats';
 import SemesterTeamsTable from '../../components/Semester/SemesterTeamsTable';
 import SemesterWhitelistsTable from '../../components/Semester/SemesterWhitelistsTable';
 import { semesterService } from '../../services/semesterService';
-import type { Semester } from '../../services/semesterService';
+import type { Semester, Whitelist } from '../../services/semesterService';
 import Swal from '../../utils/swal';
 
 import SemesterModal from '../../components/Semester/SemesterModal';
 
 import ReviewerModal from '../../components/Semester/ReviewerModal';
 import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal';
+import WhitelistStudentModal from '../../components/Semester/WhitelistStudentModal';
 import { calculateSemesterStatus } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
 import { authService } from '../../services/authService';
@@ -34,6 +35,8 @@ const SemesterDetailPage = () => {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isThesisFormModalOpen, setIsThesisFormModalOpen] = useState(false);
     const [isVersionsModalOpen, setIsVersionsModalOpen] = useState(false);
+    const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<Whitelist | null>(null);
     const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
     const [showWarning, setShowWarning] = useState(true);
 
@@ -114,6 +117,9 @@ const SemesterDetailPage = () => {
         );
     }
 
+    const semesterStatus = calculateSemesterStatus(semester.isActive, semester.startDate, semester.endDate, semester.isArchived);
+    const isEnded = semesterStatus === 'Ended';
+
     return (
         <div className="min-h-screen bg-white">
             <main className="max-w-[1200px] mx-auto w-full px-6 py-6">
@@ -138,11 +144,10 @@ const SemesterDetailPage = () => {
                             <div className="flex items-center gap-3">
                                 <h1 className="text-gray-900 text-4xl font-black tracking-tight">{semester.semesterName}</h1>
                                 {(() => {
-                                    const status = calculateSemesterStatus(semester.isActive, semester.startDate, semester.endDate, semester.isArchived);
-                                    const colors = SEMESTER_STATUS_COLORS[status];
+                                    const colors = SEMESTER_STATUS_COLORS[semesterStatus];
                                     return (
                                         <span className={`px-3 py-1 rounded-full ${colors.bg} ${colors.border} ${colors.text} text-xs font-bold uppercase tracking-wider shadow-sm border`}>
-                                            {status}
+                                            {semesterStatus}
                                         </span>
                                     );
                                 })()}
@@ -172,7 +177,7 @@ const SemesterDetailPage = () => {
                                     }}
                                 >
                                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 w-full text-center border-b border-slate-100 pb-2">
-                                        Global Thesis Form
+                                        Thesis Form
                                     </h3>
                                     <i className="pi pi-file-word text-3xl text-slate-300 group-hover:text-blue-500 mb-2 transition-colors mt-2" />
                                     <p className="font-semibold text-slate-700 text-sm text-center">Version {latestForm.versionNumber}</p>
@@ -189,7 +194,7 @@ const SemesterDetailPage = () => {
                                     onClick={() => setIsThesisFormModalOpen(true)}
                                 >
                                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400/70 mb-2 w-full text-center border-b border-indigo-100/50 pb-2">
-                                        Administration
+                                        Upload
                                     </h3>
                                     <i className="pi pi-cloud-upload text-3xl text-indigo-300 group-hover:text-indigo-500 mb-2 transition-colors mt-2" />
                                     <p className="font-semibold text-indigo-700 text-sm text-center">Upload New Version</p>
@@ -237,14 +242,18 @@ const SemesterDetailPage = () => {
                         onClick={() => setActiveTab('whitelists')}
                         className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'whitelists' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
-                        <span className="material-symbols-outlined text-lg">verified_user</span>
+                        <div className="flex items-center justify-center w-5 h-5">
+                            <span className="material-symbols-outlined text-[18px]">verified_user</span>
+                        </div>
                         All Whitelist
                     </button>
                     <button
                         onClick={() => setActiveTab('lecturers')}
                         className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'lecturers' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
-                        <span className="material-symbols-outlined text-lg">school</span>
+                        <div className="flex items-center justify-center w-5 h-5">
+                            <span className="material-symbols-outlined text-[18px]">school</span>
+                        </div>
                         Lecturers
                     </button>
 
@@ -252,7 +261,9 @@ const SemesterDetailPage = () => {
                         onClick={() => setActiveTab('students')}
                         className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'students' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
-                        <span className="material-symbols-outlined text-lg">person</span>
+                        <div className="flex items-center justify-center w-5 h-5">
+                            <span className="material-symbols-outlined text-[18px]">person</span>
+                        </div>
                         Students
                     </button>
 
@@ -263,7 +274,9 @@ const SemesterDetailPage = () => {
                         onClick={() => setActiveTab('teams')}
                         className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'teams' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
-                        <span className="material-symbols-outlined text-lg">groups</span>
+                        <div className="flex items-center justify-center w-5 h-5">
+                            <span className="material-symbols-outlined text-[18px]">groups</span>
+                        </div>
                         Teams
                     </button>
                 </div>
@@ -276,7 +289,7 @@ const SemesterDetailPage = () => {
                     <SemesterWhitelistsTable
                         key="whitelists"
                         whitelists={semester.whitelists || []}
-                        headerAction={canManage ? (
+                        headerAction={canManage && !isEnded ? (
                             <button
                                 onClick={() => setIsImportModalOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-xl text-sm font-bold hover:bg-green-100 transition-colors border border-green-200 shadow-sm cursor-pointer"
@@ -286,13 +299,14 @@ const SemesterDetailPage = () => {
                             </button>
                         ) : undefined}
                         onUpdate={() => fetchSemester(semester.semesterId)}
+                        isEnded={isEnded}
                     />
                 )}
                 {activeTab === 'lecturers' && (
                     <SemesterWhitelistsTable
                         key="lecturers"
-                        whitelists={semester.whitelists?.filter(w => w.roleName === 'Lecturer') || []}
-                        headerAction={canManage ? (
+                        whitelists={semester.whitelists?.filter(w => w.roleName?.toLowerCase() === 'lecturer') || []}
+                        headerAction={canManage && !isEnded ? (
                             <button
                                 onClick={() => setIsReviewerModalOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
@@ -302,12 +316,26 @@ const SemesterDetailPage = () => {
                             </button>
                         ) : undefined}
                         onUpdate={() => fetchSemester(semester.semesterId)}
+                        isEnded={isEnded}
                     />
                 )}
                 {activeTab === 'students' && (
                     <SemesterWhitelistsTable
                         key="students"
-                        whitelists={semester.whitelists?.filter(w => w.roleName === 'Student') || []}
+                        whitelists={semester.whitelists?.filter(w => w.roleName?.toLowerCase() === 'student') || []}
+                        headerAction={canManage && !isEnded ? (
+                            <button
+                                onClick={() => { setSelectedStudent(null); setIsStudentModalOpen(true); }}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors border border-blue-200 shadow-sm cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-lg">person_add</span>
+                                Add Student
+                            </button>
+                        ) : undefined}
+                        onEdit={(student) => { setSelectedStudent(student); setIsStudentModalOpen(true); }}
+                        onUpdate={() => fetchSemester(semester.semesterId)}
+                        showStudentCode={true}
+                        isEnded={isEnded}
                     />
                 )}
 
@@ -354,6 +382,10 @@ const SemesterDetailPage = () => {
             <ImportWhitelistModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
+                semesterId={semester?.semesterId || 0}
+                onSuccess={() => { /* refresh semester data after import */
+                    if (semester) fetchSemester(semester.semesterId);
+                }}
             />
             {/* Thesis Form Modal for HODs */}
             <ThesisFormModal
@@ -369,6 +401,14 @@ const SemesterDetailPage = () => {
             <ThesisFormVersionsModal
                 isOpen={isVersionsModalOpen}
                 onClose={() => setIsVersionsModalOpen(false)}
+            />
+
+            <WhitelistStudentModal
+                isOpen={isStudentModalOpen}
+                onClose={() => setIsStudentModalOpen(false)}
+                onSuccess={() => { setIsStudentModalOpen(false); fetchSemester(semester.semesterId); }}
+                semesterId={semester.semesterId}
+                studentData={selectedStudent}
             />
         </div>
     );

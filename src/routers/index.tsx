@@ -11,8 +11,10 @@ import ThesisPage from '../pages/Thesis/ThesisPage';
 import ProposeThesisPage from '../pages/ProposeThesis/ProposeThesisPage';
 import MyThesisPage from '../pages/Thesis/MyThesisPage';
 import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
+import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
+import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 
 const AppRouter = () => {
   return (
@@ -24,6 +26,7 @@ const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
+          <Route path="/lecturers" element={<LecturerManagementPage />} />
         </Route>
       </Route>
 
@@ -36,6 +39,7 @@ const AppRouter = () => {
           <Route path="/teams/:teamId" element={<TeamDetail />} />
           <Route path="/thesis" element={<ThesisPage />} />
           <Route path="/my-thesis" element={<MyThesisPage />} />
+          <Route path="/review-thesis" element={<ReviewerThesisPage />} />
           <Route path="/thesis/:id" element={<ThesisDetailPage />} />
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
           <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />
