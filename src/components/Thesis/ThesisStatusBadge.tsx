@@ -21,6 +21,10 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; classes: string }> = 
         label: 'Reviewing',
         classes: 'bg-orange-100 text-orange-700'
     },
+    'On Mentor Inviting': {
+        label: 'On Mentor Inviting',
+        classes: 'bg-purple-100 text-purple-700'
+    },
     Rejected: {
         label: 'Rejected',
         classes: 'bg-red-100 text-red-700'

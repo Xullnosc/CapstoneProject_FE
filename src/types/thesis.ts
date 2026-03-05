@@ -3,6 +3,7 @@ export type ThesisStatus =
     | 'Updated'
     | 'Need Update'
     | 'Reviewing'
+    | 'On Mentor Inviting'
     | 'Rejected'
     | 'Registered'
     | 'Cancelled';
