@@ -197,7 +197,7 @@ const Header = () => {
                                     }`}
                             >
                                 {item.id === 'fpt-logo' ? (
-                                    <img src={item.icon} alt="FPT" className="w-5 h-5 object-contain" />
+                                    <img src={item.icon} alt="FPT" className="h-8 w-auto min-w-[100px] lg:h-9 lg:min-w-[130px] object-contain" />
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
@@ -206,7 +206,7 @@ const Header = () => {
                                         )}
                                     </div>
                                 )}
-                                <span className="hidden lg:block">{item.label}</span>
+                                {item.id !== 'fpt-logo' && <span className="hidden lg:block">{item.label}</span>}
                             </div>
                         );
 
