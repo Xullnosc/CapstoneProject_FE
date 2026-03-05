@@ -30,23 +30,10 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
     const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
     const [hasSearched, setHasSearched] = useState(false);
 
-    useEffect(() => {
-        if (!isOpen) {
-            setSearchTerm('');
-            setSearchResults([]);
-            setInvitedUsers({});
-            setHasSearched(false);
-        }
-    }, [isOpen]);
-
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!searchTerm.trim()) return;
-
+    const performSearch = async (term: string) => {
         setIsLoading(true);
-        setHasSearched(true);
         try {
-            const results = await userService.searchLecturers(searchTerm, teamId);
+            const results = await userService.searchLecturers(term, teamId);
             setSearchResults(results);
 
             const newInvitedUsers = { ...invitedUsers };
@@ -56,19 +43,37 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                 }
             });
             setInvitedUsers(newInvitedUsers);
-
         } catch (error) {
             console.error(error);
+            // Reverting error alert to match more closely with original simple errors if any
             Swal.fire({
                 icon: 'error',
-                title: 'Search Failed',
-                text: 'Could not find lecturers. Please try again.',
-                timer: 1500,
-                showConfirmButton: false
+                title: 'Operation Failed',
+                text: 'Could not fetch mentors. Please try again.',
+                timer: 2000,
+                showConfirmButton: false,
+                backdrop: false
             });
         } finally {
             setIsLoading(false);
         }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            setSearchTerm('');
+            setHasSearched(false);
+            performSearch('');
+        } else {
+            setSearchResults([]);
+            setInvitedUsers({});
+        }
+    }, [isOpen, teamId]);
+
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setHasSearched(true);
+        await performSearch(searchTerm);
     };
 
     const handleInvite = async (user: UserInfo) => {
@@ -167,7 +172,6 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setHasSearched(false);
                             }}
                             placeholder="Type Name or Email to search for Lecturers..."
                             className="w-full pl-10 pr-20 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all text-gray-900"
@@ -175,7 +179,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                         />
                         <button
                             type="submit"
-                            disabled={isLoading || !searchTerm.trim()}
+                            disabled={isLoading}
                             className="absolute inset-y-1 right-1 px-4 bg-orange-500 text-white text-sm font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                         >
                             {isLoading ? (
@@ -241,14 +245,12 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                             <span className="material-symbols-outlined text-4xl mb-2 text-gray-300">search_off</span>
                             <p>No results found.</p>
                         </div>
-                    ) : null}
-
-                    {(!hasSearched && !isLoading) && (
+                    ) : !isLoading ? (
                         <div className="text-center py-12 text-gray-400">
                             <span className="material-symbols-outlined text-4xl mb-2 text-gray-200">search</span>
-                            <p>Enter a name or email to search for mentors</p>
+                            <p>Loading available mentors...</p>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </div>
         </Dialog>

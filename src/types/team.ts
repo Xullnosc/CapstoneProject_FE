@@ -24,6 +24,10 @@ export interface Team {
     mentorName?: string;
     mentorEmail?: string;
     mentorAvatar?: string;
+    mentorId2?: number;
+    mentor2Name?: string;
+    mentor2Email?: string;
+    mentor2Avatar?: string;
     topicId?: number;
     topicName?: string;
     description?: string;

@@ -264,7 +264,7 @@ const TeamDetail: React.FC = () => {
     if (!team) return null;
 
     const isLeader = !!(currentUserId && team.leaderId === currentUserId);
-    const isMentor = !!(currentUserId && team.mentorId === currentUserId);
+    const isMentor = !!(currentUserId && (team.mentorId === currentUserId || team.mentorId2 === currentUserId));
 
     return (
         <div className="layout-container flex h-full grow flex-col min-h-full transition-colors duration-200">
@@ -300,6 +300,10 @@ const TeamDetail: React.FC = () => {
                         mentorName={team.mentorName}
                         mentorEmail={team.mentorEmail}
                         mentorAvatar={team.mentorAvatar}
+                        mentorId2={team.mentorId2}
+                        mentor2Name={team.mentor2Name}
+                        mentor2Email={team.mentor2Email}
+                        mentor2Avatar={team.mentor2Avatar}
                         currentUserId={currentUserId}
                         teamId={team.teamId}
                         onKick={handleKick}
