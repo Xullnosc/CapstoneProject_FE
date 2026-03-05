@@ -14,6 +14,7 @@ import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
+import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 
 const AppRouter = () => {
   return (
@@ -25,6 +26,7 @@ const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
+          <Route path="/lecturers" element={<LecturerManagementPage />} />
         </Route>
       </Route>
 
