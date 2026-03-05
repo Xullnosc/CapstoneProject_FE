@@ -10,6 +10,7 @@ export interface LoginResponse {
         roleName: string;
         studentCode: string;
         campus: string;
+        isReviewer?: boolean;
     };
 }
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
+import { teamService } from '../../services/teamService';
 import ThesisStatusBadge from '../../components/Thesis/ThesisStatusBadge';
 import ThesisHistoryTable from '../../components/Thesis/ThesisHistoryTable';
 import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
@@ -12,11 +13,17 @@ const ThesisDetailPage = () => {
     const navigate = useNavigate();
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
+    const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
+    const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
 
     const [thesis, setThesis] = useState<Thesis | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
+    const [evaluating, setEvaluating] = useState<string | null>(null);
+    const [cancelModalVisible, setCancelModalVisible] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+    const [isLeader, setIsLeader] = useState(false);
 
     const fetchThesis = useCallback(async () => {
         if (!id) return;
@@ -25,17 +32,47 @@ const ThesisDetailPage = () => {
         try {
             const data = await thesisService.getThesisById(id);
             setThesis(data);
+
+            if (isStudent) {
+                const team = await teamService.getMyTeam();
+                const curUser = authService.getUser();
+                if (team && curUser) {
+                    const member = team.members.find(m => m.studentCode === curUser.studentCode);
+                    if (member?.role === 'Leader') {
+                        setIsLeader(true);
+                    }
+                }
+            }
         } catch (err) {
             console.error('Failed to fetch thesis detail', err);
             setError('Could not load thesis details. Please try again.');
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, isStudent]);
 
     useEffect(() => {
         fetchThesis();
     }, [fetchThesis]);
+
+    const handleCancel = async () => {
+        if (!id) return;
+        setCancelling(true);
+        try {
+            await thesisService.cancelThesis(id);
+            setCancelModalVisible(false);
+            fetchThesis();
+        } catch (err: unknown) {
+            console.error('Failed to cancel thesis', err);
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+            alert(message || 'Failed to cancel thesis.');
+        } finally {
+            setCancelling(false);
+        }
+    };
 
     const formatDate = (dateStr: string | null | undefined) => {
         if (!dateStr) return '—';
@@ -57,6 +94,21 @@ const ThesisDetailPage = () => {
 
     // Submission date: upDate or updateDate
     const submissionDateStr = thesis?.upDate ?? thesis?.updateDate;
+
+    const handleEvaluate = async (status: 'Published' | 'Rejected' | 'Need Update') => {
+        if (!id || !thesis) return;
+        setEvaluating(status);
+        setError(null);
+        try {
+            await thesisService.evaluateThesis(id, status);
+            await fetchThesis();
+        } catch (err) {
+            console.error('Evaluate thesis failed', err);
+            setError('Could not save evaluation. Please try again.');
+        } finally {
+            setEvaluating(null);
+        }
+    };
 
     // ─── Loading ─────────────────────────────────────────────────────────────
     if (loading) {
@@ -85,10 +137,10 @@ const ThesisDetailPage = () => {
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Thesis not found</h2>
                     <p className="text-gray-500 text-sm mb-6">{error}</p>
                     <button
-                        onClick={() => navigate('/my-thesis')}
+                        onClick={() => navigate(isHOD ? '/thesis' : isReviewer ? '/review-thesis' : '/my-thesis')}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors"
                     >
-                        Back to My Thesis
+                        {isHOD ? 'Back to Thesis List' : isReviewer ? 'Back to Review Thesis' : 'Back to My Thesis'}
                     </button>
                 </div>
             </div>
@@ -101,8 +153,8 @@ const ThesisDetailPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <nav className="flex text-sm text-slate-500">
-                        <Link to="/my-thesis" className="hover:text-primary transition-colors cursor-pointer">
-                            My Thesis
+                        <Link to={isHOD ? '/thesis' : isReviewer ? '/review-thesis' : '/my-thesis'} className="hover:text-primary transition-colors cursor-pointer">
+                            {isHOD ? 'Thesis List' : isReviewer ? 'Review Thesis' : 'My Thesis'}
                         </Link>
                         <span className="mx-2">/</span>
                         <span className="text-primary font-medium">Detail</span>
@@ -151,7 +203,7 @@ const ThesisDetailPage = () => {
                                         {thesis.fileUrl ? (
                                             <>
                                                 <p className="font-medium text-slate-700 mb-1 text-sm">
-                                                    {`thesis_v${latestVersion ?? 1}.pdf`}
+                                                    {thesis.title || 'thesis_document'}.{thesis.fileUrl?.split('.').pop() || 'pdf'}
                                                 </p>
                                                 {latestVersion && (
                                                     <p className="text-xs text-slate-400 mb-4">Version {latestVersion}</p>
@@ -221,39 +273,116 @@ const ThesisDetailPage = () => {
                                 </div>
                             </div>
 
+                            {/* Reviewer: Pass / Fail / Need Update (only when status is Reviewing) */}
+                            {isReviewer && thesis.status === 'Reviewing' && (
+                                <div className="mt-8 pt-6 border-t border-slate-200">
+                                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
+                                        Evaluation
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Published')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">check_circle</span>
+                                            Pass
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Need Update')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">edit_note</span>
+                                            Need Update
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEvaluate('Rejected')}
+                                            disabled={!!evaluating}
+                                            className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">cancel</span>
+                                            Fail
+                                        </button>
+                                    </div>
+                                    {evaluating && (
+                                        <p className="text-xs text-slate-500 mt-2 text-center">Saving...</p>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Upload new version button (students only) */}
                             {isStudent && (
-                                <div className="mt-8">
+                                <div className="mt-8 space-y-3">
                                     <button
                                         onClick={() => setUploadModalVisible(true)}
-                                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
+                                        className="w-full cursor-pointer bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
                                     >
-                                        <i className="pi pi-cloud-upload" />
+                                        <i className="pi pi-cloud-upload " />
                                         <span>Upload New Version</span>
                                     </button>
+
+                                    {isLeader && (thesis.status === 'Reviewing' || thesis.status === 'Registered') && (
+                                        <button
+                                            onClick={() => setCancelModalVisible(true)}
+                                            className="w-full bg-white hover:bg-red-50 text-red-600 border-2 border-red-100 hover:border-red-200 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <i className="pi pi-times-circle" />
+                                            <span>Cancel Proposal</span>
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Next Steps info box */}
+                        {/* Info box: student "Next Steps" vs lecturer "Review Info" */}
                         <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-                            <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
-                                <i className="pi pi-info-circle text-sm" />
-                                Next Steps
-                            </h4>
-                            <p className="text-sm text-slate-600 leading-relaxed">
-                                {thesis.status === 'Reviewing'
-                                    ? 'Your thesis is currently under review. You will be notified once feedback is available.'
-                                    : thesis.status === 'Need Update'
-                                        ? 'Your lecturer has requested updates. Please upload a revised version.'
-                                        : thesis.status === 'Rejected'
-                                            ? 'Your thesis was not approved. Please review feedback and consider revising.'
-                                            : thesis.status === 'Published'
-                                                ? 'Your thesis has been published. Congratulations!'
-                                                : thesis.status === 'Registered'
-                                                    ? 'Your thesis has been registered and is awaiting review.'
-                                                    : 'Keep track of your thesis status here.'}
-                            </p>
+                            {isReviewer || isHOD ? (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        {isReviewer ? 'Review Info' : 'Thesis Info'}
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'Reviewing'
+                                            ? (isReviewer
+                                                ? 'This thesis is pending your evaluation. Review the document above and use the evaluation buttons to Pass, Request updates, or Reject.'
+                                                : 'This thesis is under reviewer evaluation.')
+                                            : thesis.status === 'Need Update'
+                                                ? (isReviewer ? 'You have requested updates from the student.' : 'The reviewer has requested updates from the submitter.')
+                                                : thesis.status === 'Rejected'
+                                                    ? (isReviewer ? 'You have rejected this thesis.' : 'The reviewer has rejected this thesis.')
+                                                    : thesis.status === 'Published'
+                                                        ? (isReviewer ? 'You have approved this thesis (Published).' : 'This thesis has been approved and published.')
+                                                        : thesis.status === 'Registered'
+                                                            ? 'This thesis is registered and awaiting review.'
+                                                            : 'View thesis details and status above.'}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        Next Steps
+                                    </h4>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'Reviewing'
+                                            ? 'Your thesis is currently under review. You will be notified once feedback is available.'
+                                            : thesis.status === 'Need Update'
+                                                ? 'Your lecturer has requested updates. Please upload a revised version.'
+                                                : thesis.status === 'Rejected'
+                                                    ? 'Your thesis was not approved. Please review feedback and consider revising.'
+                                                    : thesis.status === 'Published'
+                                                        ? 'Your thesis has been published. Congratulations!'
+                                                        : thesis.status === 'Registered'
+                                                            ? 'Your thesis has been registered and is awaiting review.'
+                                                            : 'Keep track of your thesis status here.'}
+                                    </p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -266,6 +395,44 @@ const ThesisDetailPage = () => {
                 onHide={() => setUploadModalVisible(false)}
                 onSuccess={fetchThesis}
             />
+
+            {/* Cancel Confirm Modal */}
+            {cancelModalVisible && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i className="pi pi-exclamation-triangle text-red-600 text-2xl" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">Cancel Proposal?</h3>
+                            <p className="text-slate-500 text-sm mb-6">
+                                Are you sure you want to cancel this thesis proposal? This action will change the status to "Cancelled".
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setCancelModalVisible(false)}
+                                    disabled={cancelling}
+                                    className="flex-1 py-2.5 rounded-xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                                >
+                                    No, Keep it
+                                </button>
+                                <button
+                                    onClick={handleCancel}
+                                    disabled={cancelling}
+                                    className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {cancelling ? (
+                                        <i className="pi pi-spinner pi-spin" />
+                                    ) : (
+                                        <i className="pi pi-check" />
+                                    )}
+                                    <span>Yes, Cancel</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

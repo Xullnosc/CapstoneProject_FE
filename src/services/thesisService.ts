@@ -36,6 +36,7 @@ export const thesisService = {
         if (filters?.status) params.status = filters.status;
         if (filters?.lecturerId) params.lecturerId = filters.lecturerId;
         if (filters?.semesterId) params.semesterId = filters.semesterId;
+        if (filters?.userId) params.userId = filters.userId;
         const response = await api.get<Thesis[]>('/thesis', { params });
         return response.data;
     },
@@ -63,6 +64,17 @@ export const thesisService = {
         const response = await api.put(`/thesis/${id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
+        return response.data;
+    },
+
+    /** PUT /thesis/:id/review - reviewer only: set pass (Published) / fail (Rejected) / Need Update */
+    evaluateThesis: async (id: string, status: 'Published' | 'Rejected' | 'Need Update', note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/review`, { status, note });
+    },
+
+    /** PUT /thesis/:id/cancel - cancel a thesis proposal */
+    cancelThesis: async (id: string) => {
+        const response = await api.put(`/thesis/${id}/cancel`);
         return response.data;
     },
 };

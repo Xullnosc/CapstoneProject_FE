@@ -28,6 +28,10 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; classes: string }> = 
     Registered: {
         label: 'Registered',
         classes: 'bg-green-100 text-green-700'
+    },
+    Cancelled: {
+        label: 'Cancelled',
+        classes: 'bg-gray-200 text-gray-700'
     }
 };
 

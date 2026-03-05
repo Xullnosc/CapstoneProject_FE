@@ -2,21 +2,36 @@ import React, { useState } from 'react';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
 import InviteMemberModal from './InviteMemberModal';
+import InviteMentorModal from './InviteMentorModal';
 
 interface TeamRosterProps {
     members: TeamMember[];
     isLeader: boolean;
     leaderId: number;
+    mentorId?: number;
+    mentorName?: string;
+    mentorEmail?: string;
+    mentorAvatar?: string;
+    mentorId2?: number;
+    mentor2Name?: string;
+    mentor2Email?: string;
+    mentor2Avatar?: string;
     currentUserId: number | null;
-    teamId?: number; // Add teamId prop
+    teamId?: number;
     onKick?: (userId: number) => void;
-    onInvite?: () => void; // We can keep this for external triggering or use internal state
+    onInvite?: () => void;
     onLeave?: () => void;
     onTransferRole?: (userId: number) => void;
 }
 
-const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole }) => {
+const TeamRoster: React.FC<TeamRosterProps> = ({
+    members, isLeader, leaderId,
+    mentorId, mentorName, mentorEmail, mentorAvatar,
+    mentorId2, mentor2Name, mentor2Email, mentor2Avatar,
+    currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole
+}) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isInviteMentorModalOpen, setIsInviteMentorModalOpen] = useState(false);
 
     const handleOpenInvite = () => {
         if (onInvite) onInvite();
@@ -119,19 +134,98 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                                 </td>
                             </tr>
                         ))}
+
+                        {mentorId && (
+                            <tr className="bg-blue-50/30 hover:bg-blue-50 transition-colors">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <MemberAvatar
+                                            email={mentorEmail || ''}
+                                            fullName={mentorName || 'Mentor'}
+                                            avatarUrl={mentorAvatar}
+                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                                        />
+                                        <div>
+                                            <p className="text-gray-900 font-bold text-sm">
+                                                {mentorName}
+                                                {mentorId === currentUserId && <span className="text-blue-600 ml-1">(You)</span>}
+                                            </p>
+                                            <p className="text-gray-500 text-xs">Role: Mentor (1) • {mentorEmail}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-1.5 text-blue-700">
+                                        <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide">Mentor</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                </td>
+                            </tr>
+                        )}
+
+                        {mentorId2 && (
+                            <tr className="bg-blue-50/30 hover:bg-blue-50 transition-colors">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <MemberAvatar
+                                            email={mentor2Email || ''}
+                                            fullName={mentor2Name || 'Mentor'}
+                                            avatarUrl={mentor2Avatar}
+                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                                        />
+                                        <div>
+                                            <p className="text-gray-900 font-bold text-sm">
+                                                {mentor2Name}
+                                                {mentorId2 === currentUserId && <span className="text-blue-600 ml-1">(You)</span>}
+                                            </p>
+                                            <p className="text-gray-500 text-xs">Role: Mentor (2) • {mentor2Email}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-1.5 text-blue-700">
+                                        <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                                        <span className="text-xs font-bold uppercase tracking-wide">Mentor</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {/* Mentor Status Section */}
-            <div className="mt-4 px-1">
-                {!isLeader && (
+            <div className="mt-4 px-1 py-3 border-t border-gray-100">
+                {(mentorId && mentorId2) ? (
+                    <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-semibold border border-blue-100 shadow-sm">
+                            <span className="material-symbols-outlined text-lg">verified_user</span>
+                            <span>Mentors Assigned: <span className="font-bold">{mentorName} & {mentor2Name}</span></span>
+                        </div>
+                    </div>
+                ) : !isLeader ? (
                     <p className="text-gray-500 italic text-sm text-center">Waiting for Team Leader to select a mentor...</p>
-                )}
-                {isLeader && (
-                    <div className="text-center">
-                        <button className="text-orange-500 text-sm font-bold hover:underline">
-                            + Invite Mentor
+                ) : (
+                    <div className="text-center flex flex-col gap-2">
+                        {mentorId && (
+                            <div className="flex items-center justify-center gap-2 mb-2">
+                                <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                                    Mentor 1: {mentorName}
+                                </span>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setIsInviteMentorModalOpen(true)}
+                            className="text-orange-500 text-sm font-bold hover:underline cursor-pointer flex items-center gap-1 mx-auto"
+                        >
+                            <i className="pi pi-user-plus"></i>
+                            {mentorId ? "Invite Second Mentor" : "Invite Mentor"}
                         </button>
                     </div>
                 )}
@@ -141,6 +235,14 @@ const TeamRoster: React.FC<TeamRosterProps> = ({ members, isLeader, leaderId, cu
                 <InviteMemberModal
                     isOpen={isInviteModalOpen}
                     onClose={() => setIsInviteModalOpen(false)}
+                    teamId={teamId}
+                />
+            )}
+
+            {teamId && (
+                <InviteMentorModal
+                    isOpen={isInviteMentorModalOpen}
+                    onClose={() => setIsInviteMentorModalOpen(false)}
                     teamId={teamId}
                 />
             )}

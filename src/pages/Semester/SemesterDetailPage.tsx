@@ -14,18 +14,26 @@ import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal
 import { calculateSemesterStatus } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
 import { authService } from '../../services/authService';
+import ThesisFormModal from '../../components/Thesis/ThesisFormModal';
+import ThesisFormVersionsModal from '../../components/Thesis/ThesisFormVersionsModal';
+import { thesisFormService } from '../../services/thesisFormService';
+import type { ThesisForm } from '../../types/thesisForm';
 
 const SemesterDetailPage = () => {
     const user = authService.getUser();
     const canManage = user?.roleName === 'HOD' || user?.roleName === 'Admin';
+    const canPropose = user?.roleName === 'Lecturer' || user?.roleName === 'Student'; // Or check if they are team leader specifically
     const [searchParams] = useSearchParams();
     const id = searchParams.get('id');
 
     const [semester, setSemester] = useState<Semester | null>(null);
+    const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isThesisFormModalOpen, setIsThesisFormModalOpen] = useState(false);
+    const [isVersionsModalOpen, setIsVersionsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
     const [showWarning, setShowWarning] = useState(true);
 
@@ -33,7 +41,17 @@ const SemesterDetailPage = () => {
         if (id) {
             fetchSemester(parseInt(id));
         }
+        fetchLatestForm();
     }, [id]);
+
+    const fetchLatestForm = async () => {
+        try {
+            const data = await thesisFormService.getLatestForm();
+            setLatestForm(data.data);
+        } catch (error) {
+            console.error("Failed to fetch latest thesis form", error);
+        }
+    };
 
     const fetchSemester = async (semesterId: number) => {
         try {
@@ -140,9 +158,51 @@ const SemesterDetailPage = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex gap-3">
+                        {/* Thesis Form Actions - Styled as Premium Cards */}
+                        <div className="flex gap-4">
+                            {(canManage || canPropose) && latestForm && (
+                                <div
+                                    className="w-[200px] sm:w-[240px] shrink-0 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-primary/50 group cursor-pointer shadow-sm hover:shadow"
+                                    onClick={() => {
+                                        if (canManage) {
+                                            setIsVersionsModalOpen(true);
+                                        } else {
+                                            window.open(latestForm.fileUrl, '_blank');
+                                        }
+                                    }}
+                                >
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 w-full text-center border-b border-slate-100 pb-2">
+                                        Global Thesis Form
+                                    </h3>
+                                    <i className="pi pi-file-word text-3xl text-slate-300 group-hover:text-blue-500 mb-2 transition-colors mt-2" />
+                                    <p className="font-semibold text-slate-700 text-sm text-center">Version {latestForm.versionNumber}</p>
+                                    <div className="mt-3 flex items-center justify-center gap-1.5 text-primary text-xs font-semibold group-hover:underline">
+                                        <span>Download Form</span>
+                                        <i className="pi pi-download text-[10px]"></i>
+                                    </div>
+                                </div>
+                            )}
+
                             {canManage && (
-                                <>
+                                <div
+                                    className="w-[200px] sm:w-[240px] shrink-0 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-indigo-300 hover:shadow-indigo-500/10 group cursor-pointer shadow-sm hover:shadow"
+                                    onClick={() => setIsThesisFormModalOpen(true)}
+                                >
+                                    <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400/70 mb-2 w-full text-center border-b border-indigo-100/50 pb-2">
+                                        Administration
+                                    </h3>
+                                    <i className="pi pi-cloud-upload text-3xl text-indigo-300 group-hover:text-indigo-500 mb-2 transition-colors mt-2" />
+                                    <p className="font-semibold text-indigo-700 text-sm text-center">Upload New Version</p>
+                                    <div className="mt-3 flex items-center justify-center gap-1.5 text-indigo-600 text-xs font-semibold group-hover:underline">
+                                        <span>Update Template</span>
+                                        <i className="pi pi-arrow-right text-[10px]"></i>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Edit / End Semester Actions */}
+                            {canManage && (
+                                <div className="flex flex-col gap-3 justify-center ml-2 border-l border-gray-100 pl-6">
                                     {!semester.isArchived && (
                                         <button
                                             onClick={() => setIsEditModalOpen(true)}
@@ -158,7 +218,7 @@ const SemesterDetailPage = () => {
                                             End Semester
                                         </button>
                                     )}
-                                </>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -298,6 +358,21 @@ const SemesterDetailPage = () => {
                 onSuccess={() => { /* refresh semester data after import */
                     if (semester) fetchSemester(semester.semesterId);
                 }}
+            />
+            {/* Thesis Form Modal for HODs */}
+            <ThesisFormModal
+                isOpen={isThesisFormModalOpen}
+                onClose={() => setIsThesisFormModalOpen(false)}
+                onSuccess={() => {
+                    fetchLatestForm();
+                    setIsThesisFormModalOpen(false);
+                }}
+            />
+
+            {/* Thesis Form Versions Modal */}
+            <ThesisFormVersionsModal
+                isOpen={isVersionsModalOpen}
+                onClose={() => setIsVersionsModalOpen(false)}
             />
         </div>
     );
