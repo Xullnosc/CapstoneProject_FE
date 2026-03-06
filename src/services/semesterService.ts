@@ -28,9 +28,9 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
-    isActive: boolean;
-    isArchived: boolean;
+    status: 'Upcoming' | 'Active' | 'Ended';
     teamCount: number; // Optimized field
+    activeTeamCount: number; // Added field
     whitelistCount: number; // Added field
     teams: TeamSimple[];
     whitelists: Whitelist[];
@@ -47,7 +47,7 @@ export const semesterService = {
         return response.data;
     },
 
-    createSemester: async (data: { semesterCode: string; semesterName: string; startDate: string; endDate: string; isActive: boolean }) => {
+    createSemester: async (data: { semesterCode: string; semesterName: string; startDate: string; endDate: string }) => {
         const response = await api.post<Semester>('/semester', data);
         return response.data;
     },
@@ -64,7 +64,7 @@ export const semesterService = {
 
     getCurrentSemester: async (): Promise<Semester | undefined> => {
         const response = await api.get<Semester[]>('/semester');
-        return response.data.find(s => s.isActive);
+        return response.data.find(s => s.status === 'Active');
     },
 
     startSemester: async (id: number) => {

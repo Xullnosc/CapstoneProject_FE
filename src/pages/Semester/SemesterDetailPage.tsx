@@ -117,7 +117,7 @@ const SemesterDetailPage = () => {
         );
     }
 
-    const semesterStatus = calculateSemesterStatus(semester.isActive, semester.startDate, semester.endDate, semester.isArchived);
+    const semesterStatus = calculateSemesterStatus(semester.status);
     const isEnded = semesterStatus === 'Ended';
 
     return (
@@ -208,7 +208,7 @@ const SemesterDetailPage = () => {
                             {/* Edit / End Semester Actions */}
                             {canManage && (
                                 <div className="flex flex-col gap-3 justify-center ml-2 border-l border-gray-100 pl-6">
-                                    {!semester.isArchived && (
+                                    {semester.status !== 'Ended' && (
                                         <button
                                             onClick={() => setIsEditModalOpen(true)}
                                             className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-white/80 backdrop-blur-md border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-white hover:border-gray-300 transition-all shadow-sm hover:shadow"
@@ -217,7 +217,7 @@ const SemesterDetailPage = () => {
                                             Edit Semester
                                         </button>
                                     )}
-                                    {semester.isActive && (
+                                    {semester.status === 'Active' && (
                                         <button onClick={handleEndSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all hover:translate-y-[-1px]">
                                             <span className="material-symbols-outlined text-lg">event_busy</span>
                                             End Semester
@@ -231,9 +231,9 @@ const SemesterDetailPage = () => {
 
                 {/* Stats */}
                 <SemesterStats
-                    totalTeams={semester.teams ? semester.teams.length : 0}
-                    totalWhitelisted={semester.whitelists ? semester.whitelists.length : 0}
-                    activeTeams={semester.teams ? semester.teams.filter(t => t.status !== 'Disbanded').length : 0}
+                    totalTeams={semester.teamCount}
+                    totalWhitelisted={semester.whitelistCount}
+                    activeTeams={semester.activeTeamCount}
                 />
 
                 {/* Tabs */}

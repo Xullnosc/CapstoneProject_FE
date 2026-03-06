@@ -42,10 +42,11 @@ const SemesterDashboardPage = () => {
             name: sem.semesterName,
             startDate: formatSemesterDate(sem.startDate),
             endDate: formatSemesterDate(sem.endDate),
-            status: calculateSemesterStatus(sem.isActive, sem.startDate, sem.endDate, sem.isArchived),
+            status: calculateSemesterStatus(sem.status),
             totalTeams: sem.teamCount, // Use optimized count from backend
+            activeTeams: sem.activeTeamCount,
             totalWhitelists: sem.whitelistCount,
-            isArchived: sem.isArchived,
+            isArchived: sem.status === 'Ended',
             season: season,
             seasonColor: getSeasonColor(season)
         };
@@ -55,7 +56,7 @@ const SemesterDashboardPage = () => {
         if (filterStatus === 'All') return semesters;
 
         return semesters.filter(s => {
-            const status = calculateSemesterStatus(s.isActive, s.startDate, s.endDate, s.isArchived);
+            const status = calculateSemesterStatus(s.status);
             return status === filterStatus;
         });
     };
@@ -96,7 +97,7 @@ const SemesterDashboardPage = () => {
                 </div>
 
                 {/* Banner */}
-                <ActiveSemesterBanner semester={semesters.find(s => s.isActive) ? mapToCardProps(semesters.find(s => s.isActive)!) : null} />
+                <ActiveSemesterBanner semester={semesters.find(s => s.status === 'Active') ? mapToCardProps(semesters.find(s => s.status === 'Active')!) : null} />
 
                 {/* Filters & Grid */}
                 <div className="flex flex-col gap-6">
