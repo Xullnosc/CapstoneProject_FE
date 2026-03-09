@@ -1,0 +1,26 @@
+.adminForm :global(.p-inputtext),
+.adminForm :global(.p-password-input),
+.adminForm :global(.p-password input) {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.75rem;
+}
+
+.adminForm :global(.p-password) {
+  width: 100%;
+  display: block;
+}
+
+.adminForm :global(.p-password.p-inputwrapper) {
+  width: 100%;
+}
+
+.adminForm :global(.p-inputtext:enabled:focus),
+.adminForm :global(.p-password-input:enabled:focus),
+.adminForm :global(.p-password input:focus) {
+  outline: none;
+  border-color: #F26F21;
+  box-shadow: 0 0 0 2px rgba(242, 111, 33, 0.25);
+}

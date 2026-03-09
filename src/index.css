@@ -12,6 +12,14 @@ html {
     scrollbar-gutter: stable;
 }
 
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
 /* Override SweetAlert2 Z-Index to appear above PrimeReact Dialogs */
 .swal2-container {
     z-index: 99999 !important;
