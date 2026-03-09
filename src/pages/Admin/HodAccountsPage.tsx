@@ -240,7 +240,7 @@ const HodAccountsPage = () => {
         visible={isUpsertOpen}
         onHide={() => setIsUpsertOpen(false)}
         className="w-full max-w-lg"
-        contentClassName="!rounded-2xl bg-white shadow-2xl border border-gray-100 [&::-webkit-scrollbar]:hidden"
+        contentClassName={`${styles.hodDialog} !rounded-2xl bg-white shadow-2xl border border-gray-100 [&::-webkit-scrollbar]:hidden`}
         maskClassName="bg-black/40 backdrop-blur-sm z-[9999]"
         showHeader={false}
         modal

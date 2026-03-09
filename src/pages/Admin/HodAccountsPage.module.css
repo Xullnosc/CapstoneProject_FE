@@ -1,6 +1,9 @@
 .adminForm :global(.p-inputtext),
 .adminForm :global(.p-password-input),
-.adminForm :global(.p-password input) {
+.adminForm :global(.p-password input),
+.hodDialog :global(.p-inputtext),
+.hodDialog :global(.p-password-input),
+.hodDialog :global(.p-password input) {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #e5e7eb;
@@ -8,18 +11,38 @@
   padding: 0.75rem 0.75rem;
 }
 
-.adminForm :global(.p-password) {
+.adminForm :global(.p-password),
+.hodDialog :global(.p-password) {
   width: 100%;
   display: block;
 }
 
-.adminForm :global(.p-password.p-inputwrapper) {
+.adminForm :global(.p-password.p-inputwrapper),
+.hodDialog :global(.p-password.p-inputwrapper) {
   width: 100%;
+}
+
+.hodDialog :global(.p-input-icon-right),
+.hodDialog :global(.p-icon-field-right) {
+  width: 100%;
+}
+
+.hodDialog :global(.p-icon-field-right) {
+  display: flex;
+  align-items: center;
+}
+
+.hodDialog :global(.p-input-icon-right .p-input-icon),
+.hodDialog :global(.p-icon-field-right .p-input-icon) {
+  margin-top: -10px;
 }
 
 .adminForm :global(.p-inputtext:enabled:focus),
 .adminForm :global(.p-password-input:enabled:focus),
-.adminForm :global(.p-password input:focus) {
+.adminForm :global(.p-password input:focus),
+.hodDialog :global(.p-inputtext:enabled:focus),
+.hodDialog :global(.p-password-input:enabled:focus),
+.hodDialog :global(.p-password input:focus) {
   outline: none;
   border-color: #F26F21;
   box-shadow: 0 0 0 2px rgba(242, 111, 33, 0.25);
