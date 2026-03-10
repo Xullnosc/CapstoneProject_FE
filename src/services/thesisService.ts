@@ -31,12 +31,14 @@ export const thesisService = {
 
     /** GET /thesis - list with optional filters */
     getAllTheses: async (filters?: GetThesisFilters): Promise<Thesis[]> => {
-        const params: Record<string, string | number | undefined> = {};
+        const params: Record<string, string | number | boolean | undefined> = {};
         if (filters?.searchTitle) params.searchTitle = filters.searchTitle;
         if (filters?.status) params.status = filters.status;
         if (filters?.lecturerId) params.lecturerId = filters.lecturerId;
         if (filters?.semesterId) params.semesterId = filters.semesterId;
         if (filters?.userId) params.userId = filters.userId;
+        if (filters?.isLocked !== undefined) params.isLocked = filters.isLocked;
+        if (filters?.lecturerOnly) params.lecturerOnly = filters.lecturerOnly;
         const response = await api.get<Thesis[]>('/thesis', { params });
         return response.data;
     },
@@ -77,4 +79,11 @@ export const thesisService = {
         const response = await api.put(`/thesis/${id}/cancel`);
         return response.data;
     },
+
+    /** PUT /thesis/:id/lock - Lecturer: toggle lock/unlock on their own thesis */
+    toggleThesisLock: async (id: string): Promise<Thesis> => {
+        const response = await api.put<{ Data: Thesis }>(`/thesis/${id}/lock`);
+        return response.data.Data;
+    },
+
 };

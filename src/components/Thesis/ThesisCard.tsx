@@ -55,10 +55,22 @@ const ThesisCard = ({ thesis, onUploadClick, canUpload = false }: Props) => {
                     </p>
                 )}
 
-                {/* Footer: date */}
-                <div className="flex items-center text-xs text-slate-400 gap-1">
-                    <i className="pi pi-history text-xs" />
-                    <span>Last updated: {formatDate(displayDate)}</span>
+                {/* Footer: date + lock state */}
+                <div className="flex items-center justify-between text-xs text-slate-400 gap-1 mt-auto">
+                    <div className="flex items-center gap-1">
+                        <i className="pi pi-history text-xs" />
+                        <span>Last updated: {formatDate(displayDate)}</span>
+                    </div>
+                    <div
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${thesis.isLocked
+                                ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                                : 'bg-slate-50 text-slate-400 border border-slate-200'
+                            }`}
+                        title={thesis.isLocked ? 'Locked — students cannot register' : 'Unlocked'}
+                    >
+                        <i className={thesis.isLocked ? 'pi pi-lock' : 'pi pi-lock-open'} />
+                        <span>{thesis.isLocked ? 'Locked' : 'Unlocked'}</span>
+                    </div>
                 </div>
             </div>
 
