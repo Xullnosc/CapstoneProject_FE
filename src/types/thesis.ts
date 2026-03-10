@@ -33,15 +33,19 @@ export interface Thesis {
     ownerEmail: string | null;
     upDate: string | null;      // BE: "upDate"
     updateDate: string | null;  // BE: "updateDate"
+    isLocked: boolean;
     histories: ThesisHistory[] | null; // BE: "histories" (not "thesisHistories")
+
 }
 
 export interface GetThesisFilters {
+    status?: ThesisStatus;
     searchTitle?: string;
-    status?: ThesisStatus | '';
     lecturerId?: number;
-    semesterId?: number;
     userId?: number;
+    semesterId?: number;
+    isLocked?: boolean;
+    lecturerOnly?: boolean;
 }
 
 export interface ReviewerProgress {

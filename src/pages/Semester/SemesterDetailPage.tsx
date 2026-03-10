@@ -117,7 +117,7 @@ const SemesterDetailPage = () => {
         );
     }
 
-    const semesterStatus = calculateSemesterStatus(semester.isActive, semester.startDate, semester.endDate, semester.isArchived);
+    const semesterStatus = calculateSemesterStatus(semester.status);
     const isEnded = semesterStatus === 'Ended';
 
     return (
@@ -139,7 +139,7 @@ const SemesterDetailPage = () => {
                         <div className="absolute top-20 right-20 w-[400px] h-[400px] bg-amber-100/40 rounded-full blur-3xl"></div>
                     </div>
 
-                    <div className="relative z-10 flex flex-wrap justify-between items-end gap-6">
+                    <div className="relative z-10 flex flex-wrap justify-between items-start md:items-end gap-6">
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-gray-900 text-4xl font-black tracking-tight">{semester.semesterName}</h1>
@@ -164,10 +164,10 @@ const SemesterDetailPage = () => {
                             </div>
                         </div>
                         {/* Thesis Form Actions - Styled as Premium Cards */}
-                        <div className="flex gap-4">
+                        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                             {(canManage || canPropose) && latestForm && (
                                 <div
-                                    className="w-[200px] sm:w-[240px] shrink-0 bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-primary/50 group cursor-pointer shadow-sm hover:shadow"
+                                    className="flex-1 min-w-[200px] max-w-full sm:max-w-[240px] bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-primary/50 group cursor-pointer shadow-sm hover:shadow"
                                     onClick={() => {
                                         if (canManage) {
                                             setIsVersionsModalOpen(true);
@@ -190,7 +190,7 @@ const SemesterDetailPage = () => {
 
                             {canManage && (
                                 <div
-                                    className="w-[200px] sm:w-[240px] shrink-0 bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-indigo-300 hover:shadow-indigo-500/10 group cursor-pointer shadow-sm hover:shadow"
+                                    className="flex-1 min-w-[200px] max-w-full sm:max-w-[240px] bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-indigo-300 hover:shadow-indigo-500/10 group cursor-pointer shadow-sm hover:shadow"
                                     onClick={() => setIsThesisFormModalOpen(true)}
                                 >
                                     <h3 className="text-[10px] font-bold uppercase tracking-wider text-indigo-400/70 mb-2 w-full text-center border-b border-indigo-100/50 pb-2">
@@ -207,8 +207,8 @@ const SemesterDetailPage = () => {
 
                             {/* Edit / End Semester Actions */}
                             {canManage && (
-                                <div className="flex flex-col gap-3 justify-center ml-2 border-l border-gray-100 pl-6">
-                                    {!semester.isArchived && (
+                                <div className="flex flex-row sm:flex-col gap-3 justify-center w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 sm:border-l border-gray-100 sm:pl-6">
+                                    {semester.status !== 'Ended' && (
                                         <button
                                             onClick={() => setIsEditModalOpen(true)}
                                             className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-white/80 backdrop-blur-md border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-white hover:border-gray-300 transition-all shadow-sm hover:shadow"
@@ -217,7 +217,7 @@ const SemesterDetailPage = () => {
                                             Edit Semester
                                         </button>
                                     )}
-                                    {semester.isActive && (
+                                    {semester.status === 'Active' && (
                                         <button onClick={handleEndSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all hover:translate-y-[-1px]">
                                             <span className="material-symbols-outlined text-lg">event_busy</span>
                                             End Semester
@@ -231,16 +231,16 @@ const SemesterDetailPage = () => {
 
                 {/* Stats */}
                 <SemesterStats
-                    totalTeams={semester.teams ? semester.teams.length : 0}
-                    totalWhitelisted={semester.whitelists ? semester.whitelists.length : 0}
-                    activeTeams={semester.teams ? semester.teams.filter(t => t.status !== 'Disbanded').length : 0}
+                    totalTeams={semester.teamCount}
+                    totalWhitelisted={semester.whitelistCount}
+                    activeTeams={semester.activeTeamCount}
                 />
 
                 {/* Tabs */}
-                <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
+                <div className="flex items-center gap-6 border-b border-gray-200 mb-6 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('whitelists')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'whitelists' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'whitelists' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
                         <div className="flex items-center justify-center w-5 h-5">
                             <span className="material-symbols-outlined text-[18px]">verified_user</span>
@@ -249,7 +249,7 @@ const SemesterDetailPage = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('lecturers')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'lecturers' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'lecturers' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
                         <div className="flex items-center justify-center w-5 h-5">
                             <span className="material-symbols-outlined text-[18px]">school</span>
@@ -259,7 +259,7 @@ const SemesterDetailPage = () => {
 
                     <button
                         onClick={() => setActiveTab('students')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'students' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'students' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
                         <div className="flex items-center justify-center w-5 h-5">
                             <span className="material-symbols-outlined text-[18px]">person</span>
@@ -268,11 +268,11 @@ const SemesterDetailPage = () => {
                     </button>
 
                     {/* Spacer to push Teams to right */}
-                    <div className="flex-1"></div>
+                    <div className="flex-1 hidden sm:block"></div>
 
                     <button
                         onClick={() => setActiveTab('teams')}
-                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'teams' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'teams' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
                     >
                         <div className="flex items-center justify-center w-5 h-5">
                             <span className="material-symbols-outlined text-[18px]">groups</span>
@@ -341,8 +341,8 @@ const SemesterDetailPage = () => {
 
                 {/* Warning Note */}
                 {/* Warning Note */}
-                <div className={`transition-all duration-500 ease-in-out overflow-hidden transform ${showWarning ? 'max-h-[200px] opacity-100 mt-8' : 'max-h-0 opacity-0 mt-0'}`}>
-                    <div className="p-5 bg-orange-50/80 rounded-2xl border border-orange-100 shadow-sm flex items-start gap-4">
+                <div className={`transition-all duration-500 ease-in-out overflow-hidden transform ${showWarning ? 'max-h-[300px] opacity-100 mt-8' : 'max-h-0 opacity-0 mt-0'}`}>
+                    <div className="p-5 bg-orange-50/80 rounded-2xl border border-orange-100 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-4">
                         <div className="p-2 bg-orange-100 text-orange-600 rounded-lg shrink-0">
                             <span className="material-symbols-outlined text-xl">info</span>
                         </div>

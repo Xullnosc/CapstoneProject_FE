@@ -15,6 +15,7 @@ interface SemesterCardProps {
         status: 'Ongoing' | 'Upcoming' | 'Ended';
         isArchived: boolean;
         totalTeams: number;
+        activeTeams: number;
         totalWhitelists: number;
         season: string;
         seasonColor: string; // e.g., 'orange', 'green', 'yellow'
@@ -160,7 +161,10 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     <div className="flex items-center gap-6 pt-3 border-t border-gray-100">
                         <div>
                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Teams</span>
-                            <span className="text-xl font-bold text-gray-800">{semester.totalTeams}</span>
+                            <div className="flex items-baseline gap-1" title="Active / Total Teams">
+                                <span className="text-xl font-bold text-gray-800">{semester.activeTeams}</span>
+                                <span className="text-sm font-semibold text-gray-400">/{semester.totalTeams}</span>
+                            </div>
                         </div>
                         <div className="h-8 w-[1px] bg-gray-200"></div>
                         <div>
