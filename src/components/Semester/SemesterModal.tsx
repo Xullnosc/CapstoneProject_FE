@@ -103,10 +103,10 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             if (!isEditMode) reset(); // Only reset on create (edit might stay open or close)
             onClose();
             if (onSuccess) onSuccess();
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error && 'response' in error
-                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                : undefined;
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            console.error("Semester update error:", error);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const errorMessage = (error as any).response?.data?.message || (error as any).response?.data?.Message || error.message;
             Swal.fire({
                 icon: 'error',
                 title: 'Error',

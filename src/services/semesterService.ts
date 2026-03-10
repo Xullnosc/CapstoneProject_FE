@@ -53,7 +53,7 @@ export const semesterService = {
     },
 
     updateSemester: async (id: number, data: { semesterCode: string; semesterName: string; startDate: string; endDate: string }) => {
-        const response = await api.put<Semester>(`/semester/${id}`, data);
+        const response = await api.put<Semester>(`/semester/${id}`, { ...data, semesterId: id });
         return response.data;
     },
 

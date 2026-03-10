@@ -7,6 +7,7 @@ import { authService } from '../../services/authService';
 import { thesisService } from '../../services/thesisService';
 import { teamService } from '../../services/teamService';
 import { thesisFormService } from '../../services/thesisFormService';
+import { semesterService } from '../../services/semesterService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
 import type { ThesisForm } from '../../types/thesisForm';
@@ -55,8 +56,14 @@ const ProposeThesisPage = () => {
                             setHasAccess(false);
                             setAccessMessage('You must be in a team to propose a thesis.');
                         } else {
-                            // Check if the team leader has any ACTIVE thesis (not Cancelled/Rejected)
-                            const leaderTheses = await thesisService.getAllTheses({ userId: myTeam.leaderId });
+                            // Fetch current semester context
+                            const currentSemester = await semesterService.getCurrentSemester();
+
+                            // Check if the team leader has any ACTIVE thesis in the CURRENT semester
+                            const leaderTheses = await thesisService.getAllTheses({
+                                userId: myTeam.leaderId,
+                                semesterId: currentSemester?.semesterId
+                            });
                             const hasActiveThesis = leaderTheses && leaderTheses.some(
                                 t => t.status !== 'Cancelled' && t.status !== 'Rejected'
                             );

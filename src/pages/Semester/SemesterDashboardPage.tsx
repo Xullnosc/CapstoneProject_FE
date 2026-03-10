@@ -70,7 +70,7 @@ const SemesterDashboardPage = () => {
                         <h2 className="text-3xl font-black tracking-tight text-gray-900">Semester Management</h2>
                         <p className="text-gray-500 text-base font-normal">Manage and track academic cycles for the department</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         {canManage && (
                             <>
                                 <button className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">

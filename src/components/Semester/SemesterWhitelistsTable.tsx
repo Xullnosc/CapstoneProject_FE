@@ -72,7 +72,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
                 <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1">
                     <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
                         Whitelisted Users <span className="ml-1 text-xs text-blue-600 bg-blue-600/10 px-1.5 py-0.5 rounded-md">{whitelists.length}</span>
@@ -80,7 +80,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                 </div>
 
                 {headerAction && (
-                    <div>
+                    <div className="w-full sm:w-auto flex justify-end">
                         {headerAction}
                     </div>
                 )}
