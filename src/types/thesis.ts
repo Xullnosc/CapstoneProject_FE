@@ -3,6 +3,7 @@ export type ThesisStatus =
     | 'Updated'
     | 'Need Update'
     | 'Reviewing'
+    | 'HOD Reviewing'
     | 'On Mentor Inviting'
     | 'Rejected'
     | 'Registered'
@@ -41,5 +42,32 @@ export interface GetThesisFilters {
     lecturerId?: number;
     semesterId?: number;
     userId?: number;
+}
+
+export interface ReviewerProgress {
+    userId: number;
+    email: string | null;
+    fullName: string | null;
+    decision: string | null;
+    note: string | null;
+    reviewedAt: string | null;
+}
+
+export interface HodDecision {
+    hodId: number;
+    email: string | null;
+    fullName: string | null;
+    decision: string | null;
+    note: string | null;
+    decidedAt: string | null;
+}
+
+export interface ThesisReviewStatus {
+    thesisId: string;
+    thesisStatus: string | null;
+    overallStatus: string | null;
+    reviewers: ReviewerProgress[];
+    hodDecision: HodDecision | null;
+    requiresHodDecision: boolean;
 }
 
