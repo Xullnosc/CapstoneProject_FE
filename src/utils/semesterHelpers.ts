@@ -37,18 +37,10 @@ export const isUpcomingDate = (dateStr: string): boolean => {
 /**
  * Calculates semester status based on isActive flag and start date
  */
-export const calculateSemesterStatus = (isActive: boolean, startDate: string, endDate?: string, isArchived?: boolean): SemesterStatus => {
-    if (isActive) return SEMESTER_STATUS.ONGOING;
-    if (isArchived) return SEMESTER_STATUS.ENDED;
-
-    const now = new Date();
-    // If start date is future -> Upcoming
-    if (new Date(startDate) > now) return SEMESTER_STATUS.UPCOMING;
-
-    // If start date passed (e.g. created late) but NOT active, and NOT ended yet (End Date > Now) -> Treat as Upcoming (Ready to Start)
-    if (endDate && new Date(endDate) > now) return SEMESTER_STATUS.UPCOMING;
-
-    return SEMESTER_STATUS.ENDED;
+export const calculateSemesterStatus = (status: 'Upcoming' | 'Active' | 'Ended'): SemesterStatus => {
+    if (status === 'Active') return SEMESTER_STATUS.ONGOING;
+    if (status === 'Ended') return SEMESTER_STATUS.ENDED;
+    return SEMESTER_STATUS.UPCOMING;
 };
 
 /**
