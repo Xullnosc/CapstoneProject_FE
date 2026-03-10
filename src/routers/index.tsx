@@ -16,6 +16,7 @@ import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 import HodAccountsPage from '../pages/Admin/HodAccountsPage';
+import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 
 const AppRouter = () => {
   return (
@@ -52,6 +53,7 @@ const AppRouter = () => {
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
           <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />
           <Route path="/teams/my-teams" element={<MentorTeamsPage />} />
+          <Route path="/published-thesis" element={<PublishedThesisPage />} />
         </Route>
       </Route>
     </Routes>

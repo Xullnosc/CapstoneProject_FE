@@ -13,6 +13,7 @@ const ThesisDetailPage = () => {
     const navigate = useNavigate();
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
+    const isLecturer = user?.roleName === 'Lecturer';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
 
@@ -24,6 +25,8 @@ const ThesisDetailPage = () => {
     const [cancelModalVisible, setCancelModalVisible] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [isLeader, setIsLeader] = useState(false);
+    const [locking, setLocking] = useState(false);
+    const [lockConfirmVisible, setLockConfirmVisible] = useState(false);
 
     const fetchThesis = useCallback(async () => {
         if (!id) return;
@@ -71,6 +74,25 @@ const ThesisDetailPage = () => {
             alert(message || 'Failed to cancel thesis.');
         } finally {
             setCancelling(false);
+        }
+    };
+
+    const handleToggleLock = async () => {
+        if (!id) return;
+        setLockConfirmVisible(false);
+        setLocking(true);
+        try {
+            await thesisService.toggleThesisLock(id);
+            await fetchThesis();
+        } catch (err: unknown) {
+            console.error('Failed to toggle lock', err);
+            const message =
+                err instanceof Error
+                    ? err.message
+                    : (err as { response?: { data?: { Message?: string } } })?.response?.data?.Message;
+            alert(message || 'Failed to toggle thesis lock.');
+        } finally {
+            setLocking(false);
         }
     };
 
@@ -336,65 +358,93 @@ const ThesisDetailPage = () => {
                                     )}
                                 </div>
                             )}
+
+                            {/* Lock / Unlock button (owning Lecturer only) */}
+                            {isLecturer && thesis.userId === user?.userId && (
+                                <div className="mt-8">
+                                    <button
+                                        id="btn-toggle-thesis-lock"
+                                        onClick={() => setLockConfirmVisible(true)}
+                                        disabled={locking}
+                                        className={`w-full cursor-pointer font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50
+                                            ${thesis.isLocked
+                                                ? 'bg-white hover:bg-emerald-50 text-emerald-700 border-2 border-emerald-200 hover:border-emerald-300 shadow-sm'
+                                                : 'bg-white hover:bg-amber-50 text-amber-700 border-2 border-amber-200 hover:border-amber-300 shadow-sm'
+                                            }`}
+                                    >
+                                        {locking ? (
+                                            <i className="pi pi-spinner pi-spin" />
+                                        ) : (
+                                            <i className={thesis.isLocked ? 'pi pi-lock-open' : 'pi pi-lock'} />
+                                        )}
+                                        <span>{thesis.isLocked ? 'Unlock Thesis' : 'Lock Thesis'}</span>
+                                    </button>
+                                    <p className="text-xs text-slate-400 text-center mt-2">
+                                        {thesis.isLocked
+                                            ? 'Thesis is locked — students cannot register.'
+                                            : 'Thesis is unlocked — students can register when Published.'}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Info box: student "Next Steps" vs lecturer "Review Info" */}
-                     
-<div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
-    {isReviewer || isHOD ? (
-        <>
-            <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
-                <i className="pi pi-info-circle text-sm" />
-                {isReviewer ? 'Review Info' : 'Thesis Info'}
-            </h4>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
-                {thesis.status === 'Reviewing'
-                    ? (isReviewer
-                        ? 'This thesis is pending your evaluation. Review the document above and use the evaluation buttons to Pass, Request updates, or Reject.'
-                        : 'This thesis is under reviewer evaluation.')
-                    : thesis.status === 'Need Update'
-                        ? (isReviewer
-                            ? 'You have requested updates from the student.'
-                            : 'The reviewer has requested updates from the submitter.')
-                        : thesis.status === 'Rejected'
-                            ? (isReviewer
-                                ? 'You have rejected this thesis.'
-                                : 'The reviewer has rejected this thesis.')
-                            : thesis.status === 'Published'
-                                ? (isReviewer
-                                    ? 'You have approved this thesis (Published).'
-                                    : 'This thesis has been approved and published.')
-                                : thesis.status === 'Registered'
-                                    ? 'This thesis is registered and awaiting review.'
-                                    : 'View thesis details and status above.'}
-            </p>
-        </>
-    ) : (
-        <>
-            <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
-                <i className="pi pi-info-circle text-sm" />
-                Next Steps
-            </h4>
+                        <div className="bg-primary/5 rounded-2xl p-6 border border-primary/10">
+                            {isReviewer || isHOD ? (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        {isReviewer ? 'Review Info' : 'Thesis Info'}
+                                    </h4>
 
-            <p className="text-sm text-slate-600 leading-relaxed">
-                {thesis.status === 'On Mentor Inviting'
-                    ? 'Your thesis is waiting for a mentor to accept the invitation. You can cancel this proposal if needed.'
-                    : thesis.status === 'Reviewing'
-                        ? 'Your thesis is currently under review. You will be notified once feedback is available.'
-                        : thesis.status === 'Need Update'
-                            ? 'Your lecturer has requested updates. Please upload a revised version.'
-                            : thesis.status === 'Rejected'
-                                ? 'Your thesis was not approved. Please review feedback and consider revising.'
-                                : thesis.status === 'Published'
-                                    ? 'Your thesis has been published. Congratulations!'
-                                    : thesis.status === 'Registered'
-                                        ? 'Your thesis has been registered and is awaiting review.'
-                                        : 'Keep track of your thesis status here.'}
-            </p>
-        </>
-    )}
-</div>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'Reviewing'
+                                            ? (isReviewer
+                                                ? 'This thesis is pending your evaluation. Review the document above and use the evaluation buttons to Pass, Request updates, or Reject.'
+                                                : 'This thesis is under reviewer evaluation.')
+                                            : thesis.status === 'Need Update'
+                                                ? (isReviewer
+                                                    ? 'You have requested updates from the student.'
+                                                    : 'The reviewer has requested updates from the submitter.')
+                                                : thesis.status === 'Rejected'
+                                                    ? (isReviewer
+                                                        ? 'You have rejected this thesis.'
+                                                        : 'The reviewer has rejected this thesis.')
+                                                    : thesis.status === 'Published'
+                                                        ? (isReviewer
+                                                            ? 'You have approved this thesis (Published).'
+                                                            : 'This thesis has been approved and published.')
+                                                        : thesis.status === 'Registered'
+                                                            ? 'This thesis is registered and awaiting review.'
+                                                            : 'View thesis details and status above.'}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h4 className="font-bold text-primary mb-2 flex items-center gap-2 text-sm">
+                                        <i className="pi pi-info-circle text-sm" />
+                                        Next Steps
+                                    </h4>
+
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {thesis.status === 'On Mentor Inviting'
+                                            ? 'Your thesis is waiting for a mentor to accept the invitation. You can cancel this proposal if needed.'
+                                            : thesis.status === 'Reviewing'
+                                                ? 'Your thesis is currently under review. You will be notified once feedback is available.'
+                                                : thesis.status === 'Need Update'
+                                                    ? 'Your lecturer has requested updates. Please upload a revised version.'
+                                                    : thesis.status === 'Rejected'
+                                                        ? 'Your thesis was not approved. Please review feedback and consider revising.'
+                                                        : thesis.status === 'Published'
+                                                            ? 'Your thesis has been published. Congratulations!'
+                                                            : thesis.status === 'Registered'
+                                                                ? 'Your thesis has been registered and is awaiting review.'
+                                                                : 'Keep track of your thesis status here.'}
+                                    </p>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -406,6 +456,49 @@ const ThesisDetailPage = () => {
                 onHide={() => setUploadModalVisible(false)}
                 onSuccess={fetchThesis}
             />
+
+            {/* Lock/Unlock Confirm Modal */}
+            {lockConfirmVisible && thesis && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+                        <div className="p-6 text-center">
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${thesis.isLocked ? 'bg-emerald-100' : 'bg-amber-100'
+                                }`}>
+                                <i className={`text-2xl ${thesis.isLocked
+                                        ? 'pi pi-lock-open text-emerald-600'
+                                        : 'pi pi-lock text-amber-600'
+                                    }`} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">
+                                {thesis.isLocked ? 'Unlock Thesis?' : 'Lock Thesis?'}
+                            </h3>
+                            <p className="text-slate-500 text-sm mb-6">
+                                {thesis.isLocked
+                                    ? 'Unlocking this thesis will allow students to register for it once it is Published.'
+                                    : 'Locking this thesis will prevent students from registering, even if it is Published.'}
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setLockConfirmVisible(false)}
+                                    className="flex-1 py-2.5 rounded-xl font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleToggleLock}
+                                    className={`flex-1 py-2.5 rounded-xl font-semibold text-white transition-colors flex items-center justify-center gap-2 ${thesis.isLocked
+                                            ? 'bg-emerald-600 hover:bg-emerald-700'
+                                            : 'bg-amber-600 hover:bg-amber-700'
+                                        }`}
+                                >
+                                    <i className={thesis.isLocked ? 'pi pi-lock-open' : 'pi pi-lock'} />
+                                    <span>{thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Cancel Confirm Modal */}
             {cancelModalVisible && (
