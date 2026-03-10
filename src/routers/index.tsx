@@ -15,6 +15,7 @@ import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
+import HodAccountsPage from '../pages/Admin/HodAccountsPage';
 
 const AppRouter = () => {
   return (
@@ -27,6 +28,13 @@ const AppRouter = () => {
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
           <Route path="/lecturers" element={<LecturerManagementPage />} />
+        </Route>
+      </Route>
+
+      {/* Admin-only */}
+      <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/admin/hod" element={<HodAccountsPage />} />
         </Route>
       </Route>
 
