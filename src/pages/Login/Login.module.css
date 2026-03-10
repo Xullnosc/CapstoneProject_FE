@@ -45,7 +45,7 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
     padding: 2.5rem;
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
 }
 
 @media (max-width: 640px) {
@@ -74,7 +74,7 @@
 
 .loginButton {
     width: 100%;
-    background: linear-gradient(to right, #f97316, #22c55e);
+    background: linear-gradient(90deg, #F26F21 0%, #FF8A3D 55%, #FFB13C 100%);
     color: white;
     padding: 0.75rem;
     border-radius: 0.75rem;
@@ -82,11 +82,13 @@
     transition: all 0.2s;
     border: none;
     cursor: pointer;
+    min-height: 44px;
 }
 
 .loginButton:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
     transform: scale(1.02);
+    filter: saturate(1.05);
 }
 
 .googleButton {
@@ -102,6 +104,8 @@
     font-weight: 600;
     transition: all 0.2s;
     cursor: pointer;
+    min-height: 44px;
+    white-space: nowrap;
 }
 
 .googleButton:hover {
@@ -146,6 +150,40 @@
     mix-blend-mode: multiply;
     filter: blur(64px);
     opacity: 0.7;
+}
+
+/* HOD/Admin inputs: keep username & password same width + border */
+.hodForm :global(.p-inputtext),
+.hodForm :global(.p-password-input),
+.hodForm :global(.p-password input) {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.75rem;
+}
+
+.hodForm :global(.p-password) {
+    width: 100%;
+    display: block;
+}
+
+.hodForm :global(.p-password.p-inputwrapper) {
+    width: 100%;
+}
+
+.hodForm :global(.p-inputtext:enabled:focus),
+.hodForm :global(.p-password-input:enabled:focus),
+.hodForm :global(.p-password input:focus) {
+    outline: none;
+    border-color: #F26F21;
+    box-shadow: 0 0 0 2px rgba(242, 111, 33, 0.25);
+}
+
+/* Dropdown: unify border + radius with inputs */
+:global(.p-dropdown) {
+    border-radius: 0.75rem;
+    border-color: #e5e7eb;
 }
 
 /* Global overrides for PrimeReact, scoped within this module if possible or just global */

@@ -21,6 +21,7 @@ const Header = () => {
     // In Header, it used IDs. Let's use roleName if available, or IDs for safety if roleName is unreliable.
     // However, I previously added roleName to authService.
     const canManageSemesters = user?.roleName === 'Admin';
+    const canManageHodAccounts = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isLecturer = user?.roleName === 'Lecturer';
@@ -107,6 +108,12 @@ const Header = () => {
                                 <span>Semesters</span>
                             </div>
                         )}
+                        {canManageHodAccounts && (
+                            <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-id-card text-xl"></i>
+                                <span>HOD Accounts</span>
+                            </div>
+                        )}
                         {(isStudent || isLecturer) && (
                             <div onClick={() => navigate(isLecturer ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-users text-xl"></i>
@@ -166,6 +173,7 @@ const Header = () => {
                         const navItems: NavItem[] = [
                             { id: 'home', label: 'Homepage', icon: 'pi pi-home', path: '/home', show: true },
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
+                            { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
                             { id: 'thesis', label: 'Thesis List', icon: 'pi pi-book', path: '/my-thesis', show: true },
@@ -319,8 +327,8 @@ const Header = () => {
                             <MenuItem>
                                 {({ focus }) => (
                                     <button
-                                        onClick={() => {
-                                            authService.logout();
+                                        onClick={async () => {
+                                            await authService.logout();
                                             navigate('/');
                                             Swal.fire({
                                                 icon: 'success',

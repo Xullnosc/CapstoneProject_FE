@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { authService } from '../services/authService';
 
 interface ProtectedRouteProps {
     allowedRoles?: string[];
@@ -12,48 +13,64 @@ interface DecodedToken {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-    // Helper to get initial state from token
-    const getInitialAuth = () => {
-        const token = localStorage.getItem('token');
-        if (!token) return { isAuth: false, role: null };
+    const getAuthFromToken = (token: string | null) => {
+        if (!token) return { isAuth: false, role: null as string[] | null, isExpired: true };
         try {
             const decoded: DecodedToken = jwtDecode(token);
-            if (decoded.exp * 1000 < Date.now()) {
-                localStorage.removeItem('token');
-                return { isAuth: false, role: null };
-            }
+            const isExpired = decoded.exp * 1000 < Date.now();
             const roles = decoded.role ? (Array.isArray(decoded.role) ? decoded.role : [decoded.role]) : [];
-            return { isAuth: true, role: roles };
+            return { isAuth: !isExpired, role: roles, isExpired };
         } catch {
-            localStorage.removeItem('token');
-            return { isAuth: false, role: null };
+            return { isAuth: false, role: null, isExpired: true };
         }
     };
 
-    const [{ isAuthenticated, userRole }, setAuthState] = useState<{
+    const [{ isAuthenticated, userRole, isChecking }, setAuthState] = useState<{
         isAuthenticated: boolean;
         userRole: string | string[] | null;
-    }>(() => {
-        const initial = getInitialAuth();
-        return { isAuthenticated: initial.isAuth, userRole: initial.role };
-    });
+        isChecking: boolean;
+    }>({ isAuthenticated: false, userRole: null, isChecking: true });
 
-    // Check on mount and token change if needed, but since it's a one-time check for now,
-    // lazy init handles the initial load perfectly without cascading renders.
     useEffect(() => {
-        // We can add a listener for storage events if we want to handle token removal in other tabs
+        let cancelled = false;
+
+        const init = async () => {
+            const token = localStorage.getItem('token');
+            const current = getAuthFromToken(token);
+
+            if (current.isAuth && !current.isExpired) {
+                if (!cancelled) setAuthState({ isAuthenticated: true, userRole: current.role, isChecking: false });
+                return;
+            }
+
+            // Token missing/expired -> try refresh once (cookie-based).
+            const newToken = await authService.refreshAccessToken();
+            const refreshed = getAuthFromToken(newToken);
+            if (!cancelled) {
+                if (refreshed.isAuth && !refreshed.isExpired) {
+                    setAuthState({ isAuthenticated: true, userRole: refreshed.role, isChecking: false });
+                } else {
+                    localStorage.removeItem('token');
+                    setAuthState({ isAuthenticated: false, userRole: null, isChecking: false });
+                }
+            }
+        };
+
+        init();
+
         const handleStorageChange = () => {
-            const current = getInitialAuth();
-            setAuthState({ isAuthenticated: current.isAuth, userRole: current.role });
+            // If token changes in another tab, re-init (will refresh if needed).
+            init();
         };
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
-    if (isAuthenticated === null) {
-        // Still checking authentication status
-        return <div>Loading...</div>; // Or a proper loading spinner
-    }
+    if (isChecking) return <div>Loading...</div>;
 
     if (!isAuthenticated) {
         return <Navigate to="/" replace />;
