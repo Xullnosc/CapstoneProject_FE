@@ -27,16 +27,18 @@ const TeamDetail: React.FC = () => {
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    const loadTeam = useCallback(async (id: number) => {
+    const loadTeam = useCallback(async (id: number, abortController?: AbortController) => {
         try {
             setLoading(true);
             const data = await teamService.getTeamById(id);
+            if (abortController?.signal.aborted) return;
             if (!data) {
                 navigate('/teams');
                 return;
             }
             setTeam(data);
         } catch (err: unknown) {
+            if (abortController?.signal.aborted) return;
             console.error("Failed to load team", err);
 
             if (axios.isAxiosError(err) && err.response && err.response.status === 403) {
@@ -62,7 +64,9 @@ const TeamDetail: React.FC = () => {
             }
             navigate('/teams');
         } finally {
-            setLoading(false);
+            if (!abortController?.signal.aborted) {
+                setLoading(false);
+            }
         }
     }, [navigate]);
 
@@ -81,7 +85,12 @@ const TeamDetail: React.FC = () => {
         }
     }, []);
 
+    // Extract explicitly to avoid object reference changes per render
+    const targetIdVal = location.state?.targetId;
+
     useEffect(() => {
+        const abortController = new AbortController();
+
         // Case 1: URL has ID (e.g. /teams/123) -> Redirect to /teams/team (Mask the ID)
         if (teamId) {
             navigate('/teams/team', {
@@ -92,32 +101,39 @@ const TeamDetail: React.FC = () => {
         }
 
         // Case 2: Static URL /teams/team
-        const targetId = location.state?.targetId;
-
-        if (targetId) {
+        if (targetIdVal) {
             // Sub-case 2.1: Loading specific team from hidden state
-            loadTeam(targetId);
+            loadTeam(targetIdVal, abortController);
         } else {
             // Sub-case 2.2: Loading "My Team" (Default)
             const loadMyTeam = async () => {
                 try {
                     setLoading(true);
                     const myTeam = await teamService.getMyTeam();
+                    if (abortController.signal.aborted) return;
+
                     if (myTeam) {
                         setTeam(myTeam);
                     } else {
                         navigate('/teams');
                     }
                 } catch (error) {
+                    if (abortController.signal.aborted) return;
                     console.error("Failed to load my team", error);
                     navigate('/teams');
                 } finally {
-                    setLoading(false);
+                    if (!abortController.signal.aborted) {
+                        setLoading(false);
+                    }
                 }
             };
             loadMyTeam();
         }
-    }, [teamId, loadTeam, navigate, location.state]);
+
+        return () => {
+            abortController.abort();
+        };
+    }, [teamId, targetIdVal, loadTeam, navigate]);
 
     const handleKick = async (userId: number) => {
         const result = await Swal.fire({

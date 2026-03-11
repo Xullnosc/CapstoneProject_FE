@@ -16,6 +16,7 @@ import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 import HodAccountsPage from '../pages/Admin/HodAccountsPage';
+import AccessLogPage from '../pages/Admin/AccessLogPage';
 import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 
 const AppRouter = () => {
@@ -36,6 +37,7 @@ const AppRouter = () => {
       <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
         <Route element={<MainLayout />}>
           <Route path="/admin/hod" element={<HodAccountsPage />} />
+          <Route path="/admin/access-logs" element={<AccessLogPage />} />
         </Route>
       </Route>
 
