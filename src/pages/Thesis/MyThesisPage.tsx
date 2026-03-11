@@ -52,9 +52,10 @@ const MyThesisPage = () => {
             });
             // Update local state instead of full fetch for better UX
             setTheses(prev => prev.map(t => t.thesisId === updated.thesisId ? { ...t, isLocked: updated.isLocked } : t));
-        } catch (err: unknown) {
+        } catch (err) {
             console.error('Failed to toggle lock', err);
-            const message = err.response?.data?.Message || 'Failed to toggle thesis lock';
+            const axiosError = err as { response?: { data?: { Message?: string } } };
+            const message = axiosError.response?.data?.Message || 'Failed to toggle thesis lock';
             Swal.fire({
                 icon: 'error',
                 title: 'Error',

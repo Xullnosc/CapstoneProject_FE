@@ -10,6 +10,7 @@ import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
 import ReviewSubmissionModal from '../../components/Thesis/ReviewSubmissionModal';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { Button as PrimeButton } from 'primereact/button';
+import type { SweetAlertResult } from 'sweetalert2';
 import Swal from '../../utils/swal';
 import styles from './Thesis.module.css';
 
@@ -79,7 +80,7 @@ const ThesisDetailPage = () => {
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#94a3b8',
             confirmButtonText: 'Yes, cancel it!'
-        }).then((result: any) => {
+        }).then((result: SweetAlertResult) => {
             if (result.isConfirmed) {
                 executeCancel();
             }
@@ -93,9 +94,10 @@ const ThesisDetailPage = () => {
             await thesisService.cancelThesis(id);
             showSuccess('Thesis proposal has been cancelled.');
             fetchThesis();
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to cancel thesis', err);
-            const message = err.response?.data?.Message || 'Failed to cancel thesis.';
+            const axiosError = err as { response?: { data?: { Message?: string } } };
+            const message = axiosError.response?.data?.Message || 'Failed to cancel thesis.';
             showError(message);
         } finally {
             setCancelling(false);
@@ -114,7 +116,7 @@ const ThesisDetailPage = () => {
             confirmButtonColor: thesis.isLocked ? '#10b981' : '#f59e0b',
             cancelButtonColor: '#94a3b8',
             confirmButtonText: thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock'
-        }).then((result: any) => {
+        }).then((result: SweetAlertResult) => {
             if (result.isConfirmed) {
                 executeToggleLock();
             }
@@ -128,9 +130,10 @@ const ThesisDetailPage = () => {
             const updatedThesis = await thesisService.toggleThesisLock(id);
             showSuccess(`Thesis ${updatedThesis.isLocked ? 'locked' : 'unlocked'} successfully.`);
             await fetchThesis();
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to toggle lock', err);
-            const message = err.response?.data?.Message || 'Failed to toggle thesis lock.';
+            const axiosError = err as { response?: { data?: { Message?: string } } };
+            const message = axiosError.response?.data?.Message || 'Failed to toggle thesis lock.';
             showError(message);
         } finally {
             setLocking(false);
