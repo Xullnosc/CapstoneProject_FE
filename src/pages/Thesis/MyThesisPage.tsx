@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { Thesis, ThesisStatus } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import ThesisCard from '../../components/Thesis/ThesisCard';
 import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { Dropdown } from 'primereact/dropdown';
+import Swal from '../../utils/swal';
+import styles from './Thesis.module.css';
 
 const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'All Statuses', value: '' },
@@ -24,8 +27,9 @@ const MyThesisPage = () => {
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
     const isLecturer = user?.roleName === 'Lecturer';
+    const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const canUpload = isStudent; // Only students (team leader) upload
-    const canProposeNew = isLecturer; // Only lecturers can submit new theses from here
+    const canProposeNew = isLecturer || isHOD; // Both lecturers and HODs can submit new theses
 
     const [theses, setTheses] = useState<Thesis[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,6 +37,33 @@ const MyThesisPage = () => {
     const [statusFilter, setStatusFilter] = useState<ThesisStatus | ''>('');
     const [selectedThesis, setSelectedThesis] = useState<Thesis | null>(null);
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
+    const [lockingId, setLockingId] = useState<string | null>(null);
+
+    const handleToggleLock = async (thesis: Thesis) => {
+        setLockingId(thesis.thesisId);
+        try {
+            const updated = await thesisService.toggleThesisLock(thesis.thesisId);
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `Thesis ${updated.isLocked ? 'locked' : 'unlocked'} successfully`,
+                timer: 2000,
+                showConfirmButton: false
+            });
+            // Update local state instead of full fetch for better UX
+            setTheses(prev => prev.map(t => t.thesisId === updated.thesisId ? { ...t, isLocked: updated.isLocked } : t));
+        } catch (err: unknown) {
+            console.error('Failed to toggle lock', err);
+            const message = err.response?.data?.Message || 'Failed to toggle thesis lock';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message
+            });
+        } finally {
+            setLockingId(null);
+        }
+    };
 
     const fetchTheses = useCallback(async () => {
         setLoading(true);
@@ -66,33 +97,30 @@ const MyThesisPage = () => {
         setUploadModalVisible(true);
     };
 
-
-
     const hasFilters = debouncedSearch !== '' || statusFilter !== '';
 
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: 'My Thesis' }
+    ];
+
     return (
-        <div className="p-6 lg:p-10 font-sans text-gray-800">
+        <div className={`p-6 lg:p-10 font-sans text-gray-800 ${styles.thesisContainer}`}>
             {/* Breadcrumb */}
-            <nav className="flex mb-4">
-                <ol className="flex items-center space-x-2 text-sm text-slate-500">
-                    <li>
-                        <Link to="/home" className="hover:text-primary transition-colors">Home</Link>
-                    </li>
-                    <li><i className="pi pi-chevron-right text-xs" /></li>
-                    <li className="font-medium text-primary">My Thesis</li>
-                </ol>
-            </nav>
+            <div className="mb-4">
+                <PremiumBreadcrumb items={breadcrumbItems} />
+            </div>
 
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Thesis</h1>
-                    <p className="text-slate-500 mt-1">Manage and track your academic research progress</p>
+                    <p className="text-slate-500 mt-1">Manage and track your own academic research proposals.</p>
                 </div>
                 {canProposeNew && (
                     <button
                         onClick={() => navigate('/propose-thesis')}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white font-semibold rounded-xl hover:bg-orange-700 transition-all"
                     >
                         <i className="pi pi-plus" />
                         New Submission
@@ -132,8 +160,6 @@ const MyThesisPage = () => {
                                     trigger: { className: 'px-4' }
                                 }}
                             />
-
-
                         </div>
                     </div>
                 </div>
@@ -172,6 +198,9 @@ const MyThesisPage = () => {
                             thesis={thesis}
                             canUpload={canUpload}
                             onUploadClick={handleUploadClick}
+                            canLock={(isLecturer || isHOD) && thesis.userId === user?.userId}
+                            onToggleLock={handleToggleLock}
+                            isLocking={lockingId === thesis.thesisId}
                         />
                     ))}
                 </div>
@@ -189,3 +218,4 @@ const MyThesisPage = () => {
 };
 
 export default MyThesisPage;
+

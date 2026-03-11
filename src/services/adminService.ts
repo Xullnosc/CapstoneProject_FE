@@ -2,6 +2,7 @@ import api from './api';
 import axios from 'axios';
 
 export interface CreateOrUpdateHodPayload {
+  userId?: number;
   fullName: string;
   email: string;
   username: string;
@@ -33,6 +34,34 @@ export const adminService = {
       return res.data as { message?: string };
     } catch (err) {
       const fallback = 'Could not create/update HOD account.';
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { message?: string } | undefined;
+        throw new Error(data?.message || fallback);
+      }
+      throw new Error((err as { message?: string })?.message || fallback);
+    }
+  },
+
+  deleteHod: async (userId: number) => {
+    try {
+      const res = await api.delete(`/Admin/hod/${userId}`);
+      return res.data as { message?: string };
+    } catch (err) {
+      const fallback = 'Could not delete HOD account.';
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data as { message?: string } | undefined;
+        throw new Error(data?.message || fallback);
+      }
+      throw new Error((err as { message?: string })?.message || fallback);
+    }
+  },
+
+  updateHodEmail: async (userId: number, email: string) => {
+    try {
+      const res = await api.put(`/Admin/hod/${userId}/email`, { email });
+      return res.data as { message?: string };
+    } catch (err) {
+      const fallback = 'Could not update HOD email.';
       if (axios.isAxiosError(err)) {
         const data = err.response?.data as { message?: string } | undefined;
         throw new Error(data?.message || fallback);

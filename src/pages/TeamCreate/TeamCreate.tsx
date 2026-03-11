@@ -4,6 +4,7 @@ import { teamService } from '../../services/teamService';
 import type { TeamInvitation } from '../../types/team';
 import InvitationCard from '../../components/team/InvitationCard';
 import axios from 'axios';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 
 const TeamCreate: React.FC = () => {
     const navigate = useNavigate();
@@ -12,6 +13,11 @@ const TeamCreate: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState('');
+
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: 'Team Creation' }
+    ];
 
     useEffect(() => {
         const checkTeamStatus = async () => {
@@ -97,6 +103,10 @@ const TeamCreate: React.FC = () => {
             {/* Main Content */}
             <main className="flex flex-1 justify-center py-12 px-4 sm:px-6 lg:px-8">
                 <div className="layout-content-container flex flex-col max-w-[800px] flex-1 w-full">
+
+                    <div className="mb-8">
+                        <PremiumBreadcrumb items={breadcrumbItems} />
+                    </div>
 
                     {/* Headline - Big & Gradient */}
                     <div className="text-center mb-12">
