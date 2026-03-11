@@ -1,5 +1,5 @@
 import api from './api';
-import type { Whitelist } from './semesterService';
+import type { Whitelist, PagedResult } from './semesterService';
 
 /** model returned by backend after processing an import file */
 export interface ImportError {
@@ -78,14 +78,14 @@ export const whitelistService = {
         return response.data;
     },
 
-    getWhitelistsPaginated: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }) => {
-        const response = await api.get(`/semester/${semesterId}/whitelists`, { params });
+    getWhitelistsPaginated: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }): Promise<PagedResult<Whitelist>> => {
+        const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/whitelists`, { params });
         return response.data;
     },
 
     /** Alias for getWhitelistsPaginated as requested */
-    getAllWhitelists: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }) => {
-        const response = await api.get(`/semester/${semesterId}/whitelists`, { params });
+    getAllWhitelists: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }): Promise<PagedResult<Whitelist>> => {
+        const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/whitelists`, { params });
         return response.data;
     }
 };

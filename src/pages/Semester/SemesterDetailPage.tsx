@@ -273,7 +273,7 @@ const SemesterDetailPage = () => {
 
                 <SemesterStats
                     totalTeams={semester.teamCount || 0}
-                    totalWhitelisted={(whitelistData as any)?.totalCount ?? (whitelistData as any)?.TotalCount ?? semester.whitelistCount ?? 0}
+                    totalWhitelisted={whitelistData?.totalCount ?? semester.whitelistCount ?? 0}
                     activeTeams={semester.activeTeamCount || 0}
                 />
 
@@ -316,9 +316,9 @@ const SemesterDetailPage = () => {
                 )}
                 {activeTab === 'whitelists' && (
                     <SemesterWhitelistsTable
-                        whitelists={(whitelistData as any)?.items || (whitelistData as any)?.Items || []}
+                        whitelists={whitelistData?.items || []}
                         isLoading={isWhitelistsLoading}
-                        totalCount={(whitelistData as any)?.totalCount ?? (whitelistData as any)?.TotalCount ?? 0}
+                        totalCount={whitelistData?.totalCount ?? 0}
                         page={whitelistPage}
                         onPageChange={(p: number) => setWhitelistPage(p)}
                         headerAction={canManage && !isEnded ? (
@@ -337,9 +337,9 @@ const SemesterDetailPage = () => {
                 )}
                 {activeTab === 'lecturers' && (
                     <SemesterWhitelistsTable
-                        whitelists={(lecturerData as any)?.items || (lecturerData as any)?.Items || []}
+                        whitelists={lecturerData?.items || []}
                         isLoading={isWhitelistsLoading}
-                        totalCount={(lecturerData as any)?.totalCount ?? (lecturerData as any)?.TotalCount ?? 0}
+                        totalCount={lecturerData?.totalCount ?? 0}
                         page={lecturerPage}
                         onPageChange={(p: number) => setLecturerPage(p)}
                         headerAction={canManage && !isEnded ? (
@@ -357,9 +357,9 @@ const SemesterDetailPage = () => {
                 )}
                 {activeTab === 'students' && (
                     <SemesterWhitelistsTable
-                        whitelists={(studentData as any)?.items || (studentData as any)?.Items || []}
+                        whitelists={studentData?.items || []}
                         isLoading={isWhitelistsLoading}
-                        totalCount={(studentData as any)?.totalCount ?? (studentData as any)?.TotalCount ?? 0}
+                        totalCount={studentData?.totalCount ?? 0}
                         page={studentPage}
                         onPageChange={(p: number) => setStudentPage(p)}
                         headerAction={canManage && !isEnded ? (

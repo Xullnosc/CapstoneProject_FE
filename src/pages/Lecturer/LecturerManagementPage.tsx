@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Paginator, type PaginatorPageChangeEvent } from 'primereact/paginator';
@@ -17,33 +17,24 @@ const LecturerManagementPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null);
 
-    useEffect(() => {
-        fetchLecturers();
-    }, [page, rows, searchTerm]);
-
-    const fetchLecturers = async () => {
+    const fetchLecturers = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await lecturerService.getAllLecturers(page + 1, rows, searchTerm);
-            // Handle both PascalCase and camelCase from backend
-            const items = (data as any).items || (data as any).Items || [];
-            const total = (data as any).totalCount ?? (data as any).TotalCount ?? 0;
 
-            setLecturers(items);
-            setTotalCount(total);
-
-            // For active count, we might still need a separate call or take it from total if it's not paginated
-            // but for now let's just use what we have in the current view or keep it as is if there's no specialized API.
-            // Since this is a global pool, maybe we don't need a perfectly accurate count of ALL active lecturers if it's paginated.
-            // Let's assume the user wants the total from the PagedResult.
-            // If the user needs the exact active count of the entire pool, we'd need a separate endpoint.
+            setLecturers(data.items || []);
+            setTotalCount(data.totalCount ?? 0);
         } catch (error) {
-            console.error("Failed to fetch lecturers", error);
+            console.error('Failed to fetch lecturers', error);
             Swal.fire('Error', 'Failed to load lecturers pool', 'error');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [page, rows, searchTerm]);
+
+    useEffect(() => {
+        fetchLecturers();
+    }, [fetchLecturers]);
 
     const handleToggleStatus = async (lecturer: Lecturer) => {
         try {
