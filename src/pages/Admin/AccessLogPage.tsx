@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { accessLogService } from '../../services/accessLogService';
 import type { AccessLogDTO } from '../../services/accessLogService';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, type DataTableStateEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
@@ -33,11 +33,11 @@ const AccessLogPage: React.FC = () => {
         }
     };
 
-    const onPage = (event: any) => {
+    const onPage = (event: DataTableStateEvent) => {
         setLazyParams({
             first: event.first,
             rows: event.rows,
-            page: event.page + 1,
+            page: (event.page ?? 0) + 1,
         });
     };
 
