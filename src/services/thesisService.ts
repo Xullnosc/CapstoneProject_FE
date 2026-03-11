@@ -1,5 +1,7 @@
 import api from "./api";
-import type { Thesis, GetThesisFilters } from "../types/thesis";
+import type { Thesis, GetThesisFilters, ThesisReviewStatus } from "../types/thesis";
+
+export type ThesisDecision = 'Pass' | 'Fail';
 
 // ─── Propose ────────────────────────────────────────────────────────────────
 interface ProposeThesisRequest {
@@ -69,9 +71,9 @@ export const thesisService = {
         return response.data;
     },
 
-    /** PUT /thesis/:id/review - reviewer only: set pass (Published) / fail (Rejected) / Need Update */
-    evaluateThesis: async (id: string, status: 'Published' | 'Rejected' | 'Need Update', note?: string): Promise<void> => {
-        await api.put(`/thesis/${id}/review`, { status, note });
+    /** PUT /thesis/:id/review - reviewer only: Pass/Fail with optional note (Fail requires note) */
+    submitReviewerDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/review`, { decision, note });
     },
 
     /** PUT /thesis/:id/cancel - cancel a thesis proposal */
@@ -86,4 +88,15 @@ export const thesisService = {
         return response.data.Data;
     },
 
+
+    /** GET /thesis/:id/review-status - fetch reviewer progress and decisions */
+    getThesisReviewStatus: async (id: string): Promise<ThesisReviewStatus> => {
+        const response = await api.get<ThesisReviewStatus>(`/thesis/${id}/review-status`);
+        return response.data;
+    },
+
+    /** PUT /thesis/:id/hod-decision - HOD only: Pass/Fail with optional note */
+    submitHodDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/hod-decision`, { decision, note });
+    },
 };
