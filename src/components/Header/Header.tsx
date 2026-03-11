@@ -7,12 +7,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import 'primeicons/primeicons.css';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
+import notificationService from '../../services/notificationService';
 
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [visible, setVisible] = useState(false);
     const [currentSemesterCode, setCurrentSemesterCode] = useState<string>('');
+    const [unreadCount, setUnreadCount] = useState<number>(0);
 
     // Auth & Permissions
     const user = authService.getUser();
@@ -53,6 +55,34 @@ const Header = () => {
             window.removeEventListener('semesterChanged', handleSemesterChange);
         };
     }, []);
+
+    // Smart polling for notification count - pause when on notifications page
+    useEffect(() => {
+        const fetchUnreadCount = async () => {
+            try {
+                const count = await notificationService.getUnreadCount();
+                setUnreadCount(count);
+            } catch (error) {
+                console.error('Failed to fetch unread count:', error);
+            }
+        };
+
+        // Initial fetch
+        fetchUnreadCount();
+
+        // Only poll if NOT on notifications page (smart polling)
+        const isOnNotificationsPage = location.pathname === '/notifications';
+        if (isOnNotificationsPage) {
+            return; // Don't poll while viewing notifications
+        }
+
+        // Poll every 60 seconds when not on notifications page
+        const pollInterval = setInterval(fetchUnreadCount, 60000);
+
+        return () => {
+            clearInterval(pollInterval);
+        };
+    }, [location.pathname]);
 
     return (
         <header className="h-16 bg-white shadow-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 relative z-50">
@@ -129,10 +159,12 @@ const Header = () => {
                                 <span>Review Thesis</span>
                             </div>
                         )}
-                        <div className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
+                        <div onClick={() => { navigate('/notifications'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/notifications' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                             <div className="relative">
                                 <i className="pi pi-bell text-xl"></i>
-                                <Badge value="" severity="danger" className="p-0 w-2.5 h-2.5 min-w-0 absolute top-0 right-0 rounded-full border-2 border-white"></Badge>
+                                {unreadCount > 0 && (
+                                    <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
+                                )}
                             </div>
                             <span>Notifications</span>
                         </div>
@@ -169,7 +201,7 @@ const Header = () => {
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
                             { id: 'thesis', label: 'Thesis List', icon: 'pi pi-book', path: '/my-thesis', show: true },
-                            { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: undefined, show: true, isNotification: true },
+                            { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: '/notifications', show: true, isNotification: true },
                         ].filter(item => item.show);
 
                         // Dynamic Balancing: If odd, add FPT Logo as filler (immediately right of the + button)
@@ -201,8 +233,8 @@ const Header = () => {
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
-                                        {item.isNotification && (
-                                            <Badge value="" severity="danger" className="p-0 w-2.5 h-2.5 min-w-0 absolute top-0 right-0 rounded-full border-2 border-white"></Badge>
+                                        {item.isNotification && unreadCount > 0 && (
+                                            <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
                                         )}
                                     </div>
                                 )}
@@ -253,9 +285,11 @@ const Header = () => {
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 {isHOD && (
-                    <div className="mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full hover:bg-orange-50 text-gray-500 hover:text-orange-600 transition-all duration-200">
+                    <div onClick={() => navigate('/notifications')} className={`mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${location.pathname === '/notifications' ? 'bg-orange-50 text-orange-600' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-bell text-xl"></i>
-                        <Badge severity="danger" className="p-0 w-2.5 h-2.5 min-w-0 absolute top-2 right-2.5 rounded-full border-2 border-white"></Badge>
+                        {unreadCount > 0 && (
+                            <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
+                        )}
                     </div>
                 )}
                 <Menu as="div" className="relative">

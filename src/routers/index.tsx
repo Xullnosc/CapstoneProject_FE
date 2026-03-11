@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import Login from '../pages/Login/Login';
 import Homepage from '../pages/Homepage/Homepage';
 import MainLayout from '../layouts/MainLayout';
@@ -14,6 +15,9 @@ import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
+
+// Lazy load notifications page for code splitting
+const NotificationsPage = lazy(() => import('../pages/Notifications/NotificationsPage'));
 
 const AppRouter = () => {
   return (
@@ -42,6 +46,21 @@ const AppRouter = () => {
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
           <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />
           <Route path="/teams/my-teams" element={<MentorTeamsPage />} />
+          <Route
+            path="/notifications"
+            element={
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="text-center">
+                    <i className="pi pi-spin pi-spinner text-4xl text-orange-500 mb-4"></i>
+                    <p className="text-gray-500">Loading notifications...</p>
+                  </div>
+                </div>
+              }>
+                <NotificationsPage />
+              </Suspense>
+            }
+          />
         </Route>
       </Route>
     </Routes>
