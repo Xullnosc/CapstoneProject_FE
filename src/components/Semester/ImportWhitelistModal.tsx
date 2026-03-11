@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 import { whitelistService } from '../../services/whitelistService';
 import type { PreviewRow, ImportError, ImportResult } from '../../services/whitelistService';
+import SemesterWhitelistsTable from './SemesterWhitelistsTable';
 
 interface ImportWhitelistModalProps {
     isOpen: boolean;
@@ -67,10 +68,10 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
         if (!droppedFiles || droppedFiles.length === 0) return;
 
         const droppedFile = droppedFiles[0];
-        const isExcelFile = droppedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                           droppedFile.type === 'application/vnd.ms-excel' ||
-                           droppedFile.name.endsWith('.xlsx') ||
-                           droppedFile.name.endsWith('.xls');
+        const isExcelFile = droppedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+            droppedFile.type === 'application/vnd.ms-excel' ||
+            droppedFile.name.endsWith('.xlsx') ||
+            droppedFile.name.endsWith('.xls');
 
         if (!isExcelFile) {
             Swal.fire('Invalid file', 'Please drop an Excel file (.xlsx or .xls)', 'error');
@@ -138,11 +139,11 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             <div className="flex flex-col gap-6 p-6 bg-white min-h-100">
 
                 {/* File Upload Area */}
-                <div 
+                <div
                     className={`
                         border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all
-                        ${isDragging ? 'border-orange-400 bg-orange-50/30 scale-105' : 
-                          file ? 'border-green-200 bg-green-50/30 py-4' : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/10 py-8'}
+                        ${isDragging ? 'border-orange-400 bg-orange-50/30 scale-105' :
+                            file ? 'border-green-200 bg-green-50/30 py-4' : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/10 py-8'}
                     `}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -191,42 +192,24 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                                 Data Preview
-                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">{previewData.length} rows</span>
                             </h4>
                         </div>
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex-1 max-h-150 min-h-100  custom-scrollbar relative">
-                            <table className="w-full text-left">
-                                <thead className="bg-gray-50/80 border-b border-gray-200 sticky top-0 z-10 backdrop-blur-sm">
-                                    <tr>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Full Name</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Student Code</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {previewData.map((row, idx) => (
-                                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors group">
-                                            <td className="px-6 py-4">
-                                                <span className="text-sm text-gray-900 font-medium">{row.email}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-sm text-gray-500">{row.fullName}</span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${row.role === 'Student' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    row.role === 'Lecturer' ? 'bg-purple-50 text-purple-700 border-purple-100' :
-                                                        'bg-gray-50 text-gray-700 border-gray-100'
-                                                    }`}>
-                                                    {row.role}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500 font-mono">{row.studentCode || '-'}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <SemesterWhitelistsTable
+                            whitelists={previewData.map((row, idx) => ({
+                                whitelistId: idx, // dummy for preview
+                                email: row.email,
+                                fullName: row.fullName,
+                                roleName: row.role,
+                                studentCode: row.studentCode,
+                                campus: '',
+                                isReviewer: false,
+                                addedDate: new Date().toISOString(),
+                                semesterId: semesterId,
+                                avatar: ''
+                            }))}
+                            showStudentCode={true}
+                            rowsPerPage={5} // Smaller for modal
+                        />
                     </div>
                 )}
 

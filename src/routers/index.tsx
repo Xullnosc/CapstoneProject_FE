@@ -23,8 +23,8 @@ const AppRouter = () => {
     <Routes>
       <Route path="/" element={<Login />} />
 
-      {/* Semester Management - Only Admin/HOD */}
-      <Route element={<ProtectedRoute allowedRoles={['Admin', 'HOD']} />}>
+      {/* Semester Management - Only HOD (Admin removed) */}
+      <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
@@ -39,8 +39,8 @@ const AppRouter = () => {
         </Route>
       </Route>
 
-      {/* General Routes */}
-      <Route element={<ProtectedRoute />}>
+      {/* General Routes - Restrict Admin from accessing these */}
+      <Route element={<ProtectedRoute allowedRoles={['Student', 'Lecturer', 'HOD']} />}>
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
           <Route path="/teams" element={<TeamCreate />} />

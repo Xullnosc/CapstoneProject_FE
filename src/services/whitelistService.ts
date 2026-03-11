@@ -63,7 +63,6 @@ export const whitelistService = {
         return response.data;
     },
 
-    /** call controller to perform the actual import; returns successes and errors */
     importWhitelist: async (semesterId: number, file: File): Promise<ImportResult<PreviewRow>> => {
         // uses same endpoint as previewImport; backend is responsible for
         // interpreting the request and performing final import if appropriate.
@@ -76,6 +75,17 @@ export const whitelistService = {
             form,
             { headers: { 'Content-Type': 'multipart/form-data' } }
         );
+        return response.data;
+    },
+
+    getWhitelistsPaginated: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }) => {
+        const response = await api.get(`/semester/${semesterId}/whitelists`, { params });
+        return response.data;
+    },
+
+    /** Alias for getWhitelistsPaginated as requested */
+    getAllWhitelists: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }) => {
+        const response = await api.get(`/semester/${semesterId}/whitelists`, { params });
         return response.data;
     }
 };

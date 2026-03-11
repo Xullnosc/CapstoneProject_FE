@@ -9,6 +9,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   padding: 0.75rem 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .adminForm :global(.p-password),
@@ -32,10 +33,6 @@
   align-items: center;
 }
 
-.hodDialog :global(.p-input-icon-right .p-input-icon),
-.hodDialog :global(.p-icon-field-right .p-input-icon) {
-  margin-top: -10px;
-}
 
 .adminForm :global(.p-inputtext:enabled:focus),
 .adminForm :global(.p-password-input:enabled:focus),
@@ -45,5 +42,50 @@
 .hodDialog :global(.p-password input:focus) {
   outline: none;
   border-color: #F26F21;
-  box-shadow: 0 0 0 2px rgba(242, 111, 33, 0.25);
+  box-shadow: 0 0 0 4px rgba(242, 111, 33, 0.1);
+}
+
+.premiumButton {
+  background-color: #F26F21 !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.premiumButton:hover:not(:disabled) {
+  background-color: #e5631a !important;
+}
+
+.premiumButton:active:not(:disabled) {
+  opacity: 0.9;
+}
+
+.premiumButtonSecondary {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #4b5563 !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.premiumButtonSecondary:hover:not(:disabled) {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* Dialog Refinements */
+.hodDialogHeader {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 1.5rem 2rem !important;
+}
+
+.hodDialogFooter {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.25rem 2rem !important;
+  background-color: #f9fafb;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
 }

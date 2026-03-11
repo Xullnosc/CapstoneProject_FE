@@ -36,6 +36,16 @@ export interface Semester {
     whitelists: Whitelist[];
 }
 
+export interface PagedResult<T> {
+    items: T[];
+    totalCount: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}
+
 export const semesterService = {
     getAllSemesters: async (): Promise<Semester[]> => {
         const response = await api.get<Semester[]>('/semester');
@@ -44,6 +54,16 @@ export const semesterService = {
 
     getSemesterById: async (id: number): Promise<Semester> => {
         const response = await api.get<Semester>(`/semester/${id}`);
+        return response.data;
+    },
+
+    getWhitelistsPaginated: async (semesterId: number, params: {
+        page: number;
+        pageSize: number;
+        role?: string;
+        search?: string;
+    }): Promise<PagedResult<Whitelist>> => {
+        const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/whitelists`, { params });
         return response.data;
     },
 

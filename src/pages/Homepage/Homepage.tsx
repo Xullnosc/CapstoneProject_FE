@@ -7,11 +7,13 @@ import { useNavigate } from 'react-router-dom';
 import { teamService } from '../../services/teamService';
 import { authService } from '../../services/authService';
 import type { Team, TeamMember } from '../../types/team';
+import InviteMemberModal from '../../components/team/InviteMemberModal';
 
 const Homepage = () => {
     const navigate = useNavigate();
     const [team, setTeam] = useState<Team | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const currentUser = authService.getUser();
 
     useEffect(() => {
@@ -149,12 +151,22 @@ const Homepage = () => {
                             if ('isEmpty' in member) {
                                 return (
                                     <div key={`empty-${index}`} className="bg-white p-4 rounded-2xl border border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50 flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer"
-                                        onClick={() => navigate('/teams/team')}>
+                                        onClick={() => setIsInviteModalOpen(true)}>
                                         <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400 group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
                                             <i className="pi pi-plus text-xl"></i>
                                         </div>
                                         <div className="font-bold text-gray-400 text-sm mb-3 group-hover:text-gray-600">Available</div>
-                                        <Button label="Invite" size="small" outlined severity="warning" className="w-full text-xs" />
+                                        <Button
+                                            label="Invite"
+                                            size="small"
+                                            outlined
+                                            severity="warning"
+                                            className="w-full text-xs"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsInviteModalOpen(true);
+                                            }}
+                                        />
                                     </div>
                                 );
                             } else {
@@ -249,6 +261,13 @@ const Homepage = () => {
                     </p>
                 </div>
             </div>
+            {team && (
+                <InviteMemberModal
+                    isOpen={isInviteModalOpen}
+                    onClose={() => setIsInviteModalOpen(false)}
+                    teamId={team.teamId}
+                />
+            )}
         </div>
     );
 };
