@@ -2,9 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import Swal from '../../utils/swal';
 import { adminService, type HodAccount } from '../../services/adminService';
 import styles from './HodAccountsPage.module.css';
+
+const CAMPUSES = [
+  { label: 'FU-Hòa Lạc', value: 'FU-Hòa Lạc' },
+  { label: 'FU-Hồ Chí Minh', value: 'FU-Hồ Chí Minh' },
+  { label: 'FU-Đà Nẵng', value: 'FU-Đà Nẵng' },
+  { label: 'FU-Cần Thơ', value: 'FU-Cần Thơ' },
+  { label: 'FU-Quy Nhơn', value: 'FU-Quy Nhơn' },
+];
 
 const HodAccountsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,6 +30,7 @@ const HodAccountsPage = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [campus, setCampus] = useState<string | null>(null);
 
   const trimmed = useMemo(() => {
     return {
@@ -27,9 +38,10 @@ const HodAccountsPage = () => {
       email: email.trim(),
       username: username.trim(),
       password,
+      campus: campus || '',
       search: search.trim(),
     };
-  }, [fullName, email, username, password, search]);
+  }, [fullName, email, username, password, campus, search]);
 
   const toast = (icon: 'success' | 'warning' | 'error', title: string, text: string) => {
     return Swal.fire({
@@ -65,6 +77,7 @@ const HodAccountsPage = () => {
     setEmail('');
     setUsername('');
     setPassword('');
+    setCampus(null);
     setIsUpsertOpen(true);
   };
 
@@ -74,11 +87,12 @@ const HodAccountsPage = () => {
     setEmail(hod.email ?? '');
     setUsername(hod.username ?? '');
     setPassword('');
+    setCampus(hod.campus ?? null);
     setIsUpsertOpen(true);
   };
 
   const handleCreateOrUpdate = async () => {
-    if (!trimmed.email || !trimmed.username || !trimmed.password) {
+    if (!trimmed.email || !trimmed.username || (!selected && !trimmed.password)) {
       await toast('warning', 'Missing information', 'Please enter Email, Username, and Password.');
       return;
     }
@@ -90,6 +104,7 @@ const HodAccountsPage = () => {
         email: trimmed.email,
         username: trimmed.username,
         password: trimmed.password,
+        campus: trimmed.campus,
       });
       await toast('success', 'Success', res?.message ?? 'HOD account created/updated successfully.');
 
@@ -97,6 +112,7 @@ const HodAccountsPage = () => {
       setEmail('');
       setUsername('');
       setPassword('');
+      setCampus(null);
       setIsUpsertOpen(false);
       await load(trimmed.search || undefined);
     } catch (err) {
@@ -107,125 +123,158 @@ const HodAccountsPage = () => {
     }
   };
 
+  const dialogHeader = (
+    <div className="flex flex-col gap-1">
+      <h3 className="text-xl font-bold text-gray-800">
+        {selected ? 'Update HOD Account' : 'Create HOD Account'}
+      </h3>
+      <p className="text-xs text-gray-500 font-medium">Manage credentials for department heads</p>
+    </div>
+  );
+
+  const dialogFooter = (
+    <div className={`flex justify-end gap-3 mt-2 ${styles.hodDialogFooter}`}>
+      <Button
+        label="Cancel"
+        icon="pi pi-times"
+        className={styles.premiumButtonSecondary}
+        onClick={() => setIsUpsertOpen(false)}
+        disabled={isSubmitting}
+        text
+      />
+      <Button
+        label={isSubmitting ? 'Processing...' : selected ? 'Update' : 'Create'}
+        icon={isSubmitting ? 'pi pi-spin pi-spinner' : selected ? 'pi pi-check' : 'pi pi-plus'}
+        className={styles.premiumButton}
+        onClick={handleCreateOrUpdate}
+        disabled={isSubmitting}
+      />
+    </div>
+  );
+
   return (
     <div className={`max-w-5xl mx-auto p-4 sm:p-6 ${styles.adminForm}`}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">HOD Accounts</h1>
-        <p className="text-gray-600 mt-1">Create/update HOD accounts (username/password) provided by Admin.</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">HOD Accounts</h1>
+          <p className="text-gray-500 mt-2 font-medium">Manage administrative access for Department Heads.</p>
+        </div>
+        <Button
+          label="New HOD Account"
+          icon="pi pi-user-plus"
+          className={styles.premiumButton}
+          onClick={openCreate}
+        />
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-200 px-6 py-5 bg-white">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 px-6 py-5 bg-white">
           <div className="flex items-center gap-3">
-            <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1">
-              <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
-                HOD Accounts{' '}
-                <span className="ml-1 text-xs text-orange-700 bg-orange-600/10 px-1.5 py-0.5 rounded-md">
-                  {items.length}
-                </span>
-              </button>
+            <div className="bg-orange-50 px-4 py-2 rounded-xl border border-orange-100 flex items-center gap-2">
+              <span className="text-sm font-bold text-orange-700">Total Accounts</span>
+              <span className="bg-orange-600 text-white text-[11px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                {items.length}
+              </span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                search
-              </span>
+              <i className="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search HOD accounts (email, name)..."
-                className="w-full sm:w-72 h-11 pl-10 pr-3 rounded-xl border border-gray-200 bg-gray-50 outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm font-medium transition-all"
+                placeholder="Search by name or email..."
+                className="w-full sm:w-64 h-11 pl-11 pr-4 rounded-xl border border-gray-200 bg-gray-50/50 outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm font-medium transition-all"
               />
             </div>
-            <button
-              type="button"
+            <Button
+              icon="pi pi-refresh"
+              className={styles.premiumButtonSecondary}
               onClick={() => load(trimmed.search || undefined)}
               disabled={isLoading}
-              className="h-11 px-4 rounded-xl border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 transition disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Loading...' : 'Refresh'}
-            </button>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="h-11 px-4 rounded-xl text-white font-bold text-sm hover:shadow-lg hover:shadow-orange-200/40 transition"
-              style={{ background: 'linear-gradient(90deg, #F26F21 0%, #FF8A3D 55%, #FFB13C 100%)' }}
-            >
-              + New HOD
-            </button>
+              tooltip="Refresh data"
+              tooltipOptions={{ position: 'bottom' }}
+            />
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-gray-50/80 border-b border-gray-200">
+            <thead className="bg-gray-50/50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-20">ID</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Full name</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Username</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Credential</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest w-20">ID</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">User Details</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Campus</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Username</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-10"></div></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-32"></div></td>
-                    <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
-                    <td className="px-6 py-4"><div className="h-6 bg-gray-100 rounded-full w-24"></div></td>
-                    <td className="px-6 py-4"></td>
+                    <td className="px-6 py-6"><div className="h-4 bg-gray-100 rounded w-8"></div></td>
+                    <td className="px-6 py-6"><div className="h-10 bg-gray-100 rounded w-48"></div></td>
+                    <td className="px-6 py-6"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
+                    <td className="px-6 py-6"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
+                    <td className="px-6 py-6"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
+                    <td className="px-6 py-6"></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center justify-center text-gray-400 gap-3">
-                      <span className="material-symbols-outlined text-4xl opacity-50">person_off</span>
-                      <span className="text-sm font-medium">No HOD accounts found</span>
+                  <td colSpan={6} className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center text-gray-400 gap-4">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                        <i className="pi pi-users text-3xl opacity-20"></i>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-base font-bold text-gray-600">No accounts found</p>
+                        <p className="text-sm font-medium text-gray-400">Try adjusting your search criteria</p>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 items.map((hod) => (
                   <tr key={hod.userId} className="hover:bg-orange-50/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-semibold text-gray-800">{hod.userId}</span>
+                    <td className="px-6 py-5">
+                      <span className="text-xs font-bold text-gray-400">#{hod.userId}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900 font-medium">{hod.email ?? 'N/A'}</span>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-800 leading-tight">{hod.fullName || 'N/A'}</span>
+                        <span className="text-xs font-medium text-gray-500 mt-0.5">{hod.email || 'N/A'}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{hod.fullName ?? 'N/A'}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-700 font-mono">{hod.username ?? '—'}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-bold border ${hod.hasCredential
-                          ? 'bg-green-50 text-green-700 border-green-100'
-                          : 'bg-gray-50 text-gray-700 border-gray-200'
-                          }`}
-                      >
-                        {hod.hasCredential ? 'Configured' : 'Not set'}
+                    <td className="px-6 py-5">
+                      <span className="text-xs font-bold text-gray-600 bg-gray-100/50 px-2 py-1 rounded-md border border-gray-100">
+                        {hod.campus || 'Global'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(hod)}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg border bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-orange-600 hover:border-orange-200 transition-all"
-                        >
-                          Edit
-                        </button>
-                      </div>
+                    <td className="px-6 py-5">
+                      <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md font-mono">{hod.username || '—'}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-tight border ${hod.hasCredential
+                          ? 'bg-green-50 text-green-700 border-green-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-100'
+                          }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${hod.hasCredential ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                        {hod.hasCredential ? 'Configured' : 'Needs Setup'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <Button
+                        icon="pi pi-pencil"
+                        className="p-button-rounded p-button-text p-button-plain text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-all"
+                        onClick={() => openEdit(hod)}
+                        tooltip="Edit account"
+                      />
                     </td>
                   </tr>
                 ))
@@ -239,114 +288,102 @@ const HodAccountsPage = () => {
       <Dialog
         visible={isUpsertOpen}
         onHide={() => setIsUpsertOpen(false)}
+        header={dialogHeader}
+        footer={dialogFooter}
         className="w-full max-w-lg"
-        contentClassName={`${styles.hodDialog} !rounded-2xl bg-white shadow-2xl border border-gray-100 [&::-webkit-scrollbar]:hidden`}
+        headerClassName={styles.hodDialogHeader}
         maskClassName="bg-black/40 backdrop-blur-sm z-[9999]"
-        showHeader={false}
         modal
-        dismissableMask
         draggable={false}
         resizable={false}
-        style={{ overflow: 'hidden' }}
       >
-        <div className="relative p-8 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden">
-          <div className="absolute top-4 right-4 z-10">
-            <button
-              onClick={() => setIsUpsertOpen(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100 focus:outline-none"
-            >
-              <span className="material-symbols-outlined text-xl">close</span>
-            </button>
-          </div>
-
-          <div className="text-center mb-8 mt-2">
-            <h3 className="text-3xl font-extrabold text-[#F26F21]">
-              {selected ? 'Update HOD Account' : 'Create HOD Account'}
-            </h3>
-            <div className="h-1 w-16 bg-orange-200 mx-auto mt-2 rounded-full"></div>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Full name (optional)</label>
+        <div className="py-6 flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Full Name</label>
               <InputText
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter full name (optional)"
+                placeholder="e.g. Dr. John Smith"
                 className="w-full"
                 disabled={isSubmitting}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Email</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Campus</label>
+              <Dropdown
+                value={campus}
+                options={CAMPUSES}
+                onChange={(e) => setCampus(e.value)}
+                placeholder="Select Campus"
+                className="w-full text-sm"
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Email Address</label>
+            <div className="relative">
+              <i className="pi pi-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
               <InputText
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email address"
-                className="w-full"
+                placeholder="hod.name@fpt.edu.vn"
+                className="w-full !pl-11"
                 disabled={isSubmitting || !!selected}
               />
-              {selected && (
-                <p className="mt-2 text-xs text-gray-500 ml-1">Email is locked in edit mode.</p>
-              )}
             </div>
+            {selected && (
+              <p className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-400 font-bold uppercase tracking-tight">
+                <i className="pi pi-lock text-[10px]"></i>
+                Email cannot be changed
+              </p>
+            )}
+          </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Username</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Username</label>
               <InputText
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder="hod_user"
                 className="w-full"
                 disabled={isSubmitting}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">
-                {selected ? 'New password' : 'Password'}
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                {selected ? 'Reset Password' : 'Password'}
               </label>
               <Password
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={selected ? 'Enter new password' : 'Enter password'}
+                placeholder="••••••••"
                 className="w-full"
-                feedback={false}
+                inputClassName="w-full"
                 toggleMask
+                feedback={false}
                 disabled={isSubmitting}
               />
-              {selected && (
-                <p className="mt-2 text-xs text-gray-500 ml-1">A password is required to update credentials.</p>
-              )}
-            </div>
-
-            <div className="pt-2 flex justify-end gap-3">
-              <button
-                type="button"
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200"
-                onClick={() => setIsUpsertOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateOrUpdate}
-                disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 focus:ring-4 focus:ring-orange-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(90deg, #F26F21 0%, #FF8A3D 55%, #FFB13C 100%)' }}
-              >
-                {isSubmitting ? 'Processing...' : selected ? 'Update' : 'Create'}
-              </button>
             </div>
           </div>
+
+          {selected && (
+            <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+              <p className="text-[11px] text-orange-800/80 font-bold flex gap-2">
+                <i className="pi pi-info-circle text-xs"></i>
+                <span>Leave the password field empty if you do not wish to change it.</span>
+              </p>
+            </div>
+          )}
         </div>
       </Dialog>
-
     </div>
   );
 };
 
 export default HodAccountsPage;
-

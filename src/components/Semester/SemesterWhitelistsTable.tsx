@@ -1,8 +1,9 @@
-import { type FC, type ReactNode, useState } from 'react';
+import { type FC, type ReactNode, useState, useEffect } from 'react';
 import type { Whitelist } from '../../services/semesterService';
 import { whitelistService } from '../../services/whitelistService';
 import Swal from '../../utils/swal';
 import MemberAvatar from '../team/MemberAvatar';
+import { Paginator, type PaginatorPageChangeEvent } from 'primereact/paginator';
 
 interface SemesterWhitelistsTableProps {
     whitelists?: Whitelist[];
@@ -12,6 +13,11 @@ interface SemesterWhitelistsTableProps {
     onEdit?: (user: Whitelist) => void;
     showStudentCode?: boolean;
     isEnded?: boolean;
+    // Server-side pagination props
+    totalCount?: number;
+    page?: number; // 0-indexed for PrimeReact
+    onPageChange?: (page: number) => void;
+    rowsPerPage?: number;
 }
 
 const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
@@ -21,9 +27,37 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     onUpdate,
     onEdit,
     showStudentCode = false,
-    isEnded = false
+    isEnded = false,
+    totalCount,
+    page = 0,
+    onPageChange,
+    rowsPerPage = 10
 }) => {
     const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+    // For client-side pagination (if totalCount/onPageChange not provided)
+    const isServerSide = totalCount !== undefined && onPageChange !== undefined;
+    const [first, setFirst] = useState(0);
+    const [rows, setRows] = useState(rowsPerPage);
+
+    useEffect(() => {
+        if (isServerSide) {
+            setFirst(page * rowsPerPage);
+        }
+    }, [page, rowsPerPage, isServerSide]);
+
+    const onLocalPageChange = (event: PaginatorPageChangeEvent) => {
+        if (isServerSide) {
+            onPageChange!(event.page);
+        } else {
+            setFirst(event.first);
+            setRows(event.rows);
+        }
+    };
+
+    const displayWhitelists = isServerSide
+        ? whitelists
+        : whitelists.slice(first, first + rows);
 
     const handleToggleReviewer = async (user: Whitelist) => {
         try {
@@ -71,11 +105,13 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative mb-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
                 <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1">
                     <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
-                        Whitelisted Users <span className="ml-1 text-xs text-blue-600 bg-blue-600/10 px-1.5 py-0.5 rounded-md">{whitelists.length}</span>
+                        Whitelisted Users <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">
+                            {(isServerSide ? totalCount : whitelists.length) ?? 0}
+                        </span>
                     </button>
                 </div>
 
@@ -114,7 +150,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                     <td className="px-6 py-4"></td>
                                 </tr>
                             ))
-                        ) : whitelists.length === 0 ? (
+                        ) : displayWhitelists.length === 0 ? (
                             <tr>
                                 <td colSpan={showStudentCode ? 7 : 6} className="px-6 py-12 text-center">
                                     <div className="flex flex-col items-center justify-center text-gray-400 gap-3">
@@ -124,8 +160,8 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                 </td>
                             </tr>
                         ) : (
-                            whitelists.map((user) => (
-                                <tr key={user.whitelistId} className="hover:bg-blue-50/30 transition-colors group">
+                            displayWhitelists.map((user) => (
+                                <tr key={user.whitelistId || user.email} className="hover:bg-blue-50/30 transition-colors group">
                                     <td className="px-6 py-4 min-w-[80px] w-20">
                                         <div className="flex items-center justify-center">
                                             <MemberAvatar
@@ -190,10 +226,10 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                                                 {user.isReviewer ? 'remove_moderator' : 'add_moderator'}
                                                             </span>
                                                         )}
-                                                        {user.isReviewer ? 'Unassign Reviewer' : 'Assign Reviewer'}
+                                                        {user.isReviewer ? 'Unassign' : 'Assign Reviewer'}
                                                     </button>
                                                 ) : user.roleName === 'Student' ? (
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                                                         {onEdit && (
                                                             <button
                                                                 onClick={() => onEdit(user)}
@@ -221,6 +257,20 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                     </tbody>
                 </table>
             </div>
+
+            {(isServerSide ? (totalCount || 0) : whitelists.length) > rowsPerPage && (
+                <div className="border-t border-gray-100 py-2 bg-gray-50/30">
+                    <Paginator
+                        first={first}
+                        rows={rows}
+                        totalRecords={isServerSide ? totalCount : whitelists.length}
+                        onPageChange={onLocalPageChange}
+                        template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+                        currentPageReportTemplate="{first} - {last} of {totalRecords}"
+                        className="bg-transparent border-none text-xs"
+                    />
+                </div>
+            )}
         </div>
     );
 };

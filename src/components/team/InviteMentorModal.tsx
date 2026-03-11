@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { userService } from '../../services/userService';
 import { mentorInvitationService } from '../../services/mentorInvitationService';
 import MemberAvatar from './MemberAvatar';
@@ -30,7 +30,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
     const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
     const [hasSearched, setHasSearched] = useState(false);
 
-    const performSearch = async (term: string) => {
+    const performSearch = useCallback(async (term: string) => {
         setIsLoading(true);
         try {
             const results = await userService.searchLecturers(term, teamId);
@@ -57,7 +57,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [teamId, invitedUsers]);
 
     useEffect(() => {
         if (isOpen) {
@@ -68,7 +68,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
             setSearchResults([]);
             setInvitedUsers({});
         }
-    }, [isOpen, teamId]);
+    }, [isOpen, performSearch]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();

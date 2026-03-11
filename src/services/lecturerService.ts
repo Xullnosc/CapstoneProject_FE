@@ -11,9 +11,21 @@ export interface Lecturer {
     updatedAt?: string;
 }
 
+export interface PagedResult<T> {
+    items: T[];
+    totalCount: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+}
+
 export const lecturerService = {
-    getAllLecturers: async (): Promise<Lecturer[]> => {
-        const response = await api.get<Lecturer[]>('/Lecturer');
+    getAllLecturers: async (page: number = 1, pageSize: number = 10, search?: string): Promise<PagedResult<Lecturer>> => {
+        const response = await api.get<PagedResult<Lecturer>>('/lecturer', {
+            params: { page, pageSize, search }
+        });
         return response.data;
     },
 

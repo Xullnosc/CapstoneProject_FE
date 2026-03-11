@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Dropdown } from 'primereact/dropdown';
 import { InputSwitch } from 'primereact/inputswitch';
+import { Paginator, type PaginatorPageChangeEvent } from 'primereact/paginator';
 import { lecturerService, type Lecturer } from '../../services/lecturerService';
 import MemberAvatar from '../../components/team/MemberAvatar';
 import LecturerModal from './LecturerModal';
@@ -9,37 +9,32 @@ import Swal from '../../utils/swal';
 
 const LecturerManagementPage = () => {
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(0);
+    const [rows, setRows] = useState(10);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null);
-    const [campusFilter, setCampusFilter] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchLecturers();
-    }, []);
-
-    const fetchLecturers = async () => {
+    const fetchLecturers = useCallback(async () => {
         try {
             setIsLoading(true);
-            const data = await lecturerService.getAllLecturers();
-            setLecturers(data);
+            const data = await lecturerService.getAllLecturers(page + 1, rows, searchTerm);
+
+            setLecturers(data.items || []);
+            setTotalCount(data.totalCount ?? 0);
         } catch (error) {
-            console.error("Failed to fetch lecturers", error);
+            console.error('Failed to fetch lecturers', error);
             Swal.fire('Error', 'Failed to load lecturers pool', 'error');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [page, rows, searchTerm]);
 
-    const campusOptions = [
-        { label: 'All Campuses', value: null },
-        { label: 'FU-Hòa Lạc', value: 'FU-Hòa Lạc' },
-        { label: 'FU-Hồ Chí Minh', value: 'FU-Hồ Chí Minh' },
-        { label: 'FU-Đà Nẵng', value: 'FU-Đà Nẵng' },
-        { label: 'FU-Cần Thơ', value: 'FU-Cần Thơ' },
-        { label: 'FU-Quy Nhơn', value: 'FU-Quy Nhơn' }
-    ];
+    useEffect(() => {
+        fetchLecturers();
+    }, [fetchLecturers]);
 
     const handleToggleStatus = async (lecturer: Lecturer) => {
         try {
@@ -84,12 +79,8 @@ const LecturerManagementPage = () => {
         }
     };
 
-    const filteredLecturers = lecturers.filter(l => {
-        const matchesSearch = l.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (l.fullName?.toLowerCase().includes(searchTerm.toLowerCase()));
-        const matchesCampus = !campusFilter || l.campus === campusFilter;
-        return matchesSearch && matchesCampus;
-    });
+    // Removed client-side filteredLecturers as we now use server-side pagination/search
+    const displayLecturers = lecturers;
 
     return (
         <div className="min-h-screen bg-gray-50/50">
@@ -121,43 +112,22 @@ const LecturerManagementPage = () => {
                 {/* Search & Stats Carrier */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto flex-1">
-                        <div className="relative w-full md:w-80">
+                        <div className="relative w-full md:w-96">
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                             <input
                                 type="text"
                                 placeholder="Search by name or email..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }}
                                 className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
-                            />
-                        </div>
-
-                        <div className="w-full md:w-60">
-                            <Dropdown
-                                value={campusFilter}
-                                onChange={(e) => setCampusFilter(e.value)}
-                                options={campusOptions}
-                                optionLabel="label"
-                                placeholder="All Campuses"
-                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
-                                pt={{
-                                    root: { style: { padding: '4px 8px' } },
-                                    input: { className: 'text-sm font-medium py-2' },
-                                    item: { className: 'text-sm' }
-                                }}
-                                showClear={!!campusFilter}
                             />
                         </div>
                     </div>
 
                     <div className="flex gap-4 w-full md:w-auto">
-                        <div className="flex-1 md:flex-none px-6 py-3 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
-                            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-0.5">Total Pool</p>
-                            <p className="text-xl font-black text-blue-600">{lecturers.length}</p>
-                        </div>
-                        <div className="flex-1 md:flex-none px-6 py-3 bg-green-50/50 rounded-2xl border border-green-100/50 text-center">
-                            <p className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-0.5">Active</p>
-                            <p className="text-xl font-black text-green-600">{lecturers.filter(l => l.isActive).length}</p>
+                        <div className="flex-1 md:flex-none px-8 py-3 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
+                            <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-0.5" title="Total in current search/pool">Total Found</p>
+                            <p className="text-xl font-black text-blue-600">{totalCount}</p>
                         </div>
                     </div>
                 </div>
@@ -186,7 +156,7 @@ const LecturerManagementPage = () => {
                                             <td className="px-8 py-5"></td>
                                         </tr>
                                     ))
-                                ) : filteredLecturers.length === 0 ? (
+                                ) : displayLecturers.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-8 py-20 text-center">
                                             <div className="flex flex-col items-center gap-4 opacity-40">
@@ -196,7 +166,7 @@ const LecturerManagementPage = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredLecturers.map((l) => (
+                                    displayLecturers.map((l) => (
                                         <tr key={l.lecturerId} className="hover:bg-orange-50/30 transition-colors group">
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center gap-4">
@@ -256,6 +226,24 @@ const LecturerManagementPage = () => {
                     </div>
                 </div>
 
+                {totalCount > rows && (
+                    <div className="mt-8 border-t border-gray-100 pt-6">
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-2">
+                            <Paginator
+                                first={page * rows}
+                                rows={rows}
+                                totalRecords={totalCount}
+                                onPageChange={(e: PaginatorPageChangeEvent) => {
+                                    setPage(e.page ?? 0);
+                                    setRows(e.rows);
+                                }}
+                                template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+                                currentPageReportTemplate="{first} - {last} of {totalRecords}"
+                                className="bg-transparent border-none"
+                            />
+                        </div>
+                    </div>
+                )}
             </main>
 
             <LecturerModal
