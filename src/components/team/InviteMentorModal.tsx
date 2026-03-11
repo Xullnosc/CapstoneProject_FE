@@ -36,16 +36,19 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
             const results = await userService.searchLecturers(term, teamId);
             setSearchResults(results);
 
-            const newInvitedUsers = { ...invitedUsers };
-            results.forEach(u => {
-                if (u.pendingInvitationId) {
-                    newInvitedUsers[u.userId] = u.pendingInvitationId;
-                }
+            setInvitedUsers(prev => {
+                const newInvitedUsers = { ...prev };
+                let changed = false;
+                results.forEach(u => {
+                    if (u.pendingInvitationId && newInvitedUsers[u.userId] !== u.pendingInvitationId) {
+                        newInvitedUsers[u.userId] = u.pendingInvitationId;
+                        changed = true;
+                    }
+                });
+                return changed ? newInvitedUsers : prev;
             });
-            setInvitedUsers(newInvitedUsers);
         } catch (error) {
             console.error(error);
-            // Reverting error alert to match more closely with original simple errors if any
             Swal.fire({
                 icon: 'error',
                 title: 'Operation Failed',
@@ -57,7 +60,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
         } finally {
             setIsLoading(false);
         }
-    }, [teamId, invitedUsers]);
+    }, [teamId]);
 
     useEffect(() => {
         if (isOpen) {

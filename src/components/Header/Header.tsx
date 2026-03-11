@@ -109,10 +109,16 @@ const Header = () => {
                             </div>
                         )}
                         {canManageHodAccounts && (
-                            <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-id-card text-xl"></i>
-                                <span>HOD Accounts</span>
-                            </div>
+                            <>
+                                <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-id-card text-xl"></i>
+                                    <span>HOD Accounts</span>
+                                </div>
+                                <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-history text-xl"></i>
+                                    <span>Access Logs</span>
+                                </div>
+                            </>
                         )}
                         {user?.roleName !== 'Admin' && (isStudent || isLecturer) && (
                             <div onClick={() => navigate(isLecturer ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
@@ -263,10 +269,16 @@ const Header = () => {
                             </>
                         )}
                         {user?.roleName === 'Admin' && (
-                            <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
-                                <i className="pi pi-id-card text-xl"></i>
-                                <span className="hidden lg:block whitespace-nowrap">HOD Accounts</span>
-                            </div>
+                            <>
+                                <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                    <i className="pi pi-id-card text-xl"></i>
+                                    <span className="hidden lg:block whitespace-nowrap">HOD Accounts</span>
+                                </div>
+                                <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                    <i className="pi pi-history text-xl"></i>
+                                    <span className="hidden lg:block whitespace-nowrap">Access Logs</span>
+                                </div>
+                            </>
                         )}
                     </nav>
                 </div>
