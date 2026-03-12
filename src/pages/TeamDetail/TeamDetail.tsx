@@ -9,6 +9,7 @@ import ProjectStatusSection from '../../components/team/ProjectStatusSection';
 import TeamRoster from '../../components/team/TeamRoster';
 import DangerZone from '../../components/team/DangerZone';
 import EditTeamModal from '../../components/team/EditTeamModal';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import axios from 'axios';
 
 interface DecodedToken {
@@ -75,7 +76,9 @@ const TeamDetail: React.FC = () => {
         if (token) {
             try {
                 const decoded = jwtDecode<DecodedToken>(token);
-                const userIdStr = (decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] as string) || decoded.nameid || decoded.sub;
+                // Correctly map the nameidentifier claim
+                const nameIdentifier = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+                const userIdStr = (decoded[nameIdentifier as keyof DecodedToken] as string) || decoded.nameid || decoded.sub;
                 if (userIdStr) {
                     setCurrentUserId(parseInt(userIdStr));
                 }
@@ -85,13 +88,11 @@ const TeamDetail: React.FC = () => {
         }
     }, []);
 
-    // Extract explicitly to avoid object reference changes per render
     const targetIdVal = location.state?.targetId;
 
     useEffect(() => {
         const abortController = new AbortController();
 
-        // Case 1: URL has ID (e.g. /teams/123) -> Redirect to /teams/team (Mask the ID)
         if (teamId) {
             navigate('/teams/team', {
                 state: { targetId: parseInt(teamId) },
@@ -100,12 +101,9 @@ const TeamDetail: React.FC = () => {
             return;
         }
 
-        // Case 2: Static URL /teams/team
         if (targetIdVal) {
-            // Sub-case 2.1: Loading specific team from hidden state
             loadTeam(targetIdVal, abortController);
         } else {
-            // Sub-case 2.2: Loading "My Team" (Default)
             const loadMyTeam = async () => {
                 try {
                     setLoading(true);
@@ -150,12 +148,8 @@ const TeamDetail: React.FC = () => {
             try {
                 if (team && team.teamId) {
                     await teamService.kickMember(team.teamId, userId);
-                    Swal.fire(
-                        'Kicked!',
-                        'The member has been removed.',
-                        'success'
-                    );
-                    loadTeam(team.teamId); // Reload
+                    Swal.fire('Kicked!', 'The member has been removed.', 'success');
+                    loadTeam(team.teamId);
                 }
             } catch (err) {
                 let message = 'Failed to kick member.';
@@ -182,11 +176,7 @@ const TeamDetail: React.FC = () => {
             try {
                 if (team && team.teamId) {
                     await teamService.disbandTeam(team.teamId);
-                    await Swal.fire(
-                        'Disbanded!',
-                        'Your team has been disbanded.',
-                        'success'
-                    );
+                    await Swal.fire('Disbanded!', 'Your team has been disbanded.', 'success');
                     navigate('/teams');
                 }
             } catch (err) {
@@ -200,6 +190,7 @@ const TeamDetail: React.FC = () => {
     };
 
     const handleLeave = async () => {
+        const isLeader = !!(currentUserId && team?.leaderId === currentUserId);
         if (isLeader) {
             await Swal.fire({
                 title: 'Cannot Leave Team',
@@ -224,11 +215,7 @@ const TeamDetail: React.FC = () => {
             try {
                 if (team && team.teamId) {
                     await teamService.leaveTeam(team.teamId);
-                    await Swal.fire(
-                        'Left!',
-                        'You have left the team.',
-                        'success'
-                    );
+                    await Swal.fire('Left!', 'You have left the team.', 'success');
                     navigate('/teams');
                 }
             } catch (err) {
@@ -259,12 +246,8 @@ const TeamDetail: React.FC = () => {
             try {
                 if (team && team.teamId) {
                     await teamService.transferLeader(team.teamId, userId);
-                    await Swal.fire(
-                        'Transferred!',
-                        `Leadership has been transferred to ${memberName}.`,
-                        'success'
-                    );
-                    loadTeam(team.teamId); // Reload to reflect changes
+                    await Swal.fire('Transferred!', `Leadership has been transferred to ${memberName}.`, 'success');
+                    loadTeam(team.teamId);
                 }
             } catch (err) {
                 let message = 'Failed to transfer leadership.';
@@ -282,12 +265,20 @@ const TeamDetail: React.FC = () => {
     const isLeader = !!(currentUserId && team.leaderId === currentUserId);
     const isMentor = !!(currentUserId && (team.mentorId === currentUserId || team.mentorId2 === currentUserId));
 
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: team.teamName }
+    ];
+
     return (
         <div className="layout-container flex h-full grow flex-col min-h-full transition-colors duration-200">
             <main className="flex flex-1 justify-center py-8 px-4 md:px-8">
                 <div className="layout-content-container flex flex-col max-w-[960px] flex-1">
 
-                    {/* Team Banner */}
+                    <div className="mb-6">
+                        <PremiumBreadcrumb items={breadcrumbItems} />
+                    </div>
+
                     <TeamBanner
                         team={team}
                         isLeader={isLeader}
@@ -302,12 +293,8 @@ const TeamDetail: React.FC = () => {
                         onUpdateSuccess={() => loadTeam(team.teamId)}
                     />
 
-
-                    {/* Project Status */}
                     <ProjectStatusSection team={team} isLeader={isLeader} />
 
-
-                    {/* Roster */}
                     <TeamRoster
                         members={team.members}
                         isLeader={isLeader}
@@ -327,13 +314,11 @@ const TeamDetail: React.FC = () => {
                         onTransferRole={handleTransferRole}
                     />
 
-                    {/* Danger Zone (Leader Only) */}
                     {isLeader && (
                         <div className="mb-6">
                             <DangerZone onAction={handleDisband} actionType="disband" />
                         </div>
                     )}
-
                 </div>
             </main>
         </div>

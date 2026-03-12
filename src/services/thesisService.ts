@@ -71,9 +71,16 @@ export const thesisService = {
         return response.data;
     },
 
-    /** PUT /thesis/:id/review - reviewer only: Pass/Fail with optional note (Fail requires note) */
-    submitReviewerDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
-        await api.put(`/thesis/${id}/review`, { decision, note });
+    /** PUT /thesis/:id/review - reviewer only: set Approve / Reject with optional comment and file */
+    evaluateThesis: async (id: string, data: { status: 'Approve' | 'Reject', comment?: string, reviewFile?: File }): Promise<void> => {
+        const formData = new FormData();
+        formData.append('Status', data.status);
+        if (data.comment) formData.append('Comment', data.comment);
+        if (data.reviewFile) formData.append('ReviewFile', data.reviewFile);
+
+        await api.put(`/thesis/${id}/review`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
     },
 
     /** PUT /thesis/:id/cancel - cancel a thesis proposal */
@@ -84,8 +91,8 @@ export const thesisService = {
 
     /** PUT /thesis/:id/lock - Lecturer: toggle lock/unlock on their own thesis */
     toggleThesisLock: async (id: string): Promise<Thesis> => {
-        const response = await api.put<{ Data: Thesis }>(`/thesis/${id}/lock`);
-        return response.data.Data;
+        const response = await api.put<{ data: Thesis }>(`/thesis/${id}/lock`);
+        return response.data.data;
     },
 
 

@@ -1,0 +1,169 @@
+import React, { useState } from 'react';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { FileUpload } from 'primereact/fileupload';
+import { SelectButton } from 'primereact/selectbutton';
+import { thesisService } from '../../services/thesisService';
+import Swal from '../../utils/swal';
+
+interface ReviewSubmissionModalProps {
+    visible: boolean;
+    onHide: () => void;
+    thesisId: string;
+    onSuccess: () => void;
+}
+
+const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, onHide, thesisId, onSuccess }) => {
+    const [status, setStatus] = useState<'Approve' | 'Reject' | null>(null);
+    const [comment, setComment] = useState('');
+    const [file, setFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const statusOptions = [
+        { label: 'Approve', value: 'Approve', icon: 'pi pi-check' },
+        { label: 'Reject', value: 'Reject', icon: 'pi pi-times' }
+    ];
+
+    const handleSubmit = async () => {
+        if (!status) {
+            Swal.fire({ icon: 'warning', title: 'Decision Required', text: 'Please select Approve or Reject.' });
+            return;
+        }
+
+        if (status === 'Reject' && !comment.trim()) {
+            Swal.fire({ icon: 'warning', title: 'Comment Required', text: 'Please provide a comment for rejection.' });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await thesisService.evaluateThesis(thesisId, {
+                status,
+                comment: comment.trim() || undefined,
+                reviewFile: file || undefined
+            });
+            Swal.fire({ icon: 'success', title: 'Submitted', text: 'Your evaluation has been recorded.', timer: 2000, showConfirmButton: false });
+            onSuccess();
+            onHide();
+            // Reset
+            setStatus(null);
+            setComment('');
+            setFile(null);
+        } catch (err: unknown) {
+            console.error('Submit review failed', err);
+            const axiosError = err as { response?: { data?: { Message?: string } } };
+            const msg = axiosError.response?.data?.Message || 'Failed to submit review.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const footer = (
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <Button
+                label="Cancel"
+                icon="pi pi-times"
+                onClick={onHide}
+                className="p-button-text p-button-secondary p-button-sm font-bold px-4"
+            />
+            <Button
+                label={loading ? "Submitting..." : "Submit Evaluation"}
+                icon={loading ? "pi pi-spin pi-spinner" : "pi pi-send"}
+                onClick={handleSubmit}
+                disabled={!status || loading}
+                className="p-button-sm font-bold px-6 shadow-sm hover:shadow-md transition-all active:scale-95"
+                style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+            />
+        </div>
+    );
+
+    return (
+        <Dialog
+            header="Thesis Evaluation"
+            visible={visible}
+            onHide={onHide}
+            style={{ width: '500px' }}
+            breakpoints={{ '960px': '75vw', '641px': '90vw' }}
+            footer={footer}
+            draggable={false}
+            resizable={false}
+            modal
+            className="p-fluid shadow-2xl"
+            headerClassName="text-xl font-bold border-b border-gray-100 pb-4"
+            contentClassName="pt-6"
+        >
+            <div className="flex flex-col gap-8">
+                {/* Verdict Section */}
+                <div className="flex flex-col gap-3">
+                    <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-1">
+                        Reviewer Decision
+                    </label>
+                    <SelectButton
+                        value={status}
+                        options={statusOptions}
+                        onChange={(e) => setStatus(e.value)}
+                        className="premium-select-button select-button-vertical"
+                        itemTemplate={(option) => (
+                            <div className="flex items-center justify-center gap-2 py-3 w-full">
+                                <i className={`${option.icon} text-sm`} />
+                                <span className="text-xs font-bold uppercase tracking-widest">{option.label}</span>
+                            </div>
+                        )}
+                    />
+                </div>
+
+                {/* Comment Section */}
+                <div className="flex flex-col gap-3">
+                    <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-1">
+                        Detailed Feedback {status === 'Reject' && <span className="text-red-500">*</span>}
+                    </label>
+                    <InputTextarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows={6}
+                        placeholder={status === 'Reject' ? "Explain the reasons for rejection and required improvements..." : "Add overall feedback for the team (optional)..."}
+                        className="text-sm border border-slate-200 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 p-4 leading-relaxed outline-none transition-all shadow-sm"
+                    />
+                </div>
+
+                {/* File Upload Section */}
+                <div className="flex flex-col gap-3">
+                    <label className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 px-1">
+                        Supporting Document (Optional)
+                    </label>
+                    <div className="p-5 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50 hover:bg-white hover:border-orange-200 transition-all flex flex-col gap-4 group">
+                        <FileUpload
+                            mode="basic"
+                            auto
+                            chooseLabel={file ? file.name : "Attach Review Report"}
+                            onSelect={(e) => setFile(e.files[0])}
+                            className="p-button-sm p-button-outlined p-button-secondary font-bold w-full rounded-xl border-slate-200 group-hover:border-orange-300 transition-colors"
+                        />
+                        {file && (
+                            <div className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                                        <i className="pi pi-file text-xl" />
+                                    </div>
+                                    <div className="flex flex-col overflow-hidden">
+                                        <span className="text-xs font-bold truncate max-w-[150px]">{file.name}</span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase">Size: {(file.size / 1024).toFixed(1)} KB</span>
+                                    </div>
+                                </div>
+                                <Button
+                                    icon="pi pi-trash"
+                                    className="p-button-text p-button-danger p-button-sm p-0 w-8 h-8 rounded-full hover:bg-red-50"
+                                    onClick={() => setFile(null)}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+    );
+};
+
+export default ReviewSubmissionModal;

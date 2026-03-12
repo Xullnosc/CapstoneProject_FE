@@ -11,12 +11,11 @@ import ThesisPage from '../pages/Thesis/ThesisPage';
 import ProposeThesisPage from '../pages/ProposeThesis/ProposeThesisPage';
 import MyThesisPage from '../pages/Thesis/MyThesisPage';
 import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
-import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 import HodAccountsPage from '../pages/Admin/HodAccountsPage';
-import AccessLogPage from '../pages/Admin/AccessLogPage';
+import AccessLogsPage from '../pages/Admin/AccessLogsPage';
 import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 
 const AppRouter = () => {
@@ -37,7 +36,7 @@ const AppRouter = () => {
       <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
         <Route element={<MainLayout />}>
           <Route path="/admin/hod" element={<HodAccountsPage />} />
-          <Route path="/admin/access-logs" element={<AccessLogPage />} />
+          <Route path="/admin/access-logs" element={<AccessLogsPage />} />
         </Route>
       </Route>
 
@@ -50,7 +49,7 @@ const AppRouter = () => {
           <Route path="/teams/:teamId" element={<TeamDetail />} />
           <Route path="/thesis" element={<ThesisPage />} />
           <Route path="/my-thesis" element={<MyThesisPage />} />
-          <Route path="/review-thesis" element={<ReviewerThesisPage />} />
+          <Route path="/review-thesis" element={<ThesisPage />} />
           <Route path="/thesis/:id" element={<ThesisDetailPage />} />
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
           <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />

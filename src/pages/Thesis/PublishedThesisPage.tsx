@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
+import Swal from '../../utils/swal';
 
 const PublishedThesisPage = () => {
     const navigate = useNavigate();
@@ -9,6 +11,16 @@ const PublishedThesisPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchTitle, setSearchTitle] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    const handleRegisterClick = (thesis: Thesis) => {
+        Swal.fire({
+            title: 'Registration',
+            text: `Would you like to register your team for "${thesis.title}"? This feature will be available in the next update.`,
+            icon: 'info',
+            confirmButtonColor: '#f97415',
+            confirmButtonText: 'Great, thanks!'
+        });
+    };
 
     // Debounce
     useEffect(() => {
@@ -49,18 +61,17 @@ const PublishedThesisPage = () => {
         }
     };
 
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: 'Register Approved Thesis' }
+    ];
+
     return (
         <div className="p-6 lg:p-10 font-sans text-gray-800">
             {/* Breadcrumb */}
-            <nav className="flex mb-4">
-                <ol className="flex items-center space-x-2 text-sm text-slate-500">
-                    <li><Link to="/home" className="hover:text-primary transition-colors">Home</Link></li>
-                    <li><i className="pi pi-chevron-right text-xs" /></li>
-                    <li><Link to="/teams/team" className="hover:text-primary transition-colors">My Team</Link></li>
-                    <li><i className="pi pi-chevron-right text-xs" /></li>
-                    <li className="font-medium text-primary">Register Approved Thesis</li>
-                </ol>
-            </nav>
+            <div className="mb-6">
+                <PremiumBreadcrumb items={breadcrumbItems} />
+            </div>
 
             {/* Page Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -169,10 +180,7 @@ const PublishedThesisPage = () => {
                                     View Details
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        // TODO: implement register flow (register team to this thesis)
-                                        alert(`Register for: ${thesis.title}`);
-                                    }}
+                                    onClick={() => handleRegisterClick(thesis)}
                                     className="flex-1 py-2.5 bg-primary text-white font-bold rounded-xl cursor-pointer hover:bg-primary/90 transition-colors shadow-sm text-sm"
                                 >
                                     Register

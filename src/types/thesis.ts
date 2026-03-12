@@ -34,8 +34,20 @@ export interface Thesis {
     upDate: string | null;      // BE: "upDate"
     updateDate: string | null;  // BE: "updateDate"
     isLocked: boolean;
-    histories: ThesisHistory[] | null; // BE: "histories" (not "thesisHistories")
+    histories: ThesisHistory[] | null;
 
+    reviews: ThesisReview[] | null;
+}
+
+export interface ThesisReview {
+    reviewId: number;
+    thesisId: string;
+    reviewerId: number;
+    reviewerName: string | null;
+    status: 'Approve' | 'Reject';
+    comment: string | null;
+    fileUrl: string | null;
+    reviewDate: string;
 }
 
 export interface GetThesisFilters {
