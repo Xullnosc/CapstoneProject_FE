@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Avatar } from 'primereact/avatar';
-import { Badge } from 'primereact/badge';
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { Sidebar } from 'primereact/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -28,6 +27,8 @@ const Header = () => {
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isLecturer = user?.roleName === 'Lecturer';
     const isStudent = user?.roleName === 'Student';
+    const hasUnread = unreadCount > 0;
+    const isNotificationsPath = location.pathname.startsWith('/notifications');
 
     useEffect(() => {
         const fetchCurrentSemester = async () => {
@@ -72,7 +73,7 @@ const Header = () => {
         fetchUnreadCount();
 
         // Only poll if NOT on notifications page (smart polling)
-        const isOnNotificationsPage = location.pathname === '/notifications';
+        const isOnNotificationsPage = location.pathname.startsWith('/notifications');
         if (isOnNotificationsPage) {
             return; // Don't poll while viewing notifications
         }
@@ -176,16 +177,22 @@ const Header = () => {
                         )}
 
                         {user?.roleName !== 'Admin' && (
-                            <div className="flex items-center gap-3 text-gray-700 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer">
-                                <div onClick={() => { navigate('/notifications'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/notifications' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                            <div
+                                onClick={() => {
+                                    navigate('/notifications');
+                                    setVisible(false);
+                                }}
+                                className={`flex items-center justify-between gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${isNotificationsPath ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}
+                            >
+                                <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <i className="pi pi-bell text-xl"></i>
-                                        {unreadCount > 0 && (
-                                            <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
+                                        {hasUnread && (
+                                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
                                         )}
                                     </div>
+                                    <span>Notifications</span>
                                 </div>
-                                <span>Notifications</span>
                             </div>
                         )}
 
@@ -255,8 +262,8 @@ const Header = () => {
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
-                                        {item.isNotification && unreadCount > 0 && (
-                                            <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
+                                        {item.isNotification && hasUnread && (
+                                            <span className="absolute top-0 right-0 translate-x-[35%] -translate-y-[35%] w-2 h-2 rounded-full bg-red-500 border border-white pointer-events-none"></span>
                                         )}
                                     </div>
                                 )}
@@ -323,10 +330,10 @@ const Header = () => {
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 {isHOD && (
-                    <div onClick={() => navigate('/notifications')} className={`mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${location.pathname === '/notifications' ? 'bg-orange-50 text-orange-600' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
+                    <div onClick={() => navigate('/notifications')} className={`mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${isNotificationsPath ? 'bg-orange-50 text-orange-600' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-bell text-xl"></i>
-                        {unreadCount > 0 && (
-                            <Badge value={unreadCount > 99 ? '99+' : unreadCount.toString()} severity="danger" className="min-w-[1.25rem] h-5 text-xs absolute -top-1 -right-2 border-2 border-white"></Badge>
+                        {hasUnread && (
+                            <span className="absolute top-0 right-0 translate-x-[35%] -translate-y-[35%] w-2 h-2 rounded-full bg-red-500 border border-white pointer-events-none"></span>
                         )}
                     </div>
                 )}

@@ -3,6 +3,41 @@ import { useNavigate } from 'react-router-dom';
 import type { NotificationDTO } from '../../types/notification';
 import { NotificationType, notificationTypeConfig } from '../../types/notification';
 
+const formatNotificationTimestamp = (createdAt?: string): string => {
+  if (!createdAt) return '';
+
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const diffMs = Date.now() - date.getTime();
+  const diffInMinutes = Math.floor(diffMs / (1000 * 60));
+  const relativeTime = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+  if (diffInMinutes < 1) {
+    return 'Just now';
+  }
+  if (diffInMinutes < 60) {
+    return relativeTime.format(-diffInMinutes, 'minute');
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return relativeTime.format(-diffInHours, 'hour');
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return relativeTime.format(-diffInDays, 'day');
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
 interface NotificationItemProps {
   notification: NotificationDTO;
   onMarkRead: (id: number) => void;
@@ -22,25 +57,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const typeConfig = useMemo(() => notificationTypeConfig[notification.type], [notification.type]);
 
   // Format timestamp
-  const formattedTime = useMemo(() => {
-    if (!notification.createdAt) return '';
-    
-    const date = new Date(notification.createdAt);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-      return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
-    }
-    if (diffInHours < 24) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    }
-    if (diffInHours < 48) {
-      return 'Yesterday';
-    }
-    return `${Math.floor(diffInHours / 24)} days ago`;
-  }, [notification.createdAt]);
+  const formattedTime = useMemo(() => formatNotificationTimestamp(notification.createdAt), [notification.createdAt]);
 
   // Get action button configuration based on notification type
   const getActionButton = useMemo(() => {
@@ -108,12 +125,17 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1 pr-4 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className={`text-xs font-bold uppercase tracking-wider ${typeConfig.color}`}>
-            {notification.type.replace(/([A-Z])/g, ' $1').trim()}
-          </span>
-          <span className="text-xs text-gray-400">{formattedTime}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`text-xs font-bold uppercase tracking-wider ${typeConfig.color}`}>
+              {notification.type.replace(/([A-Z])/g, ' $1').trim()}
+            </span>
+            {!notification.isRead && (
+              <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_6px_rgba(255,106,0,0.45)]"></span>
+            )}
+          </div>
+          <span className="text-xs text-gray-400 shrink-0">{formattedTime}</span>
         </div>
         <h3 className={`text-base leading-tight mb-1 ${notification.isRead ? 'font-medium' : 'font-bold'}`}>
           {notification.title}
@@ -123,52 +145,49 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         </p>
 
         {/* Action Buttons */}
-        {getActionButton && (
-          <div className="flex gap-2 mt-3">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          {getActionButton ? (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 getActionButton.onClick();
               }}
-              className="px-4 py-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-orange-700 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-full transition-colors"
             >
+              <i className="pi pi-external-link text-[10px]"></i>
               {getActionButton.label}
             </button>
+          ) : (
+            <span className="text-xs text-transparent select-none">.</span>
+          )}
+
+          <div className="ml-auto flex items-center gap-2">
+            {!notification.isRead && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkRead(notification.notificationId);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full transition-colors"
+                title="Mark as read"
+              >
+                <i className="pi pi-check text-[10px]"></i>
+                Mark as read
+              </button>
+            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(notification.notificationId);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-full transition-colors"
+              title="Archive"
+            >
+              <i className="pi pi-trash text-[10px]"></i>
+              Delete
+            </button>
           </div>
-        )}
-      </div>
-
-      {/* Unread Indicator */}
-      {!notification.isRead && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2">
-          <div className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(255,106,0,0.5)]"></div>
         </div>
-      )}
-
-      {/* Action Menu (Mark Read / Delete) */}
-      <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {!notification.isRead && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMarkRead(notification.notificationId);
-            }}
-            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            title="Mark as read"
-          >
-            <i className="pi pi-check text-sm text-gray-500"></i>
-          </button>
-        )}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(notification.notificationId);
-          }}
-          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-          title="Archive"
-        >
-          <i className="pi pi-trash text-sm text-red-500"></i>
-        </button>
       </div>
     </div>
   );

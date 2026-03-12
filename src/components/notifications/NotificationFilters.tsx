@@ -10,7 +10,6 @@ const NotificationFilters: React.FC<NotificationFiltersProps> = ({ activeFilter,
   const filters: { value: FilterType; label: string }[] = [
     { value: 'all', label: 'All' },
     { value: 'unread', label: 'Unread' },
-    { value: 'archived', label: 'Archived' },
   ];
 
   return (

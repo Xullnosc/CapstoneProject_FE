@@ -22,18 +22,14 @@ const NotificationsPage: React.FC = () => {
     changePage,
   } = useNotifications();
 
+  const unreadOnPage = notifications.filter((notification) => !notification.isRead).length;
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/40 via-white to-white">
       {/* Header Section */}
-      <header className="sticky top-0 z-10 bg-white/80  backdrop-blur-md border-b border-orange-100">
+      <header className="sticky top-0 z-10 bg-white/85 backdrop-blur-md border-b border-orange-100 shadow-sm shadow-orange-100/40">
         <div className="px-6 py-5 max-w-2xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-2">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-orange-50 text-gray-900 dark:text-gray-100 transition-colors"
-            >
-              <i className="pi pi-arrow-left"></i>
-            </button>
             <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
               <button onClick={() => navigate('/home')} className="text-gray-500 hover:text-orange-600 transition-colors">
                 Home
@@ -43,13 +39,20 @@ const NotificationsPage: React.FC = () => {
             </nav>
           </div>
           <div className="flex items-end justify-between">
-            <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {totalCount} total{totalCount !== 1 ? 's' : ''}{unreadOnPage > 0 ? ` • ${unreadOnPage} unread on this page` : ''}
+              </p>
+            </div>
+
             <button
               onClick={markAllAsRead}
-              disabled={isLoading || notifications.filter(n => !n.isRead).length === 0}
-              className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors px-3 py-1 rounded-lg hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || unreadOnPage === 0}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Mark all as read
+              <i className="pi pi-check-square"></i>
+              <span>Mark all as read</span>
             </button>
           </div>
         </div>
@@ -93,15 +96,13 @@ const NotificationsPage: React.FC = () => {
             <p className="text-gray-500 text-center max-w-sm">
               {filter === 'unread'
                 ? 'You have no unread notifications at the moment.'
-                : filter === 'archived'
-                ? 'No archived notifications.'
                 : 'You don\'t have any notifications yet.'}
             </p>
           </div>
         ) : (
           // Notification Items
           <>
-            <div className="space-y-3">
+            <div className="space-y-3 rounded-2xl p-1">
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification.notificationId}

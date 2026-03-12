@@ -45,7 +45,7 @@ export interface PagedResult<T> {
   totalPages: number;
 }
 
-export type FilterType = 'all' | 'unread' | 'archived';
+export type FilterType = 'all' | 'unread';
 
 // Notification type metadata for UI rendering
 export interface NotificationTypeConfig {

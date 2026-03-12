@@ -44,8 +44,11 @@ const notificationService = {
     }
 
     // Fetch fresh count from API
-    const response = await api.get<number>('/notifications/count');
-    const count = response.data;
+    const response = await api.get<number | { count: number }>('/notifications/unread-count');
+    const count =
+      typeof response.data === 'number'
+        ? response.data
+        : Number(response.data?.count ?? 0);
 
     // Update cache
     unreadCountCache = {

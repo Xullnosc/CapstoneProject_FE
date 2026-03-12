@@ -44,15 +44,6 @@ export const useNotifications = () => {
           totalCount: unreadNotifications.length,
           totalPages: Math.ceil(unreadNotifications.length / pageSize) || 1,
         };
-      } else if (filter === 'archived') {
-        // Archived notifications are deleted, so show empty list
-        result = {
-          items: [],
-          pageIndex: 1,
-          pageSize: pageSize,
-          totalCount: 0,
-          totalPages: 1,
-        };
       } else {
         // Default: get all notifications with pagination
         result = await notificationService.getNotifications(currentPage, pageSize);
