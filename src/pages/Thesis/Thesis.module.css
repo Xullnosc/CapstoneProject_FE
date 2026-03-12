@@ -1,0 +1,14 @@
+.thesisContainer :global(.p-inputtext:enabled:focus),
+.thesisContainer :global(.p-dropdown:not(.p-disabled).p-focus),
+.thesisContainer textarea:focus {
+    border-color: #f97415 !important;
+    box-shadow: 0 0 0 2px rgba(249, 116, 21, 0.2) !important;
+}
+
+.thesisContainer :global(.orange-switch .p-inputswitch-checked .p-inputswitch-slider) {
+    background: #f97415 !important;
+}
+
+.thesisContainer :global(.orange-switch .p-inputswitch-slider:before) {
+    background: #ffffff !important;
+}

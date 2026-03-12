@@ -100,6 +100,7 @@ const HodAccountsPage = () => {
     try {
       setIsSubmitting(true);
       const res = await adminService.createOrUpdateHod({
+        userId: selected?.userId,
         fullName: trimmed.fullName || trimmed.email,
         email: trimmed.email,
         username: trimmed.username,
@@ -120,6 +121,33 @@ const HodAccountsPage = () => {
       await toast('error', 'Failed', (err as { message?: string })?.message ?? 'Could not create/update HOD account.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+
+  const handleDelete = async (hod: HodAccount) => {
+    const result = await Swal.fire({
+      title: 'Delete HOD Account?',
+      text: `Are you sure you want to delete the account for ${hod.fullName || hod.email}? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setIsLoading(true);
+        const res = await adminService.deleteHod(hod.userId);
+        await toast('success', 'Deleted', res?.message ?? 'Account deleted successfully.');
+        await load(trimmed.search || undefined);
+      } catch (err) {
+        console.error(err);
+        await toast('error', 'Failed', (err as { message?: string })?.message ?? 'Could not delete HOD account.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -268,12 +296,18 @@ const HodAccountsPage = () => {
                         {hod.hasCredential ? 'Configured' : 'Needs Setup'}
                       </span>
                     </td>
-                    <td className="px-6 py-5 text-right">
+                    <td className="px-6 py-5 text-right flex justify-end gap-1">
                       <Button
                         icon="pi pi-pencil"
                         className="p-button-rounded p-button-text p-button-plain text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-all"
                         onClick={() => openEdit(hod)}
                         tooltip="Edit account"
+                      />
+                      <Button
+                        icon="pi pi-trash"
+                        className="p-button-rounded p-button-text p-button-danger hover:bg-red-50 transition-all"
+                        onClick={() => handleDelete(hod)}
+                        tooltip="Delete account"
                       />
                     </td>
                   </tr>
@@ -332,14 +366,16 @@ const HodAccountsPage = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="hod.name@fpt.edu.vn"
                 className="w-full !pl-11"
-                disabled={isSubmitting || !!selected}
+                disabled={isSubmitting}
               />
             </div>
-            {selected && (
-              <p className="flex items-center gap-1.5 mt-2 text-[11px] text-gray-400 font-bold uppercase tracking-tight">
-                <i className="pi pi-lock text-[10px]"></i>
-                Email cannot be changed
-              </p>
+            {selected && email.trim() !== selected.email && (
+              <div className="flex items-center justify-between mt-2">
+                <p className="flex items-center gap-1.5 text-[11px] text-orange-600 font-bold uppercase tracking-tight">
+                  <i className="pi pi-info-circle text-[10px]"></i>
+                  Email change will be applied upon update
+                </p>
+              </div>
             )}
           </div>
 

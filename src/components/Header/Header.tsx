@@ -166,13 +166,13 @@ const Header = () => {
                         {user?.roleName !== 'Admin' && (
                             <div onClick={() => navigate('/my-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/my-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-book text-xl"></i>
-                                <span>Thesis List</span>
+                                <span>My Thesis</span>
                             </div>
                         )}
-                        {user?.roleName !== 'Admin' && isReviewer && (
-                            <div onClick={() => navigate('/review-thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/review-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-eye text-xl"></i>
-                                <span>Review Thesis</span>
+                        {user?.roleName !== 'Admin' && (isHOD || isReviewer) && (
+                            <div onClick={() => navigate('/thesis')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-list text-xl"></i>
+                                <span>Thesis List</span>
                             </div>
                         )}
 
@@ -229,8 +229,9 @@ const Header = () => {
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
-                            { id: 'thesis', label: 'Thesis List', icon: 'pi pi-book', path: '/my-thesis', show: true },
                             { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: '/notifications', show: true, isNotification: true },
+                            { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
+                            { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
 
                         // Dynamic Balancing: If odd, add FPT Logo as filler (immediately right of the + button)

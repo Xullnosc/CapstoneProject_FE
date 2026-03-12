@@ -1,182 +1,175 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { semesterService, type Semester, type PagedResult, type Whitelist } from '../../services/semesterService';
+import { thesisFormService } from '../../services/thesisFormService';
+import { authService } from '../../services/authService';
+import { calculateSemesterStatus } from '../../utils/semesterHelpers';
+import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
+import Swal from '../../utils/swal';
+
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import SemesterStats from '../../components/Semester/SemesterStats';
 import SemesterTeamsTable from '../../components/Semester/SemesterTeamsTable';
 import SemesterWhitelistsTable from '../../components/Semester/SemesterWhitelistsTable';
-import { semesterService } from '../../services/semesterService';
-import { whitelistService } from '../../services/whitelistService';
-import type { Semester, Whitelist, PagedResult } from '../../services/semesterService';
-import Swal from '../../utils/swal';
-
 import SemesterModal from '../../components/Semester/SemesterModal';
-
 import ReviewerModal from '../../components/Semester/ReviewerModal';
 import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal';
 import WhitelistStudentModal from '../../components/Semester/WhitelistStudentModal';
-import { calculateSemesterStatus } from '../../utils/semesterHelpers';
-import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
-import { authService } from '../../services/authService';
 import ThesisFormModal from '../../components/Thesis/ThesisFormModal';
 import ThesisFormVersionsModal from '../../components/Thesis/ThesisFormVersionsModal';
-import { thesisFormService } from '../../services/thesisFormService';
 import type { ThesisForm } from '../../types/thesisForm';
 
 const SemesterDetailPage = () => {
+    const [searchParams] = useSearchParams();
+    const semesterId = Number(searchParams.get('id'));
     const user = authService.getUser();
     const canManage = user?.roleName === 'HOD' || user?.roleName === 'Admin';
-    const canPropose = user?.roleName === 'Lecturer' || user?.roleName === 'Student';
-    const [searchParams] = useSearchParams();
-    const id = searchParams.get('id');
+    const canPropose = user?.roleName === 'Student' || user?.roleName === 'Lecturer';
 
     const [semester, setSemester] = useState<Semester | null>(null);
+    const [loading, setLoading] = useState(true);
     const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isThesisFormModalOpen, setIsThesisFormModalOpen] = useState(false);
-    const [isVersionsModalOpen, setIsVersionsModalOpen] = useState(false);
-    const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
-    const [selectedStudent, setSelectedStudent] = useState<Whitelist | null>(null);
     const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
     const [showWarning, setShowWarning] = useState(true);
 
-    // Pagination States
+    // Whitelist pagination states
     const [whitelistData, setWhitelistData] = useState<PagedResult<Whitelist> | null>(null);
     const [lecturerData, setLecturerData] = useState<PagedResult<Whitelist> | null>(null);
     const [studentData, setStudentData] = useState<PagedResult<Whitelist> | null>(null);
-
-    const [whitelistPage, setWhitelistPage] = useState(0); // PrimeReact is 0-indexed for Paginator but 1-indexed for backend usually? Need to check.
-    const [lecturerPage, setLecturerPage] = useState(0);
-    const [studentPage, setStudentPage] = useState(0);
     const [isWhitelistsLoading, setIsWhitelistsLoading] = useState(false);
 
-    const PAGE_SIZE = 10;
+    const [whitelistPage, setWhitelistPage] = useState(1);
+    const [lecturerPage, setLecturerPage] = useState(1);
+    const [studentPage, setStudentPage] = useState(1);
+    const pageSize = 10;
 
-    useEffect(() => {
-        if (id) {
-            fetchSemester(parseInt(id));
+    // Modal states
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+    const [isThesisFormModalOpen, setIsThesisFormModalOpen] = useState(false);
+    const [isVersionsModalOpen, setIsVersionsModalOpen] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<Whitelist | null>(null);
+
+    const fetchSemesterDetail = useCallback(async () => {
+        if (!semesterId) return;
+        try {
+            setLoading(true);
+            const data = await semesterService.getSemesterById(semesterId);
+            setSemester(data);
+        } catch (error) {
+            console.error('Failed to fetch semester detail', error);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load semester details' });
+        } finally {
+            setLoading(false);
         }
-        fetchLatestForm();
-    }, [id]);
+    }, [semesterId]);
 
-    const fetchWhitelists = useCallback(async (role?: string, page: number = 0) => {
-        if (!id) return;
+    const fetchLatestForm = useCallback(async () => {
+        try {
+            const response = await thesisFormService.getLatestForm();
+            setLatestForm(response.data);
+        } catch (error) {
+            console.error('Failed to fetch latest thesis form', error);
+        }
+    }, []);
+
+    const fetchWhitelists = useCallback(async (role?: string) => {
+        if (!semesterId) return;
         try {
             setIsWhitelistsLoading(true);
-            const data = await whitelistService.getWhitelistsPaginated(parseInt(id), {
-                page: page + 1,
-                pageSize: PAGE_SIZE,
-                role: role
+            let page = 1;
+            if (role === 'Lecturer') page = lecturerPage;
+            else if (role === 'Student') page = studentPage;
+            else page = whitelistPage;
+
+            const data = await semesterService.getWhitelistsPaginated(semesterId, {
+                page,
+                pageSize,
+                role: role || undefined
             });
-            if (!role) setWhitelistData(data);
-            else if (role.toLowerCase() === 'lecturer') setLecturerData(data);
-            else if (role.toLowerCase() === 'student') setStudentData(data);
+
+            if (role === 'Lecturer') setLecturerData(data);
+            else if (role === 'Student') setStudentData(data);
+            else setWhitelistData(data);
         } catch (error) {
-            console.error(`Failed to fetch ${role || 'all'} whitelists`, error);
+            console.error('Failed to fetch whitelists', error);
         } finally {
             setIsWhitelistsLoading(false);
         }
-    }, [id]);
+    }, [semesterId, whitelistPage, lecturerPage, studentPage]);
 
     useEffect(() => {
-        // Reset data when switching tabs (optional, but prevents showing old data while loading)
-        // setWhitelistData(null); setLecturerData(null); setStudentData(null);
+        fetchSemesterDetail();
+        fetchLatestForm();
+    }, [fetchSemesterDetail, fetchLatestForm]);
 
-        if (activeTab === 'whitelists') fetchWhitelists(undefined, whitelistPage);
-        if (activeTab === 'lecturers') fetchWhitelists('Lecturer', lecturerPage);
-        if (activeTab === 'students') fetchWhitelists('Student', studentPage);
-    }, [activeTab, whitelistPage, lecturerPage, studentPage, fetchWhitelists]);
-
-    const fetchLatestForm = async () => {
-        try {
-            const data = await thesisFormService.getLatestForm();
-            setLatestForm(data.data);
-        } catch (error) {
-            console.error("Failed to fetch latest thesis form", error);
+    useEffect(() => {
+        const role = activeTab === 'lecturers' ? 'Lecturer' : activeTab === 'students' ? 'Student' : undefined;
+        if (activeTab !== 'teams') {
+            fetchWhitelists(role);
         }
-    };
-
-    const fetchSemester = async (semesterId: number) => {
-        try {
-            setIsLoading(true);
-            const data = await semesterService.getSemesterById(semesterId);
-            setSemester(data);
-        } catch (error: unknown) {
-            console.error("Failed to fetch semester details", error);
-            Swal.fire('Error', 'Failed to load semester details', 'error');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleEditSuccess = () => {
-        if (semester) fetchSemester(semester.semesterId);
-        setIsEditModalOpen(false);
-    };
+    }, [activeTab, fetchWhitelists]);
 
     const handleEndSemester = async () => {
         if (!semester) return;
-
         const result = await Swal.fire({
-            title: 'Are you sure?',
+            title: 'End Semester?',
             text: "Ending the semester is irreversible. Ensure all grades are finalized.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#f26e21',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, End Semester!'
+            confirmButtonColor: '#f97316',
+            confirmButtonText: 'Yes, End Semester'
         });
 
         if (result.isConfirmed) {
             try {
                 await semesterService.endSemester(semester.semesterId);
-                Swal.fire('Ended!', 'The semester has been ended.', 'success');
-                fetchSemester(semester.semesterId);
-            } catch {
-                Swal.fire('Error', 'Failed to end semester.', 'error');
+                Swal.fire({ icon: 'success', title: 'Ended!', text: 'Semester has been ended.' });
+                fetchSemesterDetail();
+            } catch (error) {
+                console.error('Failed to end semester', error);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to end semester' });
             }
         }
     };
 
-    const refreshActiveTab = () => {
-        if (activeTab === 'whitelists') fetchWhitelists(undefined, whitelistPage);
-        else if (activeTab === 'lecturers') fetchWhitelists('Lecturer', lecturerPage);
-        else if (activeTab === 'students') fetchWhitelists('Student', studentPage);
-        if (semester) fetchSemester(semester.semesterId); // stats might change
+    const handleEditSuccess = () => {
+        setIsEditModalOpen(false);
+        fetchSemesterDetail();
     };
 
-    if (isLoading) {
+    const refreshActiveTab = () => {
+        const role = activeTab === 'lecturers' ? 'Lecturer' : activeTab === 'students' ? 'Student' : undefined;
+        fetchWhitelists(role);
+        fetchSemesterDetail();
+    };
+
+    if (loading || !semester) {
         return (
-            <div className="min-h-screen bg-white flex justify-center items-center">
+            <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
         );
     }
 
-    if (!semester) {
-        return (
-            <div className="min-h-screen bg-white flex justify-center items-center">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gray-900">Semester Not Found</h2>
-                    <Link to="/semesters" className="text-orange-500 hover:underline mt-2 block">Back to Dashboard</Link>
-                </div>
-            </div>
-        );
-    }
-
     const semesterStatus = calculateSemesterStatus(semester.status);
-    const isEnded = semesterStatus === 'Ended';
+    const isEnded = semester.status === 'Ended';
+
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: 'Semesters', to: '/semesters' },
+        { label: `${semester.semesterName} Detail` }
+    ];
 
     return (
         <div className="min-h-screen bg-white">
             <main className="max-w-[1200px] mx-auto w-full px-6 py-6">
 
                 {/* Breadcrumb */}
-                <div className="flex items-center gap-2 mb-6">
-                    <Link className="text-gray-500 text-sm font-medium hover:text-orange-600 transition-colors" to="/semesters">Semesters</Link>
-                    <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
-                    <span className="text-gray-900 text-sm font-semibold">{semester.semesterName} Detail</span>
+                <div className="mb-6">
+                    <PremiumBreadcrumb items={breadcrumbItems} />
                 </div>
 
                 {/* Header Section */}
@@ -319,8 +312,8 @@ const SemesterDetailPage = () => {
                         whitelists={whitelistData?.items || []}
                         isLoading={isWhitelistsLoading}
                         totalCount={whitelistData?.totalCount ?? 0}
-                        page={whitelistPage}
-                        onPageChange={(p: number) => setWhitelistPage(p)}
+                        page={whitelistPage - 1}
+                        onPageChange={(p: number) => setWhitelistPage(p + 1)}
                         headerAction={canManage && !isEnded ? (
                             <button
                                 onClick={() => setIsImportModalOpen(true)}
@@ -340,8 +333,8 @@ const SemesterDetailPage = () => {
                         whitelists={lecturerData?.items || []}
                         isLoading={isWhitelistsLoading}
                         totalCount={lecturerData?.totalCount ?? 0}
-                        page={lecturerPage}
-                        onPageChange={(p: number) => setLecturerPage(p)}
+                        page={lecturerPage - 1}
+                        onPageChange={(p: number) => setLecturerPage(p + 1)}
                         headerAction={canManage && !isEnded ? (
                             <button
                                 onClick={() => setIsReviewerModalOpen(true)}
@@ -360,8 +353,8 @@ const SemesterDetailPage = () => {
                         whitelists={studentData?.items || []}
                         isLoading={isWhitelistsLoading}
                         totalCount={studentData?.totalCount ?? 0}
-                        page={studentPage}
-                        onPageChange={(p: number) => setStudentPage(p)}
+                        page={studentPage - 1}
+                        onPageChange={(p: number) => setStudentPage(p + 1)}
                         headerAction={canManage && !isEnded ? (
                             <button
                                 onClick={() => { setSelectedStudent(null); setIsStudentModalOpen(true); }}
