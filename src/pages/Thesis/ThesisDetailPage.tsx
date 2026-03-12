@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Thesis } from '../../types/thesis';
+import type { Thesis, ThesisReviewStatus, ReviewerProgress } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
@@ -30,6 +30,12 @@ const ThesisDetailPage = () => {
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
     const [reviewModalVisible, setReviewModalVisible] = useState(false);
     const [isLeader, setIsLeader] = useState(false);
+    const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
+
+    const toggleNote = (userId: number) => {
+        setExpandedNotes(prev => ({ ...prev, [userId]: !prev[userId] }));
+    };
+
     const [locking, setLocking] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [evaluating] = useState(false);
@@ -350,7 +356,7 @@ const ThesisDetailPage = () => {
                                 </div>
                                 <div className="p-6">
                                     <div className="space-y-4">
-                                        {reviewStatus.reviewers.map(reviewer => (
+                                        {reviewStatus.reviewers.map((reviewer: ReviewerProgress) => (
                                             <div key={reviewer.userId} className="flex flex-col p-4 bg-slate-50 rounded-xl border border-slate-100">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
