@@ -24,6 +24,7 @@ const ThesisDetailPage = () => {
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
 
     const [thesis, setThesis] = useState<Thesis | null>(null);
+    const [reviewStatus, setReviewStatus] = useState<ThesisReviewStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -48,6 +49,14 @@ const ThesisDetailPage = () => {
         try {
             const data = await thesisService.getThesisById(id);
             setThesis(data);
+
+            try {
+                const statusData = await thesisService.getThesisReviewStatus(id);
+                setReviewStatus(statusData);
+            } catch (err) {
+                console.warn('Could not fetch review status:', err);
+                setReviewStatus(null);
+            }
 
             if (isStudent) {
                 const team = await teamService.getMyTeam();
@@ -329,6 +338,95 @@ const ThesisDetailPage = () => {
                             </div>
                             <ThesisHistoryTable histories={thesis.histories ?? []} />
                         </div>
+
+                        {/* Review Progress */}
+                        {reviewStatus && reviewStatus.reviewers && reviewStatus.reviewers.length > 0 && (
+                            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
+                                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                                    <h3 className="font-bold text-lg text-slate-900">Review Progress</h3>
+                                    <span className="text-sm font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                                        Overall: {reviewStatus.overallStatus || 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        {reviewStatus.reviewers.map(reviewer => (
+                                            <div key={reviewer.userId} className="flex flex-col p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="size-10 rounded-full bg-blue-100 text-blue-600 flex flex-shrink-0 items-center justify-center font-bold">
+                                                            {reviewer.fullName ? reviewer.fullName.charAt(0).toUpperCase() : '?'}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-semibold text-slate-800 text-sm">{reviewer.fullName || 'Unknown Reviewer'}</p>
+                                                            <p className="text-xs text-slate-500">{reviewer.email}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        {reviewer.decision ? (
+                                                            <>
+                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
+                                                                ${reviewer.decision === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                    <i className={`pi ${reviewer.decision === 'Pass' ? 'pi-check-circle' : 'pi-times-circle'}`} />
+                                                                    {reviewer.decision}
+                                                                </span>
+                                                                <div className="text-xs text-slate-400 mt-1">
+                                                                    {formatDate(reviewer.reviewedAt)}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-600">
+                                                                <i className="pi pi-clock" /> Pending
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {reviewer.note && (
+                                                    <div className="mt-3 pt-3 border-t border-slate-200/60">
+                                                        <button
+                                                            onClick={() => toggleNote(reviewer.userId)}
+                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider hover:text-primary/80 transition-colors"
+                                                        >
+                                                            <i className={`pi ${expandedNotes[reviewer.userId] ? 'pi-minus-circle' : 'pi-plus-circle'}`} />
+                                                            {expandedNotes[reviewer.userId] ? 'Hide Feedback' : 'View Feedback'}
+                                                        </button>
+
+                                                        {expandedNotes[reviewer.userId] && (
+                                                            <div className="mt-2 p-3 bg-white/50 border border-slate-100 rounded-lg shadow-inner">
+                                                                <p className="text-sm text-slate-700 leading-relaxed italic">
+                                                                    "{reviewer.note}"
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+
+                                        {reviewStatus.hodDecision && (
+                                            <div className="mt-4 p-4 border-l-4 border-purple-500 bg-purple-50 rounded-r-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="font-bold text-purple-900 text-sm">Head of Department Decision</h4>
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
+                                                        ${reviewStatus.hodDecision.decision === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {reviewStatus.hodDecision.decision}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-purple-800">
+                                                    <span className="font-semibold">{reviewStatus.hodDecision.fullName}</span> made the final decision.
+                                                </p>
+                                                {reviewStatus.hodDecision.note && (
+                                                    <p className="text-xs text-purple-700 mt-2 bg-purple-100/50 p-2 rounded">
+                                                        "{reviewStatus.hodDecision.note}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Sidebar */}
