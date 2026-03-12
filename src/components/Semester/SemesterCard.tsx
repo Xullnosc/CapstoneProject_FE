@@ -15,6 +15,7 @@ interface SemesterCardProps {
         status: 'Ongoing' | 'Upcoming' | 'Ended';
         isArchived: boolean;
         totalTeams: number;
+        activeTeams: number;
         totalWhitelists: number;
         season: string;
         seasonColor: string; // e.g., 'orange', 'green', 'yellow'
@@ -85,6 +86,55 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
         }
     };
 
+    const handleEndSemester = async () => {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "Ending the semester is irreversible. Ensure all grades are finalized.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f26e21',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, End Semester!'
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            setIsLoading(true);
+            await semesterService.endSemester(semester.id);
+
+            await Swal.fire({
+                title: 'Ended!',
+                text: 'The semester has been ended.',
+                icon: 'success',
+                confirmButtonColor: '#f97316'
+            });
+
+            if (onRefresh) {
+                onRefresh();
+            }
+        } catch (error: unknown) {
+            console.error('Failed to end semester:', error);
+
+            let message = 'Failed to end semester';
+            if (error && typeof error === 'object' && 'response' in error) {
+                const responseData = (error as { response: { data: { detail?: string; message?: string } } }).response?.data;
+                message = responseData?.detail || responseData?.message || message;
+            } else if (error instanceof Error) {
+                message = error.message;
+            }
+
+            Swal.fire({
+                title: 'Error!',
+                text: message,
+                icon: 'error',
+                confirmButtonColor: '#d33'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="group relative rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[320px] flex flex-col bg-white">
             {/* Background Pattern */}
@@ -111,7 +161,10 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     <div className="flex items-center gap-6 pt-3 border-t border-gray-100">
                         <div>
                             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Teams</span>
-                            <span className="text-xl font-bold text-gray-800">{semester.totalTeams}</span>
+                            <div className="flex items-baseline gap-1" title="Active / Total Teams">
+                                <span className="text-xl font-bold text-gray-800">{semester.activeTeams}</span>
+                                <span className="text-sm font-semibold text-gray-400">/{semester.totalTeams}</span>
+                            </div>
                         </div>
                         <div className="h-8 w-[1px] bg-gray-200"></div>
                         <div>
@@ -147,7 +200,11 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     )}
 
                     {semester.status === 'Ongoing' && (
-                        <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-orange-600 text-xs font-bold transition-colors">
+                        <button
+                            onClick={handleEndSemester}
+                            disabled={isLoading}
+                            className={`cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-orange-600 text-xs font-bold transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
                             <span className="material-symbols-outlined text-[18px]">stop_circle</span> End
                         </button>
                     )}

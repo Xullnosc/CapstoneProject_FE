@@ -9,6 +9,10 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; classes: string }> = 
         label: 'Published',
         classes: 'bg-blue-100 text-blue-700'
     },
+    'HOD Reviewing': {
+        label: 'HOD Reviewing',
+        classes: 'bg-fuchsia-100 text-fuchsia-700'
+    },
     Updated: {
         label: 'Updated',
         classes: 'bg-indigo-100 text-indigo-700'
@@ -20,6 +24,10 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; classes: string }> = 
     Reviewing: {
         label: 'Reviewing',
         classes: 'bg-orange-100 text-orange-700'
+    },
+    'On Mentor Inviting': {
+        label: 'On Mentor Inviting',
+        classes: 'bg-purple-100 text-purple-700'
     },
     Rejected: {
         label: 'Rejected',

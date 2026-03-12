@@ -9,6 +9,7 @@ import { Dropdown } from 'primereact/dropdown';
 
 const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'All Statuses', value: '' },
+    { label: 'On Mentor Inviting', value: 'On Mentor Inviting' },
     { label: 'Registered', value: 'Registered' },
     { label: 'Reviewing', value: 'Reviewing' },
     { label: 'Need Update', value: 'Need Update' },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import ActiveSemesterBanner from '../../components/Semester/ActiveSemesterBanner';
 import SemesterCard from '../../components/Semester/SemesterCard';
 import SemesterModal from '../../components/Semester/SemesterModal';
@@ -41,10 +42,11 @@ const SemesterDashboardPage = () => {
             name: sem.semesterName,
             startDate: formatSemesterDate(sem.startDate),
             endDate: formatSemesterDate(sem.endDate),
-            status: calculateSemesterStatus(sem.isActive, sem.startDate, sem.endDate, sem.isArchived),
+            status: calculateSemesterStatus(sem.status),
             totalTeams: sem.teamCount, // Use optimized count from backend
+            activeTeams: sem.activeTeamCount,
             totalWhitelists: sem.whitelistCount,
-            isArchived: sem.isArchived,
+            isArchived: sem.status === 'Ended',
             season: season,
             seasonColor: getSeasonColor(season)
         };
@@ -54,7 +56,7 @@ const SemesterDashboardPage = () => {
         if (filterStatus === 'All') return semesters;
 
         return semesters.filter(s => {
-            const status = calculateSemesterStatus(s.isActive, s.startDate, s.endDate, s.isArchived);
+            const status = calculateSemesterStatus(s.status);
             return status === filterStatus;
         });
     };
@@ -68,13 +70,20 @@ const SemesterDashboardPage = () => {
                         <h2 className="text-3xl font-black tracking-tight text-gray-900">Semester Management</h2>
                         <p className="text-gray-500 text-base font-normal">Manage and track academic cycles for the department</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                         {canManage && (
                             <>
                                 <button className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">
                                     <span className="material-symbols-outlined text-xl">ios_share</span>
                                     Export
                                 </button>
+                                <Link
+                                    to="/lecturers"
+                                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors shadow-sm"
+                                >
+                                    <span className="material-symbols-outlined text-xl">school</span>
+                                    Manage Lecturer Pool
+                                </Link>
                                 <button
                                     onClick={() => setIsCreateModalOpen(true)}
                                     className="cursor-pointer flex items-center gap-2 px-5 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all hover:translate-y-[-1px] active:translate-y-[1px]"
@@ -88,7 +97,7 @@ const SemesterDashboardPage = () => {
                 </div>
 
                 {/* Banner */}
-                <ActiveSemesterBanner semester={semesters.find(s => s.isActive) ? mapToCardProps(semesters.find(s => s.isActive)!) : null} />
+                <ActiveSemesterBanner semester={semesters.find(s => s.status === 'Active') ? mapToCardProps(semesters.find(s => s.status === 'Active')!) : null} />
 
                 {/* Filters & Grid */}
                 <div className="flex flex-col gap-6">

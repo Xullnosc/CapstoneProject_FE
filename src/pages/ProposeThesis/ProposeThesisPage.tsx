@@ -7,6 +7,7 @@ import { authService } from '../../services/authService';
 import { thesisService } from '../../services/thesisService';
 import { teamService } from '../../services/teamService';
 import { thesisFormService } from '../../services/thesisFormService';
+import { semesterService } from '../../services/semesterService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
 import type { ThesisForm } from '../../types/thesisForm';
@@ -55,12 +56,20 @@ const ProposeThesisPage = () => {
                             setHasAccess(false);
                             setAccessMessage('You must be in a team to propose a thesis.');
                         } else {
-                            // Check if the team leader has already proposed a thesis
-                            const leaderTheses = await thesisService.getAllTheses({ userId: myTeam.leaderId });
-                            const hasProposed = leaderTheses && leaderTheses.length > 0;
+                            // Fetch current semester context
+                            const currentSemester = await semesterService.getCurrentSemester();
 
-                            if (hasProposed) {
-                                // If already proposed, direct the user to their thesis view page
+                            // Check if the team leader has any ACTIVE thesis in the CURRENT semester
+                            const leaderTheses = await thesisService.getAllTheses({
+                                userId: myTeam.leaderId,
+                                semesterId: currentSemester?.semesterId
+                            });
+                            const hasActiveThesis = leaderTheses && leaderTheses.some(
+                                t => t.status !== 'Cancelled' && t.status !== 'Rejected'
+                            );
+
+                            if (hasActiveThesis) {
+                                // If there's an active thesis, redirect to the list view
                                 navigate('/my-thesis', { replace: true });
                                 return;
                             }

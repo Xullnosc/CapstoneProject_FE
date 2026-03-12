@@ -1,6 +1,8 @@
+import axios from 'axios';
 import api from './api';
 
 export interface LoginResponse {
+    accessToken?: string;
     token: string;
     userInfo: {
         fullName: string;
@@ -14,16 +16,47 @@ export interface LoginResponse {
     };
 }
 
+export interface RefreshResponse {
+    accessToken: string;
+}
+
 export const authService = {
     login: async (idToken: string, campus: string) => {
-        const response = await api.post<LoginResponse>('/Auth/login', {
-            idToken,
-            campus
-        });
-        return response.data;
+        const response = await api.post<LoginResponse>('/Auth/login', { idToken, campus }, { withCredentials: true });
+        const data = response.data;
+        const accessToken = data.accessToken ?? data.token;
+        return { ...data, accessToken, token: accessToken };
     },
 
-    logout: () => {
+    loginWithCredentials: async (username: string, password: string) => {
+        const response = await api.post<LoginResponse>('/Auth/login/credentials', { username, password }, { withCredentials: true });
+        const data = response.data;
+        const accessToken = data.accessToken ?? data.token;
+        return { ...data, accessToken, token: accessToken };
+    },
+
+    refreshAccessToken: async (): Promise<string | null> => {
+        try {
+            // Use a raw request (no interceptors) to avoid refresh-loop on 401.
+            const response = await axios.post<RefreshResponse>(
+                `${import.meta.env.VITE_API_URL}/Auth/refresh`,
+                {},
+                { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
+            );
+            const accessToken = response.data?.accessToken ?? null;
+            if (accessToken) localStorage.setItem('token', accessToken);
+            return accessToken;
+        } catch {
+            return null;
+        }
+    },
+
+    logout: async () => {
+        try {
+            await api.post('/Auth/logout', {}, { withCredentials: true });
+        } catch {
+            // ignore
+        }
         localStorage.removeItem('token');
         localStorage.removeItem('user');
     },

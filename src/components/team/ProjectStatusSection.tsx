@@ -25,8 +25,8 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
 
         if (actionName === 'propose a thesis idea') {
             navigate('/propose-thesis');
-        } else {
-            // TODO: Handle other actions like register thesis
+        } else if (actionName === 'register a thesis') {
+            navigate('/published-thesis');
         }
     };
 

@@ -19,7 +19,6 @@ interface SemesterFormInputs {
     semesterName: string;
     startDate: string;
     endDate: string;
-    isActive: boolean;
 }
 
 const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, semesterData }) => {
@@ -38,15 +37,13 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
                 setValue('semesterName', semesterData.semesterName);
                 setValue('startDate', new Date(semesterData.startDate).toISOString().split('T')[0]);
                 setValue('endDate', new Date(semesterData.endDate).toISOString().split('T')[0]);
-                setValue('isActive', semesterData.isActive);
             } else {
                 // Create Mode -> Reset
                 reset({
                     semesterCode: '',
                     semesterName: '',
                     startDate: '',
-                    endDate: '',
-                    isActive: false
+                    endDate: ''
                 });
             }
         }
@@ -106,10 +103,10 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             if (!isEditMode) reset(); // Only reset on create (edit might stay open or close)
             onClose();
             if (onSuccess) onSuccess();
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error && 'response' in error
-                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-                : undefined;
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+            console.error("Semester update error:", error);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const errorMessage = (error as any).response?.data?.message || (error as any).response?.data?.Message || error.message;
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -142,7 +139,7 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
                 {isEditMode ? 'Close' : 'Cancel'}
             </button>
             {/* Show Save/Create button only if active or if it's create mode */}
-            {(!isEditMode || semesterData?.isActive) && (
+            {(!isEditMode || (semesterData && semesterData.status === 'Active')) && (
                 <button
                     type="submit"
                     form="semester-form"
@@ -173,14 +170,14 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             draggable={false}
         >
             <form id="semester-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 pt-2">
-                {isEditMode && semesterData && !semesterData.isActive && (
+                {isEditMode && semesterData && semesterData.status === 'Ended' && (
                     <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
                         <span className="material-symbols-outlined">lock</span>
                         This semester has ended and cannot be modified.
                     </div>
                 )}
 
-                <fieldset disabled={isEditMode && semesterData && !semesterData.isActive} className="contents disabled:opacity-60">
+                <fieldset disabled={isEditMode && semesterData && semesterData.status === 'Ended'} className="contents disabled:opacity-60">
                     {/* Hidden ID field for edit */}
                     {isEditMode && <input type="hidden" {...register('semesterId')} />}
 
@@ -242,17 +239,6 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-6 shadow-sm">
-
-                        <div className="flex flex-col gap-1">
-                            <p className="text-gray-900 text-base font-bold leading-tight">Set as Active Semester</p>
-                            <p className="text-gray-500 text-xs font-normal leading-normal">Make this the current semester for all department activities.</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input {...register('isActive')} type="checkbox" className="sr-only peer" />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-                        </label>
-                    </div>
                 </fieldset>
             </form>
         </Dialog>

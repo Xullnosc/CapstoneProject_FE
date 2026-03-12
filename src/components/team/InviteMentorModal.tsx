@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { userService } from '../../services/userService';
 import { mentorInvitationService } from '../../services/mentorInvitationService';
 import MemberAvatar from './MemberAvatar';
@@ -30,22 +30,25 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
     const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
     const [hasSearched, setHasSearched] = useState(false);
 
-    const performSearch = async (term: string) => {
+    const performSearch = useCallback(async (term: string) => {
         setIsLoading(true);
         try {
             const results = await userService.searchLecturers(term, teamId);
             setSearchResults(results);
 
-            const newInvitedUsers = { ...invitedUsers };
-            results.forEach(u => {
-                if (u.pendingInvitationId) {
-                    newInvitedUsers[u.userId] = u.pendingInvitationId;
-                }
+            setInvitedUsers(prev => {
+                const newInvitedUsers = { ...prev };
+                let changed = false;
+                results.forEach(u => {
+                    if (u.pendingInvitationId && newInvitedUsers[u.userId] !== u.pendingInvitationId) {
+                        newInvitedUsers[u.userId] = u.pendingInvitationId;
+                        changed = true;
+                    }
+                });
+                return changed ? newInvitedUsers : prev;
             });
-            setInvitedUsers(newInvitedUsers);
         } catch (error) {
             console.error(error);
-            // Reverting error alert to match more closely with original simple errors if any
             Swal.fire({
                 icon: 'error',
                 title: 'Operation Failed',
@@ -57,7 +60,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [teamId]);
 
     useEffect(() => {
         if (isOpen) {
@@ -68,7 +71,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
             setSearchResults([]);
             setInvitedUsers({});
         }
-    }, [isOpen, teamId]);
+    }, [isOpen, performSearch]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();

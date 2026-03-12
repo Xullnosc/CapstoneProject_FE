@@ -15,6 +15,10 @@ import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 import ReviewerThesisPage from '../pages/Thesis/ReviewerThesisPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
+import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
+import HodAccountsPage from '../pages/Admin/HodAccountsPage';
+import AccessLogPage from '../pages/Admin/AccessLogPage';
+import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(() => import('../pages/Notifications/NotificationsPage'));
@@ -24,16 +28,25 @@ const AppRouter = () => {
     <Routes>
       <Route path="/" element={<Login />} />
 
-      {/* Semester Management - Only Admin/HOD */}
-      <Route element={<ProtectedRoute allowedRoles={['Admin', 'HOD']} />}>
+      {/* Semester Management - Only HOD (Admin removed) */}
+      <Route element={<ProtectedRoute allowedRoles={['HOD']} />}>
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />
+          <Route path="/lecturers" element={<LecturerManagementPage />} />
         </Route>
       </Route>
 
-      {/* General Routes */}
-      <Route element={<ProtectedRoute />}>
+      {/* Admin-only */}
+      <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/admin/hod" element={<HodAccountsPage />} />
+          <Route path="/admin/access-logs" element={<AccessLogPage />} />
+        </Route>
+      </Route>
+
+      {/* General Routes - Restrict Admin from accessing these */}
+      <Route element={<ProtectedRoute allowedRoles={['Student', 'Lecturer', 'HOD']} />}>
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
           <Route path="/teams" element={<TeamCreate />} />
@@ -61,6 +74,7 @@ const AppRouter = () => {
               </Suspense>
             }
           />
+          <Route path="/published-thesis" element={<PublishedThesisPage />} />
         </Route>
       </Route>
     </Routes>

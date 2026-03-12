@@ -1,5 +1,7 @@
 import api from "./api";
-import type { Thesis, GetThesisFilters } from "../types/thesis";
+import type { Thesis, GetThesisFilters, ThesisReviewStatus } from "../types/thesis";
+
+export type ThesisDecision = 'Pass' | 'Fail';
 
 // ─── Propose ────────────────────────────────────────────────────────────────
 interface ProposeThesisRequest {
@@ -31,12 +33,14 @@ export const thesisService = {
 
     /** GET /thesis - list with optional filters */
     getAllTheses: async (filters?: GetThesisFilters): Promise<Thesis[]> => {
-        const params: Record<string, string | number | undefined> = {};
+        const params: Record<string, string | number | boolean | undefined> = {};
         if (filters?.searchTitle) params.searchTitle = filters.searchTitle;
         if (filters?.status) params.status = filters.status;
         if (filters?.lecturerId) params.lecturerId = filters.lecturerId;
         if (filters?.semesterId) params.semesterId = filters.semesterId;
         if (filters?.userId) params.userId = filters.userId;
+        if (filters?.isLocked !== undefined) params.isLocked = filters.isLocked;
+        if (filters?.lecturerOnly) params.lecturerOnly = filters.lecturerOnly;
         const response = await api.get<Thesis[]>('/thesis', { params });
         return response.data;
     },
@@ -67,14 +71,32 @@ export const thesisService = {
         return response.data;
     },
 
-    /** PUT /thesis/:id/review - reviewer only: set pass (Published) / fail (Rejected) / Need Update */
-    evaluateThesis: async (id: string, status: 'Published' | 'Rejected' | 'Need Update', note?: string): Promise<void> => {
-        await api.put(`/thesis/${id}/review`, { status, note });
+    /** PUT /thesis/:id/review - reviewer only: Pass/Fail with optional note (Fail requires note) */
+    submitReviewerDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/review`, { decision, note });
     },
 
     /** PUT /thesis/:id/cancel - cancel a thesis proposal */
     cancelThesis: async (id: string) => {
         const response = await api.put(`/thesis/${id}/cancel`);
         return response.data;
+    },
+
+    /** PUT /thesis/:id/lock - Lecturer: toggle lock/unlock on their own thesis */
+    toggleThesisLock: async (id: string): Promise<Thesis> => {
+        const response = await api.put<{ Data: Thesis }>(`/thesis/${id}/lock`);
+        return response.data.Data;
+    },
+
+
+    /** GET /thesis/:id/review-status - fetch reviewer progress and decisions */
+    getThesisReviewStatus: async (id: string): Promise<ThesisReviewStatus> => {
+        const response = await api.get<ThesisReviewStatus>(`/thesis/${id}/review-status`);
+        return response.data;
+    },
+
+    /** PUT /thesis/:id/hod-decision - HOD only: Pass/Fail with optional note */
+    submitHodDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
+        await api.put(`/thesis/${id}/hod-decision`, { decision, note });
     },
 };

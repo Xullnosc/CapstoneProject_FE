@@ -14,8 +14,12 @@ export interface Whitelist {
     email: string;
     fullName?: string;
     roleName?: string;
+    roleId?: number;
+    semesterId?: number;
     isReviewer?: boolean;
     avatar?: string;
+    campus?: string;
+    studentCode?: string;
 }
 
 export interface Semester {
@@ -24,12 +28,22 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
-    isActive: boolean;
-    isArchived: boolean;
+    status: 'Upcoming' | 'Active' | 'Ended';
     teamCount: number; // Optimized field
+    activeTeamCount: number; // Added field
     whitelistCount: number; // Added field
     teams: TeamSimple[];
     whitelists: Whitelist[];
+}
+
+export interface PagedResult<T> {
+    items: T[];
+    totalCount: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
 }
 
 export const semesterService = {
@@ -43,13 +57,23 @@ export const semesterService = {
         return response.data;
     },
 
-    createSemester: async (data: { semesterCode: string; semesterName: string; startDate: string; endDate: string; isActive: boolean }) => {
+    getWhitelistsPaginated: async (semesterId: number, params: {
+        page: number;
+        pageSize: number;
+        role?: string;
+        search?: string;
+    }): Promise<PagedResult<Whitelist>> => {
+        const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/whitelists`, { params });
+        return response.data;
+    },
+
+    createSemester: async (data: { semesterCode: string; semesterName: string; startDate: string; endDate: string }) => {
         const response = await api.post<Semester>('/semester', data);
         return response.data;
     },
 
     updateSemester: async (id: number, data: { semesterCode: string; semesterName: string; startDate: string; endDate: string }) => {
-        const response = await api.put<Semester>(`/semester/${id}`, data);
+        const response = await api.put<Semester>(`/semester/${id}`, { ...data, semesterId: id });
         return response.data;
     },
 
@@ -60,7 +84,7 @@ export const semesterService = {
 
     getCurrentSemester: async (): Promise<Semester | undefined> => {
         const response = await api.get<Semester[]>('/semester');
-        return response.data.find(s => s.isActive);
+        return response.data.find(s => s.status === 'Active');
     },
 
     startSemester: async (id: number) => {

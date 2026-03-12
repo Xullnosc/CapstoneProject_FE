@@ -1,0 +1,91 @@
+.adminForm :global(.p-inputtext),
+.adminForm :global(.p-password-input),
+.adminForm :global(.p-password input),
+.hodDialog :global(.p-inputtext),
+.hodDialog :global(.p-password-input),
+.hodDialog :global(.p-password input) {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.adminForm :global(.p-password),
+.hodDialog :global(.p-password) {
+  width: 100%;
+  display: block;
+}
+
+.adminForm :global(.p-password.p-inputwrapper),
+.hodDialog :global(.p-password.p-inputwrapper) {
+  width: 100%;
+}
+
+.hodDialog :global(.p-input-icon-right),
+.hodDialog :global(.p-icon-field-right) {
+  width: 100%;
+}
+
+.hodDialog :global(.p-icon-field-right) {
+  display: flex;
+  align-items: center;
+}
+
+
+.adminForm :global(.p-inputtext:enabled:focus),
+.adminForm :global(.p-password-input:enabled:focus),
+.adminForm :global(.p-password input:focus),
+.hodDialog :global(.p-inputtext:enabled:focus),
+.hodDialog :global(.p-password-input:enabled:focus),
+.hodDialog :global(.p-password input:focus) {
+  outline: none;
+  border-color: #F26F21;
+  box-shadow: 0 0 0 4px rgba(242, 111, 33, 0.1);
+}
+
+.premiumButton {
+  background-color: #F26F21 !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.premiumButton:hover:not(:disabled) {
+  background-color: #e5631a !important;
+}
+
+.premiumButton:active:not(:disabled) {
+  opacity: 0.9;
+}
+
+.premiumButtonSecondary {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #4b5563 !important;
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.premiumButtonSecondary:hover:not(:disabled) {
+  background-color: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #111827 !important;
+}
+
+/* Dialog Refinements */
+.hodDialogHeader {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 1.5rem 2rem !important;
+}
+
+.hodDialogFooter {
+  border-top: 1px solid #f3f4f6;
+  padding: 1.25rem 2rem !important;
+  background-color: #f9fafb;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+}
