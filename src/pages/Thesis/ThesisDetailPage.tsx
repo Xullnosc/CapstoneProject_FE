@@ -207,7 +207,7 @@ const ThesisDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-slate-100 relative overflow-hidden">
+                        <div className="bg-white rounded-4xl shadow-sm p-8 border border-slate-100 relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8">
                                 <ThesisStatusBadge status={thesis.status} />
                             </div>
@@ -256,7 +256,7 @@ const ThesisDetailPage = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-slate-100">
+                        <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
                             <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                                 <h3 className="font-black text-slate-900 tracking-tight">Reviewer Feedback</h3>
                                 <div className="px-3 py-1 bg-orange-100 rounded-full text-[10px] font-black text-orange-600 uppercase">
@@ -301,7 +301,7 @@ const ThesisDetailPage = () => {
                                                             </div>
                                                             <div className="text-left">
                                                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Feedback Attachment</p>
-                                                                <p className="text-xs font-bold text-slate-700 truncate max-w-[150px]">Open Guidelines</p>
+                                                                <p className="text-xs font-bold text-slate-700 truncate max-w-37.5">Open Guidelines</p>
                                                             </div>
                                                         </button>
                                                     )}
@@ -320,7 +320,7 @@ const ThesisDetailPage = () => {
                         </div>
 
                         {/* Version History */}
-                        <div className="bg-white rounded-[2rem] shadow-sm overflow-hidden border border-slate-100">
+                        <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
                             <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                                 <h3 className="font-black text-slate-900 tracking-tight">Iteration Log</h3>
                                 <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase">
@@ -333,7 +333,7 @@ const ThesisDetailPage = () => {
 
                     {/* Sidebar */}
                     <div className="space-y-8">
-                        <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm sticky top-8">
+                        <div className="bg-white rounded-4xl p-8 border border-slate-100 shadow-sm sticky top-8">
                             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Metadata</h3>
 
                             <div className="space-y-8">
@@ -421,7 +421,7 @@ const ThesisDetailPage = () => {
                             )}
 
                             {/* Info Context */}
-                            <div className="mt-10 p-5 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+                            <div className="mt-10 p-5 bg-slate-50 rounded-3xl border border-slate-100">
                                 <p className="text-xs text-slate-500 leading-relaxed font-medium">
                                     <i className="pi pi-info-circle mr-1" />
                                     {isReviewer
