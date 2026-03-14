@@ -1,6 +1,8 @@
 import api from "./api";
 import type { Thesis, GetThesisFilters } from "../types/thesis";
 
+export type ThesisDecision = 'Pass' | 'Fail';
+
 // ─── Propose ────────────────────────────────────────────────────────────────
 interface ProposeThesisRequest {
     title: string;
