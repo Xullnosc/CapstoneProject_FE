@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Thesis } from '../../types/thesis';
+import type { Thesis, ThesisReview } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
@@ -279,7 +279,7 @@ const ThesisDetailPage = () => {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {thesis.reviews.map((rev, idx) => (
+                                        {thesis.reviews.map((rev: ThesisReview, idx: number) => (
                                             <div key={idx} className="p-6 bg-white rounded-3xl border-2 border-slate-50 shadow-sm transition-all hover:border-slate-100">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div>

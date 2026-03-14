@@ -4,7 +4,7 @@ interface Props {
     status: ThesisStatus;
 }
 
-const STATUS_CONFIG: Record<ThesisStatus, { label: string; icon: string; classes: string }> = {
+const STATUS_CONFIG: Record<ThesisStatus, { label: string; icon?: string; classes: string }> = {
     Published: {
         label: 'Published',
         icon: 'pi pi-check-circle',
@@ -58,7 +58,7 @@ const ThesisStatusBadge = ({ status }: Props) => {
         <span
             className={`flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest border shadow-sm transition-all hover:shadow-md ${config.classes}`}
         >
-            <i className={`${config.icon} text-sm`} />
+            <i className={`${config.icon || 'pi pi-info-circle'} text-sm`} />
             {config.label}
         </span>
     );

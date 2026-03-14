@@ -101,4 +101,10 @@ export const thesisService = {
         await api.put(`/thesis/${id}/hod-decision`, data);
     },
 
+    /** GET /thesis/:id/review-status - get review status */
+    getThesisReviewStatus: async (id: string) => {
+        const response = await api.get(`/thesis/${id}/review-status`);
+        return response.data;
+    },
+
 };
