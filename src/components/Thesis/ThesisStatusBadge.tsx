@@ -4,51 +4,61 @@ interface Props {
     status: ThesisStatus;
 }
 
-const STATUS_CONFIG: Record<ThesisStatus, { label: string; classes: string }> = {
+const STATUS_CONFIG: Record<ThesisStatus, { label: string; icon: string; classes: string }> = {
     Published: {
         label: 'Published',
-        classes: 'bg-blue-100 text-blue-700'
+        icon: 'pi pi-check-circle',
+        classes: 'bg-emerald-50 text-emerald-700 border-emerald-100'
     },
     Updated: {
         label: 'Updated',
-        classes: 'bg-indigo-100 text-indigo-700'
+        icon: 'pi pi-sync',
+        classes: 'bg-indigo-50 text-indigo-700 border-indigo-100'
     },
     'Need Update': {
         label: 'Need Update',
-        classes: 'bg-amber-100 text-amber-700'
+        icon: 'pi pi-exclamation-triangle',
+        classes: 'bg-amber-50 text-amber-700 border-amber-100'
     },
     Reviewing: {
         label: 'Reviewing',
-        classes: 'bg-orange-100 text-orange-700'
+        icon: 'pi pi-clock',
+        classes: 'bg-sky-50 text-sky-700 border-sky-100'
     },
     'On Mentor Inviting': {
         label: 'On Mentor Inviting',
-        classes: 'bg-purple-100 text-purple-700'
+        icon: 'pi pi-user-plus',
+        classes: 'bg-purple-50 text-purple-700 border-purple-100'
     },
     Rejected: {
         label: 'Rejected',
-        classes: 'bg-red-100 text-red-700'
+        icon: 'pi pi-times-circle',
+        classes: 'bg-rose-50 text-rose-700 border-rose-100'
     },
     Registered: {
         label: 'Registered',
-        classes: 'bg-green-100 text-green-700'
+        icon: 'pi pi-bookmark-fill',
+        classes: 'bg-green-50 text-green-700 border-green-100'
     },
     Cancelled: {
         label: 'Cancelled',
-        classes: 'bg-gray-200 text-gray-700'
+        icon: 'pi pi-trash',
+        classes: 'bg-slate-100 text-slate-600 border-slate-200'
     }
 };
 
 const ThesisStatusBadge = ({ status }: Props) => {
     const config = STATUS_CONFIG[status] ?? {
         label: status,
-        classes: 'bg-gray-100 text-gray-600'
+        icon: 'pi pi-info-circle',
+        classes: 'bg-gray-50 text-gray-600 border-gray-100'
     };
 
     return (
         <span
-            className={`shrink-0 px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider ${config.classes}`}
+            className={`flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest border shadow-sm transition-all hover:shadow-md ${config.classes}`}
         >
+            <i className={`${config.icon} text-sm`} />
             {config.label}
         </span>
     );

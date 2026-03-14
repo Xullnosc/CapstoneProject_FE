@@ -96,9 +96,13 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             const result: ImportResult<PreviewRow> = await whitelistService.importWhitelist(semesterId, file);
             const successCount = result.items.length;
             const errorCount = result.errors.length;
-            let msg = `Imported ${successCount} users.`;
-            if (errorCount) msg += ` ${errorCount} row(s) failed.`;
-            Swal.fire('Success', msg, 'success');
+            let msg = `Successfully imported ${successCount} users.`;
+            if (errorCount) msg += `\n${errorCount} row(s) were skipped due to conflicts.`;
+            Swal.fire({
+                icon: successCount > 0 ? 'success' : 'warning',
+                title: successCount > 0 ? 'Import Complete' : 'Nothing Imported',
+                text: msg
+            });
             if (errorCount) {
                 console.warn('import errors', result.errors);
             }
@@ -107,10 +111,18 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             setFile(null);
             setPreviewData([]);
             setPreviewErrors([]);
-        } catch (err) {
-            console.error(err);
-            Swal.fire('Error', 'Import failed. Please try again.', 'error');
-        }
+        } catch (err: unknown) {
+    console.error(err);
+
+    let msg = 'Import failed. Please try again.';
+
+    if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { message?: string } } };
+        msg = e.response?.data?.message ?? msg;
+    }
+
+    Swal.fire('Error', msg, 'error');
+}
     };
 
     const dialogHeader = (

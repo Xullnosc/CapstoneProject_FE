@@ -69,10 +69,13 @@ export const thesisService = {
         return response.data;
     },
 
-    /** PUT /thesis/:id/review - reviewer only: set Approve / Reject with optional comment and file */
+    /** PUT /thesis/:id/review - reviewer only: set Pass / Fail with optional comment and file */
     evaluateThesis: async (id: string, data: { status: 'Approve' | 'Reject', comment?: string, reviewFile?: File }): Promise<void> => {
         const formData = new FormData();
-        formData.append('Status', data.status);
+        // Map FE 'Approve'/'Reject' to BE 'Pass'/'Fail'
+        const decision = data.status === 'Approve' ? 'Pass' : 'Fail';
+        formData.append('Decision', decision);
+        
         if (data.comment) formData.append('Comment', data.comment);
         if (data.reviewFile) formData.append('ReviewFile', data.reviewFile);
 
@@ -91,6 +94,11 @@ export const thesisService = {
     toggleThesisLock: async (id: string): Promise<Thesis> => {
         const response = await api.put<{ data: Thesis }>(`/thesis/${id}/lock`);
         return response.data.data;
+    },
+
+    /** PUT /thesis/:id/hod-decision - HOD: submit final decision (Pass/Fail) */
+    submitHodDecision: async (id: string, data: { decision: 'Pass' | 'Fail', comment?: string }): Promise<void> => {
+        await api.put(`/thesis/${id}/hod-decision`, data);
     },
 
 };

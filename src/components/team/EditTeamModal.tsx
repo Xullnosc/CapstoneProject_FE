@@ -14,6 +14,7 @@ interface EditTeamModalProps {
 
 const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team, onUpdateSuccess }) => {
     const [file, setFile] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<UpdateTeamRequest>({
         defaultValues: {
@@ -28,10 +29,10 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
             teamName: team.teamName,
             description: team.description || "",
         });
-        // Removed setFile(null) from here to avoid setState in effect warning
-    }, [team, reset]); // Removed isOpen from dependency as we want to reset mainly on team change
+    }, [team, reset]);
 
     const handleClose = () => {
+        if (isLoading) return; // prevent closing while saving
         setFile(null);
         closeModal();
     };
@@ -44,6 +45,8 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
     };
 
     const onSubmit = async (data: UpdateTeamRequest) => {
+        if (isLoading) return;
+        setIsLoading(true);
         try {
             await teamService.updateTeam(team.teamId, {
                 ...data,
@@ -66,6 +69,8 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                 text: 'Failed to update team information',
                 confirmButtonColor: '#F26F21'
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -182,16 +187,23 @@ const EditTeamModal: React.FC<EditTeamModalProps> = ({ isOpen, closeModal, team,
                     <div className="pt-4 flex justify-end gap-3">
                         <button
                             type="button"
-                            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200"
+                            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
                             onClick={closeModal}
+                            disabled={isLoading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#F26F21] hover:bg-orange-700 transition-all duration-200 focus:ring-4 focus:ring-orange-500/20"
+                            disabled={isLoading}
+                            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#F26F21] hover:bg-orange-700 transition-all duration-200 focus:ring-4 focus:ring-orange-500/20 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            Save Changes
+                            {isLoading ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Saving...
+                                </>
+                            ) : 'Save Changes'}
                         </button>
                     </div>
                 </form>

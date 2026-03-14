@@ -8,6 +8,7 @@ import ThesisStatusBadge from '../../components/Thesis/ThesisStatusBadge';
 import ThesisHistoryTable from '../../components/Thesis/ThesisHistoryTable';
 import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
 import ReviewSubmissionModal from '../../components/Thesis/ReviewSubmissionModal';
+import HodDecisionModal from '../../components/Thesis/HodDecisionModal';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { Button as PrimeButton } from 'primereact/button';
 import type { SweetAlertResult } from 'sweetalert2';
@@ -32,6 +33,7 @@ const ThesisDetailPage = () => {
     const [locking, setLocking] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [evaluating] = useState(false);
+    const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
 
     const showSuccess = (message: string) => {
         Swal.fire({ icon: 'success', title: 'Success', text: message, timer: 3000, showConfirmButton: false });
@@ -107,7 +109,7 @@ const ThesisDetailPage = () => {
     const handleToggleLockClick = () => {
         if (!thesis) return;
         Swal.fire({
-            title: thesis.isLocked ? 'Unlock Thesis?' : 'Lock Thesis?',
+            title: thesis.isLocked ? 'Unlock Registration?' : 'Lock Registration?',
             text: thesis.isLocked
                 ? 'Unlocking will allow students to register for it once published.'
                 : 'Locking will prevent students from registering, even if published.',
@@ -115,7 +117,7 @@ const ThesisDetailPage = () => {
             showCancelButton: true,
             confirmButtonColor: thesis.isLocked ? '#10b981' : '#f59e0b',
             cancelButtonColor: '#94a3b8',
-            confirmButtonText: thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock'
+            confirmButtonText: thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock Registration'
         }).then((result: SweetAlertResult) => {
             if (result.isConfirmed) {
                 executeToggleLock();
@@ -207,14 +209,21 @@ const ThesisDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-white rounded-4xl shadow-sm p-8 border border-slate-100 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-8">
-                                <ThesisStatusBadge status={thesis.status} />
+                        <div className="bg-white rounded-4xl shadow-sm p-10 border border-slate-100 relative overflow-hidden">
+                            <div className="flex flex-wrap items-start justify-between gap-6 mb-8">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Current Phase</span>
+                                    </div>
+                                    <h2 className="text-3xl font-black text-slate-900 leading-tight">
+                                        {thesis.title}
+                                    </h2>
+                                </div>
+                                <div className="shrink-0 pt-2">
+                                    <ThesisStatusBadge status={thesis.status} />
+                                </div>
                             </div>
-
-                            <h2 className="text-3xl font-black text-slate-900 mb-6 leading-tight pr-24">
-                                {thesis.title}
-                            </h2>
 
                             <div className="space-y-8">
                                 <div>
@@ -271,15 +280,15 @@ const ThesisDetailPage = () => {
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {thesis.reviews.map((rev, idx) => (
-                                            <div key={rev.reviewId} className="p-6 bg-white rounded-3xl border-2 border-slate-50 shadow-sm transition-all hover:border-slate-100">
+                                            <div key={idx} className="p-6 bg-white rounded-3xl border-2 border-slate-50 shadow-sm transition-all hover:border-slate-100">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div>
                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Reviewer {idx + 1}</p>
                                                         <p className="text-sm font-black text-slate-800">{rev.reviewerName || `Lecturer ${idx + 1}`}</p>
                                                     </div>
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${rev.status === 'Approve' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${rev.decision === 'Pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                                                         }`}>
-                                                        {rev.status}
+                                                        {rev.decision}
                                                     </span>
                                                 </div>
 
@@ -308,7 +317,7 @@ const ThesisDetailPage = () => {
 
                                                     <div className="pt-2 border-t border-slate-100">
                                                         <p className="text-[9px] text-slate-400 font-bold uppercase text-right">
-                                                            Evaluated on {formatDate(rev.reviewDate)}
+                                                            Evaluated on {formatDate(rev.reviewedAt)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -362,10 +371,22 @@ const ThesisDetailPage = () => {
                             {/* Reviewer Actions */}
                             {/* Reviewer Actions - Don't show if user is the owner (unless owner is Lecturer) or already reviewed */}
                             {(() => {
-                                const hasReviewed = thesis.reviews?.some(rev => rev.reviewerId === user?.userId);
+                                const hasReviewed = thesis.reviews?.some(rev => rev.reviewerId === user?.userId && rev.decision && rev.decision !== 'Pending');
+                                const isAssigned = thesis.reviews?.some(rev => rev.reviewerId === user?.userId);
                                 const isOwner = thesis.userId === user?.userId;
-                                // Only block if user is owner AND NOT a lecturer
-                                const canEvaluate = isReviewer && thesis.status === 'Reviewing' && (!isOwner || isLecturer) && !hasReviewed;
+                                const reviewSlotsTaken = thesis.reviews?.length ?? 0;
+
+                                // Show evaluation button if:
+                                // 1. User is a reviewer
+                                // 2. Thesis is in Reviewing state
+                                // 3. User is not the owner (unless specific cases, but generally owner shouldn't review their own proposal manually)
+                                // 4. User hasn't submitted a final review yet
+                                // 5. User is either assigned to a slot OR there is an available slot (less than 2 reviewers)
+                                const canEvaluate = isReviewer && 
+                                                  thesis.status === 'Reviewing' && 
+                                                  !isOwner && 
+                                                  !hasReviewed && 
+                                                  (reviewSlotsTaken < 2 || isAssigned);
 
                                 if (canEvaluate) {
                                     return (
@@ -385,11 +406,27 @@ const ThesisDetailPage = () => {
                                 return null;
                             })()}
 
-                            {(isLecturer || isHOD) && thesis.userId === user?.userId && (
+                            {isHOD && (
                                 <div className="mt-10 pt-10 border-t border-slate-100">
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Access Management</h3>
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">HOD Final Authority</h3>
                                     <PrimeButton
-                                        label={thesis.isLocked ? 'Release Lock' : 'Enable Lock'}
+                                        label="Make Final Decision"
+                                        icon="pi pi-shield"
+                                        onClick={() => setHodDecisionVisible(true)}
+                                        className="p-button-sm w-full font-bold uppercase tracking-wider py-3"
+                                        style={{ backgroundColor: '#1e293b', borderColor: '#1e293b' }}
+                                    />
+                                    <p className="mt-3 text-[10px] text-slate-400 font-medium italic">
+                                        Note: Your decision will override all reviewer scores.
+                                    </p>
+                                </div>
+                            )}
+
+                            {thesis.status === 'Published' && (isLecturer || isHOD) && thesis.userId === user?.userId && (
+                                <div className="mt-10 pt-10 border-t border-slate-100">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Registration Management</h3>
+                                    <PrimeButton
+                                        label={thesis.isLocked ? 'Unlock Registration' : 'Lock Registration'}
                                         icon={thesis.isLocked ? 'pi pi-lock-open' : 'pi pi-lock'}
                                         onClick={handleToggleLockClick}
                                         loading={locking}
@@ -445,6 +482,13 @@ const ThesisDetailPage = () => {
                 visible={reviewModalVisible}
                 thesisId={id || ''}
                 onHide={() => setReviewModalVisible(false)}
+                onSuccess={fetchThesis}
+            />
+
+            <HodDecisionModal
+                visible={hodDecisionVisible}
+                thesisId={id || ''}
+                onHide={() => setHodDecisionVisible(false)}
                 onSuccess={fetchThesis}
             />
         </div>

@@ -51,10 +51,17 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
             setComment('');
             setFile(null);
         } catch (err: unknown) {
-            console.error('Submit review failed', err);
-            const msg = err.response?.data?.Message || 'Failed to submit review.';
-            Swal.fire({ icon: 'error', title: 'Error', text: msg });
-        } finally {
+    console.error(err);
+
+    let msg = 'Submit review failed';
+
+    if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { message?: string } } };
+        msg = e.response?.data?.message ?? msg;
+    }
+
+    Swal.fire('Error', msg, 'error');
+} finally {
             setLoading(false);
         }
     };
@@ -80,7 +87,17 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
 
     return (
         <Dialog
-            header="Thesis Evaluation"
+            header={
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 shadow-sm">
+                        <i className="pi pi-list-check text-xl" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-900 leading-none mb-1">Thesis Evaluation</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reviewer Assessment</p>
+                    </div>
+                </div>
+            }
             visible={visible}
             onHide={onHide}
             style={{ width: '500px' }}
@@ -89,9 +106,12 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
             draggable={false}
             resizable={false}
             modal
-            className="p-fluid shadow-2xl"
-            headerClassName="text-xl font-bold border-b border-gray-100 pb-4"
-            contentClassName="pt-6"
+            className="p-fluid shadow-2xl rounded-[2.5rem] overflow-hidden"
+            pt={{
+                header: { className: 'p-8 border-b border-gray-100 bg-white' },
+                content: { className: 'p-8 bg-white' },
+                mask: { className: 'backdrop-blur-sm bg-slate-900/40' }
+            }}
         >
             <div className="flex flex-col gap-8">
                 {/* Verdict Section */}
@@ -103,13 +123,27 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                         value={status}
                         options={statusOptions}
                         onChange={(e) => setStatus(e.value)}
-                        className="premium-select-button select-button-vertical"
-                        itemTemplate={(option) => (
-                            <div className="flex items-center justify-center gap-2 py-3 w-full">
-                                <i className={`${option.icon} text-sm`} />
-                                <span className="text-xs font-bold uppercase tracking-widest">{option.label}</span>
-                            </div>
-                        )}
+                        className="premium-select-button evaluation-select"
+                        itemTemplate={(option) => {
+                            const isSelected = status === option.value;
+                            const isReject = option.value === 'Reject';
+                            
+                            let activeClass = '';
+                            if (isSelected) {
+                                activeClass = isReject 
+                                    ? 'bg-red-500 text-white scale-105' 
+                                    : 'bg-emerald-500 text-white scale-105';
+                            } else {
+                                activeClass = 'bg-slate-50 text-slate-400 opacity-60 grayscale';
+                            }
+
+                            return (
+                                <div className={`flex items-center justify-center gap-2 py-4 w-full transition-all duration-300 rounded-xl ${activeClass}`}>
+                                    <i className={`${option.icon} ${isSelected ? 'text-lg' : 'text-sm'}`} />
+                                    <span className={`font-black uppercase tracking-widest ${isSelected ? 'text-sm' : 'text-[10px]'}`}>{option.label}</span>
+                                </div>
+                            );
+                        }}
                     />
                 </div>
 
@@ -121,7 +155,7 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                     <InputTextarea
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
-                        rows={6}
+                        rows={5}
                         placeholder={status === 'Reject' ? "Explain the reasons for rejection and required improvements..." : "Add overall feedback for the team (optional)..."}
                         className="text-sm border border-slate-200 rounded-2xl focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 p-4 leading-relaxed outline-none transition-all shadow-sm"
                     />
