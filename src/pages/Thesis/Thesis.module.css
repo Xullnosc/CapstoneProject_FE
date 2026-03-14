@@ -12,3 +12,31 @@
 .thesisContainer :global(.orange-switch .p-inputswitch-slider:before) {
     background: #ffffff !important;
 }
+
+/* Premium Select Button Overrides */
+:global(.evaluation-select.p-selectbutton) {
+    display: flex !important;
+    background: #f8fafc !important;
+    padding: 6px !important;
+    border-radius: 1.25rem !important;
+    border: 1px solid #f1f5f9 !important;
+    gap: 6px !important;
+}
+
+:global(.evaluation-select .p-button) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    flex: 1 !important;
+    overflow: visible !important;
+    border-radius: 1rem !important;
+}
+
+:global(.evaluation-select .p-button.p-highlight) {
+    background: transparent !important;
+}
+
+:global(.evaluation-select .p-button:focus) {
+    box-shadow: none !important;
+}

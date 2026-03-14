@@ -40,14 +40,13 @@ export interface Thesis {
 }
 
 export interface ThesisReview {
-    reviewId: number;
     thesisId: string;
-    reviewerId: number;
+    reviewerId: number | null;
     reviewerName: string | null;
-    status: 'Approve' | 'Reject';
+    decision: string; // "Pass" | "Fail" | "Pending"
     comment: string | null;
     fileUrl: string | null;
-    reviewDate: string;
+    reviewedAt: string;
 }
 
 export interface GetThesisFilters {

@@ -10,6 +10,8 @@ interface Props {
     canLock?: boolean;
     onToggleLock?: (thesis: Thesis) => void;
     isLocking?: boolean;
+    isHOD?: boolean;
+    onHodDecisionClick?: (thesis: Thesis) => void;
 }
 
 const ThesisCard = ({
@@ -18,7 +20,9 @@ const ThesisCard = ({
     canUpload = false,
     canLock = false,
     onToggleLock,
-    isLocking = false
+    isLocking = false,
+    isHOD = false,
+    onHodDecisionClick
 }: Props) => {
     const navigate = useNavigate();
 
@@ -87,6 +91,15 @@ const ThesisCard = ({
 
             {/* Actions */}
             <div className="px-6 pb-6 pt-2 flex flex-col sm:flex-row gap-3">
+                {isHOD && (
+                    <button
+                        onClick={() => onHodDecisionClick?.(thesis)}
+                        className="flex-1 py-2.5 bg-slate-900 text-white cursor-pointer font-bold rounded-xl hover:bg-slate-800 transition-colors text-sm flex items-center justify-center gap-2"
+                    >
+                        <i className="pi pi-shield text-xs" />
+                        Final Decision
+                    </button>
+                )}
                 <button
                     onClick={() => navigate(`/thesis/${thesis.thesisId}`)}
                     className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
