@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
 
 const PublishedThesisPage = () => {

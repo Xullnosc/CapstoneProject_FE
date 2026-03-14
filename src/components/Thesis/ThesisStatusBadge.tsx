@@ -10,6 +10,10 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; icon: string; classes
         icon: 'pi pi-check-circle',
         classes: 'bg-emerald-50 text-emerald-700 border-emerald-100'
     },
+    'HOD Reviewing': {
+        label: 'HOD Reviewing',
+        classes: 'bg-fuchsia-100 text-fuchsia-700'
+    },
     Updated: {
         label: 'Updated',
         icon: 'pi pi-sync',

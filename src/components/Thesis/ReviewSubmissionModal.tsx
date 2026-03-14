@@ -51,17 +51,11 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
             setComment('');
             setFile(null);
         } catch (err: unknown) {
-    console.error(err);
-
-    let msg = 'Submit review failed';
-
-    if (typeof err === 'object' && err !== null && 'response' in err) {
-        const e = err as { response?: { data?: { message?: string } } };
-        msg = e.response?.data?.message ?? msg;
-    }
-
-    Swal.fire('Error', msg, 'error');
-} finally {
+            console.error('Submit review failed', err);
+            const axiosError = err as { response?: { data?: { Message?: string } } };
+            const msg = axiosError.response?.data?.Message || 'Failed to submit review.';
+            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+        } finally {
             setLoading(false);
         }
     };

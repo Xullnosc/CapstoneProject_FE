@@ -11,6 +11,8 @@ interface SemesterWhitelistsTableProps {
     headerAction?: ReactNode;
     onUpdate?: () => void;
     onEdit?: (user: Whitelist) => void;
+    canEdit?: (user: Whitelist) => boolean;
+    onDelete?: (user: Whitelist) => Promise<void> | void;
     showStudentCode?: boolean;
     isEnded?: boolean;
     // Server-side pagination props
@@ -26,6 +28,8 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     headerAction,
     onUpdate,
     onEdit,
+    canEdit,
+    onDelete,
     showStudentCode = false,
     isEnded = false,
     totalCount,
@@ -82,7 +86,12 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
         }
     };
 
-    const handleDeleteStudent = async (id: number) => {
+    const handleDeleteStudent = async (user: Whitelist) => {
+        if (onDelete) {
+            await onDelete(user);
+            return;
+        }
+
         const result = await Swal.fire({
             title: 'Remove Student?',
             text: "This student will be removed from this semester's whitelist.",
@@ -95,7 +104,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
 
         if (result.isConfirmed) {
             try {
-                await whitelistService.deleteWhitelist(id);
+                await whitelistService.deleteWhitelist(user.whitelistId);
                 Swal.fire('Removed!', 'Student has been removed from whitelist.', 'success');
                 if (onUpdate) onUpdate();
             } catch {
@@ -229,8 +238,8 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                                         {user.isReviewer ? 'Unassign' : 'Assign Reviewer'}
                                                     </button>
                                                 ) : user.roleName === 'Student' ? (
-                                                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        {onEdit && (
+                                                    <div className={`flex items-center gap-1 transition-opacity ${onEdit && (canEdit ? canEdit(user) : true) ? 'opacity-100' : 'opacity-100 sm:opacity-0 group-hover:opacity-100'}`}>
+                                                        {onEdit && (canEdit ? canEdit(user) : true) && (
                                                             <button
                                                                 onClick={() => onEdit(user)}
                                                                 className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
@@ -240,7 +249,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                                             </button>
                                                         )}
                                                         <button
-                                                            onClick={() => handleDeleteStudent(user.whitelistId)}
+                                                            onClick={() => handleDeleteStudent(user)}
                                                             className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
                                                             title="Delete Student"
                                                         >
