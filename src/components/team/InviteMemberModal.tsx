@@ -50,7 +50,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
         setHasSearched(true); // Mark as searched
         try {
             const results = await userService.searchStudents(searchTerm, teamId);
-            setSearchResults(results);
+            setSearchResults(results as UserInfo[]);
 
             // Sync initial state from backend results
             const newInvitedUsers = { ...invitedUsers };
