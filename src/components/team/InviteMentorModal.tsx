@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { userService } from '../../services/userService';
+import { userService, type UserInfo } from '../../services/userService';
 import { mentorInvitationService } from '../../services/mentorInvitationService';
 import MemberAvatar from './MemberAvatar';
 import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 import axios from 'axios';
 
-interface UserInfo {
-    userId: number;
-    fullName: string;
-    studentCode: string;
-    email: string;
-    avatar: string;
-    hasTeam: boolean;
-    pendingInvitationId?: number | null;
-}
+type MentorUserInfo = UserInfo;
 
 interface InviteMentorModalProps {
     isOpen: boolean;
@@ -24,7 +16,7 @@ interface InviteMentorModalProps {
 
 const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, teamId }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<UserInfo[]>([]);
+    const [searchResults, setSearchResults] = useState<MentorUserInfo[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [invitedUsers, setInvitedUsers] = useState<Record<number, number>>({}); // userId -> invitationId
     const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
@@ -34,7 +26,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
         setIsLoading(true);
         try {
             const results = await userService.searchLecturers(term, teamId);
-            setSearchResults(results);
+            setSearchResults(results as MentorUserInfo[]);
 
             setInvitedUsers(prev => {
                 const newInvitedUsers = { ...prev };
