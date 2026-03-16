@@ -1,5 +1,6 @@
 import axios from 'axios';
 import api from './api';
+import type { UserInfo } from './userService';
 
 export interface LoginResponse {
     accessToken?: string;
@@ -67,7 +68,7 @@ export const authService = {
         return null;
     },
 
-    setUser: (user: any) => {
+    setUser: (user: UserInfo) => {
         localStorage.setItem('user', JSON.stringify(user));
     }
 };

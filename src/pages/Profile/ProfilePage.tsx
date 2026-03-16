@@ -9,6 +9,7 @@ import { authService } from '../../services/authService';
 import { userService } from '../../services/userService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
+import type { AxiosError } from 'axios';
 
 const ProfilePage = () => {
     const user = authService.getUser();
@@ -139,11 +140,11 @@ const ProfilePage = () => {
                 showConfirmButton: false
             });
             setIsEditing(false);
-        } catch (error: any) {
+        } catch (error: unknown) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.response?.data?.message || 'Failed to update profile. Please try again.',
+                text: (error as AxiosError<{ message?: string }>)?.response?.data?.message || 'Failed to update profile. Please try again.',
                 confirmButtonColor: '#F26F21'
             });
         } finally {
