@@ -14,6 +14,7 @@ export interface MentorInvitationDTO {
     type: string;
     status: string;
     thesisTitle?: string;
+    thesisId?: string;
     thesisStatus?: string;
     createdAt?: string;
     respondedAt?: string;
