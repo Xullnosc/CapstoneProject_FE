@@ -327,6 +327,7 @@ const ThesisPage = () => {
                                         thesis={t} 
                                         canUpload={false} 
                                         isHOD={isHOD}
+                                        showLockStatus={isHOD}
                                         onHodDecisionClick={handleHodDecision}
                                     />
                                 ))}

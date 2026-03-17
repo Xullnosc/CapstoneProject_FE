@@ -12,6 +12,7 @@ interface Props {
     isLocking?: boolean;
     isHOD?: boolean;
     onHodDecisionClick?: (thesis: Thesis) => void;
+    showLockStatus?: boolean;
 }
 
 const ThesisCard = ({
@@ -22,7 +23,8 @@ const ThesisCard = ({
     onToggleLock,
     isLocking = false,
     isHOD = false,
-    onHodDecisionClick
+    onHodDecisionClick,
+    showLockStatus = false
 }: Props) => {
     const navigate = useNavigate();
 
@@ -76,16 +78,18 @@ const ThesisCard = ({
                         <i className="pi pi-history text-xs" />
                         <span>Last updated: {formatDate(displayDate)}</span>
                     </div>
-                    <div
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${thesis.isLocked
-                            ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                            : 'bg-slate-50 text-slate-400 border border-slate-200'
-                            }`}
-                        title={thesis.isLocked ? 'Locked — students cannot register' : 'Unlocked'}
-                    >
-                        <i className={thesis.isLocked ? 'pi pi-lock' : 'pi pi-lock-open'} />
-                        <span>{thesis.isLocked ? 'Locked' : 'Unlocked'}</span>
-                    </div>
+                    {showLockStatus && (
+                        <div
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${thesis.isLocked
+                                ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                                : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                }`}
+                            title={thesis.isLocked ? 'Closed — students cannot register' : 'Open — students can register'}
+                        >
+                            <i className={thesis.isLocked ? 'pi pi-lock' : 'pi pi-lock-open'} />
+                            <span>{thesis.isLocked ? 'Registration Closed' : 'Open Registration'}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -114,7 +118,7 @@ const ThesisCard = ({
                         Upload New
                     </button>
                 )}
-                {canLock && (
+                {canLock && thesis.status === 'Published' && (
                     <div className="flex flex-1 items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:border-amber-200 transition-colors group/lock">
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none mb-1">Thesis Access</span>
