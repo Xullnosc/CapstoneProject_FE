@@ -383,7 +383,7 @@ const ThesisDetailPage = () => {
                                 // 4. User hasn't submitted a final review yet
                                 // 5. User is either assigned to a slot OR there is an available slot (less than 2 reviewers)
                                 const canEvaluate = isReviewer && 
-                                                  thesis.status === 'Reviewing' && 
+                                                  (thesis.status === 'Reviewing' || thesis.status === 'On Mentor Inviting') && 
                                                   !isOwner && 
                                                   !hasReviewed && 
                                                   (reviewSlotsTaken < 2 || isAssigned);

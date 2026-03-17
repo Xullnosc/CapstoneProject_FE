@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { MentorInvitationDTO } from '../../services/mentorInvitationService';
 
 // Simple relative time formatter (avoid date-fns dep)
@@ -54,45 +55,62 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
                     </p>
                 </div>
             </div>
-
             {/* Center Block: Details */}
-            <div className="flex flex-col gap-2 flex-1 px-0 md:px-6 md:border-x border-slate-100 min-w-0">
-                {/* Thesis Info */}
+            <div className="flex flex-col gap-3 flex-1 px-0 md:px-6 md:border-x border-slate-100 min-w-0">
+                {/* Thesis Info Box */}
                 {invitation.thesisTitle && (
-                    <div className="flex items-start gap-2 mb-1">
-                        <span className="material-symbols-outlined text-slate-400 text-base mt-0.5">description</span>
-                        <div className="flex flex-col">
-                            <span className="text-sm text-slate-700 line-clamp-2" title={invitation.thesisTitle}>
-                                {invitation.thesisTitle}
-                            </span>
-                            {invitation.thesisStatus && (
-                                <span className={`text-[10px] uppercase font-bold w-fit px-1.5 py-0.5 rounded border mt-1
-                                    ${invitation.thesisStatus === 'Published'
-                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
-                                    {invitation.thesisStatus}
+                    <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-100/50">
+                        <div className="flex items-start gap-2.5">
+                            <i className="pi pi-book text-slate-400 text-xs mt-1 shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-slate-800 line-clamp-1 mb-1.5" title={invitation.thesisTitle}>
+                                    {invitation.thesisTitle}
                                 </span>
-                            )}
+                                <div className="flex items-center gap-2">
+                                    {invitation.thesisStatus && (
+                                        <span className={`text-[9px] uppercase font-black tracking-wider px-1.5 py-0.5 rounded-md border
+                                            ${invitation.thesisStatus === 'Published'
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                : invitation.thesisStatus === 'Reviewing'
+                                                    ? 'bg-sky-50 text-sky-600 border-sky-100'
+                                                    : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                                            {invitation.thesisStatus}
+                                        </span>
+                                    )}
+                                    {invitation.thesisId && (
+                                        <Link
+                                            to={`/thesis/${invitation.thesisId}`}
+                                            className="text-[10px] text-sky-600 hover:text-sky-700 font-bold flex items-center gap-0.5 transition-colors group/link"
+                                        >
+                                            Details
+                                            <i className="pi pi-external-link text-[8px] group-hover/link:translate-x-0.5 transition-transform" />
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
-                {/* Leader info */}
-                <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-base">person</span>
-                    <span className="text-sm text-slate-700 truncate">{invitation.invitedByEmail}</span>
-                </div>
-                {/* Invited date */}
-                <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-base">schedule</span>
-                    <span className="text-sm text-slate-500">
-                        {invitation.createdAt
-                            ? new Date(invitation.createdAt).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                            })
-                            : '—'}
-                    </span>
+
+                <div className="space-y-1.5">
+                    {/* Leader info */}
+                    <div className="flex items-center gap-2 text-slate-500">
+                        <i className="pi pi-user text-[10px]" />
+                        <span className="text-xs font-medium truncate">{invitation.invitedByEmail}</span>
+                    </div>
+                    {/* Invited date */}
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <i className="pi pi-calendar text-[10px]" />
+                        <span className="text-[11px] font-medium">
+                            {invitation.createdAt
+                                ? new Date(invitation.createdAt).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                })
+                                : '—'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
