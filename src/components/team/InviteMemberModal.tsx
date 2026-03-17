@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { userService } from '../../services/userService';
+import { userService, type UserInfo } from '../../services/userService';
 import { invitationService } from '../../services/invitationService';
 import MemberAvatar from './MemberAvatar';
 import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 import axios from 'axios';
 
-interface UserInfo {
-    userId: number;
-    fullName: string;
-    studentCode: string;
-    email: string;
-    avatar: string;
-    hasTeam: boolean;
-    pendingInvitationId?: number | null;
+type InviteUserInfo = UserInfo & {
     // Local state helper
     invitationId?: number;
     isInvited?: boolean;
-}
+};
 
 interface InviteMemberModalProps {
     isOpen: boolean;
@@ -27,7 +20,7 @@ interface InviteMemberModalProps {
 
 const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, teamId }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<UserInfo[]>([]);
+    const [searchResults, setSearchResults] = useState<InviteUserInfo[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [invitedUsers, setInvitedUsers] = useState<Record<number, number>>({}); // userId -> invitationId
 
@@ -50,7 +43,7 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ isOpen, onClose, 
         setHasSearched(true); // Mark as searched
         try {
             const results = await userService.searchStudents(searchTerm, teamId);
-            setSearchResults(results);
+            setSearchResults(results as InviteUserInfo[]);
 
             // Sync initial state from backend results
             const newInvitedUsers = { ...invitedUsers };
