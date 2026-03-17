@@ -21,6 +21,7 @@ const STATUS_OPTIONS: { label: string; value: ThesisStatus | 'Verified' | '' }[]
     { label: 'All Proposals', value: '' },
     { label: 'Verified Only', value: 'Verified' },
     { label: 'Published', value: 'Published' },
+    { label: 'On Mentor Inviting', value: 'On Mentor Inviting' },
     { label: 'Reviewing', value: 'Reviewing' },
     { label: 'Need Update', value: 'Need Update' },
     { label: 'Rejected', value: 'Rejected' },
@@ -77,7 +78,7 @@ const ThesisPage = () => {
         try {
             // First, fetch everything *without* filters to get accurate stats
             const fullData = await thesisService.getAllTheses({
-                lecturerOnly: true // Ensure we only get appropriate proposals
+                // lecturerOnly: true // Removed to show student leader-proposed theses
             });
 
             // Filter out current user's theses and Cancelled ones for the repository view

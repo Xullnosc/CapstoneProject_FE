@@ -34,7 +34,7 @@ const PublishedThesisPage = () => {
             const data = await thesisService.getAllTheses({
                 status: 'Published',
                 isLocked: false,
-                lecturerOnly: true,
+                // lecturerOnly: true, // Removed to show student leader-proposed theses
                 searchTitle: searchTitle || undefined,
             });
             setTheses(data);
@@ -77,10 +77,10 @@ const PublishedThesisPage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                        Available Lecturer Theses
+                        Available Thesis Repository
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Browse published, unlocked theses proposed by lecturers and register your team.
+                        Browse published, unlocked theses and register your team.
                     </p>
                 </div>
             </div>
@@ -120,7 +120,7 @@ const PublishedThesisPage = () => {
                     <p className="text-slate-400 text-sm">
                         {debouncedSearch
                             ? 'No theses match your search.'
-                            : 'There are no published & unlocked lecturer theses at the moment.'}
+                            : 'There are no published & unlocked theses at the moment.'}
                     </p>
                 </div>
             ) : (
