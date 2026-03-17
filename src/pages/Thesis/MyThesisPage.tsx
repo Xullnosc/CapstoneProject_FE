@@ -40,13 +40,25 @@ const MyThesisPage = () => {
     const [lockingId, setLockingId] = useState<string | null>(null);
 
     const handleToggleLock = async (thesis: Thesis) => {
+        const action = thesis.isLocked ? 'Open Registration' : 'Close Registration';
+        const result = await Swal.fire({
+            title: `${action}?`,
+            text: `Are you sure you want to ${action.toLowerCase()} for this thesis?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: thesis.isLocked ? '#10b981' : '#f26e21', // emerald vs orange
+            confirmButtonText: 'Yes, proceed'
+        });
+
+        if (!result.isConfirmed) return;
+
         setLockingId(thesis.thesisId);
         try {
             const updated = await thesisService.toggleThesisLock(thesis.thesisId);
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: `Thesis ${updated.isLocked ? 'locked' : 'unlocked'} successfully`,
+                text: `Registration ${updated.isLocked ? 'closed' : 'opened'} successfully`,
                 timer: 2000,
                 showConfirmButton: false
             });
@@ -199,7 +211,8 @@ const MyThesisPage = () => {
                             thesis={thesis}
                             canUpload={canUpload}
                             onUploadClick={handleUploadClick}
-                            canLock={(isLecturer || isHOD) && thesis.userId === user?.userId}
+                            canLock={(isLecturer || isHOD) && thesis.userId === user?.userId && thesis.status === 'Published'}
+                            showLockStatus={true}
                             onToggleLock={handleToggleLock}
                             isLocking={lockingId === thesis.thesisId}
                         />
