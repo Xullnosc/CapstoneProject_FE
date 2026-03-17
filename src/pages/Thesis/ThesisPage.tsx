@@ -10,6 +10,7 @@ import { authService } from '../../services/authService';
 import { checklistService } from '../../services/checklistService';
 import type { ChecklistDTO } from '../../types/checklist';
 import ThesisCard from '../../components/Thesis/ThesisCard';
+import HodDecisionModal from '../../components/Thesis/HodDecisionModal';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
 import styles from './Thesis.module.css';
@@ -20,6 +21,7 @@ const STATUS_OPTIONS: { label: string; value: ThesisStatus | 'Verified' | '' }[]
     { label: 'All Proposals', value: '' },
     { label: 'Verified Only', value: 'Verified' },
     { label: 'Published', value: 'Published' },
+    { label: 'On Mentor Inviting', value: 'On Mentor Inviting' },
     { label: 'Reviewing', value: 'Reviewing' },
     { label: 'Need Update', value: 'Need Update' },
     { label: 'Rejected', value: 'Rejected' },
@@ -61,13 +63,22 @@ const ThesisPage = () => {
     const [editingContent, setEditingContent] = useState('');
     const [isAddingCriteria, setIsAddingCriteria] = useState(false);
 
+    // HOD Decision Modal State
+    const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
+    const [selectedThesisId, setSelectedThesisId] = useState<string | null>(null);
+
+    const handleHodDecision = (thesis: Thesis) => {
+        setSelectedThesisId(thesis.thesisId);
+        setHodDecisionVisible(true);
+    };
+
     const fetchTheses = useCallback(async () => {
         setLoading(true);
         // Removed setLoading(true) as `loading` state was removed.
         try {
             // First, fetch everything *without* filters to get accurate stats
             const fullData = await thesisService.getAllTheses({
-                lecturerOnly: true // Ensure we only get appropriate proposals
+                // lecturerOnly: true // Removed to show student leader-proposed theses
             });
 
             // Filter out current user's theses and Cancelled ones for the repository view
@@ -227,7 +238,7 @@ const ThesisPage = () => {
                         <StatCard
                             label={isHOD ? "HOD Authority" : "Active Reviewer"}
                             value={user?.fullName?.split(' ')[0] || 'Member'}
-                            icon={isHOD ? "pi-shield" : "pi-user-check"}
+                            icon={isHOD ? "pi-shield" : "pi-users"}
                             color="purple"
                         />
                     </div>
@@ -311,7 +322,13 @@ const ThesisPage = () => {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
                                 {theses.map((t) => (
-                                    <ThesisCard key={t.thesisId} thesis={t} canUpload={false} />
+                                    <ThesisCard 
+                                        key={t.thesisId} 
+                                        thesis={t} 
+                                        canUpload={false} 
+                                        isHOD={isHOD}
+                                        onHodDecisionClick={handleHodDecision}
+                                    />
                                 ))}
                             </div>
                         )}
@@ -496,6 +513,18 @@ const ThesisPage = () => {
                     </div>
                 </div>
             </Dialog>
+
+            {selectedThesisId && (
+                <HodDecisionModal
+                    visible={hodDecisionVisible}
+                    onHide={() => {
+                        setHodDecisionVisible(false);
+                        setSelectedThesisId(null);
+                    }}
+                    thesisId={selectedThesisId}
+                    onSuccess={fetchTheses}
+                />
+            )}
         </div>
     );
 };

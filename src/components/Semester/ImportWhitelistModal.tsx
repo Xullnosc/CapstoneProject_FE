@@ -4,7 +4,6 @@ import Swal from '../../utils/swal';
 import { whitelistService } from '../../services/whitelistService';
 import type { ImportWhitelistRow, ImportError, ImportResult, WhitelistRowOverride } from '../../services/whitelistService';
 import SemesterWhitelistsTable from './SemesterWhitelistsTable';
-import { AxiosError } from 'axios';
 
 interface ImportWhitelistModalProps {
     isOpen: boolean;
@@ -188,9 +187,13 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             const result: ImportResult<ImportWhitelistRow> = await whitelistService.importWhitelist(semesterId, file, excludedRowNumbers, rowOverrides);
             const successCount = result.items.length;
             const errorCount = result.errors.length;
-            let msg = `Imported ${successCount} users.`;
-            if (errorCount) msg += ` ${errorCount} row(s) failed.`;
-            Swal.fire('Success', msg, 'success');
+            let msg = `Successfully imported ${successCount} users.`;
+            if (errorCount) msg += `\n${errorCount} row(s) were skipped due to conflicts.`;
+            Swal.fire({
+                icon: successCount > 0 ? 'success' : 'warning',
+                title: successCount > 0 ? 'Import Complete' : 'Nothing Imported',
+                text: msg
+            });
             if (errorCount) {
                 console.warn('import errors', result.errors);
             }
@@ -199,16 +202,18 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             setFile(null);
             setPreviewData([]);
             setPreviewErrors([]);
-            setExcludedRowNumbers([]);
-            setRowOverrides([]);
-            setEditingConflictRow(null);
-        } catch (err) {
-            console.error(err);
-            const message =
-                (err as AxiosError<{ message?: string }>)?.response?.data?.message ||
-                'Import failed. Please try again.';
-            Swal.fire('Error', message, 'error');
-        }
+        } catch (err: unknown) {
+    console.error(err);
+
+    let msg = 'Import failed. Please try again.';
+
+    if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { message?: string } } };
+        msg = e.response?.data?.message ?? msg;
+    }
+
+    Swal.fire('Error', msg, 'error');
+}
     };
 
     const dialogHeader = (

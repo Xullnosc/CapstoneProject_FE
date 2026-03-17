@@ -1,5 +1,5 @@
 import api from "./api";
-import type { Thesis, GetThesisFilters, ThesisReviewStatus } from "../types/thesis";
+import type { Thesis, GetThesisFilters } from "../types/thesis";
 
 export type ThesisDecision = 'Pass' | 'Fail';
 
@@ -71,10 +71,13 @@ export const thesisService = {
         return response.data;
     },
 
-    /** PUT /thesis/:id/review - reviewer only: set Approve / Reject with optional comment and file */
+    /** PUT /thesis/:id/review - reviewer only: set Pass / Fail with optional comment and file */
     evaluateThesis: async (id: string, data: { status: 'Approve' | 'Reject', comment?: string, reviewFile?: File }): Promise<void> => {
         const formData = new FormData();
-        formData.append('Status', data.status);
+        // Map FE 'Approve'/'Reject' to BE 'Pass'/'Fail'
+        const decision = data.status === 'Approve' ? 'Pass' : 'Fail';
+        formData.append('Decision', decision);
+        
         if (data.comment) formData.append('Comment', data.comment);
         if (data.reviewFile) formData.append('ReviewFile', data.reviewFile);
 
@@ -95,15 +98,15 @@ export const thesisService = {
         return response.data.data;
     },
 
+    /** PUT /thesis/:id/hod-decision - HOD: submit final decision (Pass/Fail) */
+    submitHodDecision: async (id: string, data: { decision: 'Pass' | 'Fail', comment?: string }): Promise<void> => {
+        await api.put(`/thesis/${id}/hod-decision`, data);
+    },
 
-    /** GET /thesis/:id/review-status - fetch reviewer progress and decisions */
-    getThesisReviewStatus: async (id: string): Promise<ThesisReviewStatus> => {
-        const response = await api.get<ThesisReviewStatus>(`/thesis/${id}/review-status`);
+    /** GET /thesis/:id/review-status - get review status */
+    getThesisReviewStatus: async (id: string) => {
+        const response = await api.get(`/thesis/${id}/review-status`);
         return response.data;
     },
 
-    /** PUT /thesis/:id/hod-decision - HOD only: Pass/Fail with optional note */
-    submitHodDecision: async (id: string, decision: ThesisDecision, note?: string): Promise<void> => {
-        await api.put(`/thesis/${id}/hod-decision`, { decision, note });
-    },
 };

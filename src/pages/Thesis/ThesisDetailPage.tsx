@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Thesis, ThesisReviewStatus, ReviewerProgress } from '../../types/thesis';
+import type { Thesis, ThesisReview } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
@@ -8,6 +8,7 @@ import ThesisStatusBadge from '../../components/Thesis/ThesisStatusBadge';
 import ThesisHistoryTable from '../../components/Thesis/ThesisHistoryTable';
 import UpdateThesisModal from '../../components/Thesis/UpdateThesisModal';
 import ReviewSubmissionModal from '../../components/Thesis/ReviewSubmissionModal';
+import HodDecisionModal from '../../components/Thesis/HodDecisionModal';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { Button as PrimeButton } from 'primereact/button';
 import type { SweetAlertResult } from 'sweetalert2';
@@ -24,21 +25,15 @@ const ThesisDetailPage = () => {
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
 
     const [thesis, setThesis] = useState<Thesis | null>(null);
-    const [reviewStatus, setReviewStatus] = useState<ThesisReviewStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
     const [reviewModalVisible, setReviewModalVisible] = useState(false);
     const [isLeader, setIsLeader] = useState(false);
-    const [expandedNotes, setExpandedNotes] = useState<Record<number, boolean>>({});
-
-    const toggleNote = (userId: number) => {
-        setExpandedNotes(prev => ({ ...prev, [userId]: !prev[userId] }));
-    };
-
     const [locking, setLocking] = useState(false);
     const [cancelling, setCancelling] = useState(false);
     const [evaluating] = useState(false);
+    const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
 
     const showSuccess = (message: string) => {
         Swal.fire({ icon: 'success', title: 'Success', text: message, timer: 3000, showConfirmButton: false });
@@ -55,14 +50,6 @@ const ThesisDetailPage = () => {
         try {
             const data = await thesisService.getThesisById(id);
             setThesis(data);
-
-            try {
-                const statusData = await thesisService.getThesisReviewStatus(id);
-                setReviewStatus(statusData);
-            } catch (err) {
-                console.warn('Could not fetch review status:', err);
-                setReviewStatus(null);
-            }
 
             if (isStudent) {
                 const team = await teamService.getMyTeam();
@@ -122,7 +109,7 @@ const ThesisDetailPage = () => {
     const handleToggleLockClick = () => {
         if (!thesis) return;
         Swal.fire({
-            title: thesis.isLocked ? 'Unlock Thesis?' : 'Lock Thesis?',
+            title: thesis.isLocked ? 'Unlock Registration?' : 'Lock Registration?',
             text: thesis.isLocked
                 ? 'Unlocking will allow students to register for it once published.'
                 : 'Locking will prevent students from registering, even if published.',
@@ -130,7 +117,7 @@ const ThesisDetailPage = () => {
             showCancelButton: true,
             confirmButtonColor: thesis.isLocked ? '#10b981' : '#f59e0b',
             cancelButtonColor: '#94a3b8',
-            confirmButtonText: thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock'
+            confirmButtonText: thesis.isLocked ? 'Yes, Unlock' : 'Yes, Lock Registration'
         }).then((result: SweetAlertResult) => {
             if (result.isConfirmed) {
                 executeToggleLock();
@@ -222,14 +209,21 @@ const ThesisDetailPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-white rounded-4xl shadow-sm p-8 border border-slate-100 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-8">
-                                <ThesisStatusBadge status={thesis.status} />
+                        <div className="bg-white rounded-4xl shadow-sm p-10 border border-slate-100 relative overflow-hidden">
+                            <div className="flex flex-wrap items-start justify-between gap-6 mb-8">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Current Phase</span>
+                                    </div>
+                                    <h2 className="text-3xl font-black text-slate-900 leading-tight">
+                                        {thesis.title}
+                                    </h2>
+                                </div>
+                                <div className="shrink-0 pt-2">
+                                    <ThesisStatusBadge status={thesis.status} />
+                                </div>
                             </div>
-
-                            <h2 className="text-3xl font-black text-slate-900 mb-6 leading-tight pr-24">
-                                {thesis.title}
-                            </h2>
 
                             <div className="space-y-8">
                                 <div>
@@ -285,16 +279,16 @@ const ThesisDetailPage = () => {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {thesis.reviews.map((rev, idx) => (
-                                            <div key={rev.reviewId} className="p-6 bg-white rounded-3xl border-2 border-slate-50 shadow-sm transition-all hover:border-slate-100">
+                                        {thesis.reviews.map((rev: ThesisReview, idx: number) => (
+                                            <div key={idx} className="p-6 bg-white rounded-3xl border-2 border-slate-50 shadow-sm transition-all hover:border-slate-100">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div>
                                                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Reviewer {idx + 1}</p>
                                                         <p className="text-sm font-black text-slate-800">{rev.reviewerName || `Lecturer ${idx + 1}`}</p>
                                                     </div>
-                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${rev.status === 'Approve' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${rev.decision === 'Pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
                                                         }`}>
-                                                        {rev.status}
+                                                        {rev.decision}
                                                     </span>
                                                 </div>
 
@@ -323,7 +317,7 @@ const ThesisDetailPage = () => {
 
                                                     <div className="pt-2 border-t border-slate-100">
                                                         <p className="text-[9px] text-slate-400 font-bold uppercase text-right">
-                                                            Evaluated on {formatDate(rev.reviewDate)}
+                                                            Evaluated on {formatDate(rev.reviewedAt)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -344,95 +338,6 @@ const ThesisDetailPage = () => {
                             </div>
                             <ThesisHistoryTable histories={thesis.histories ?? []} />
                         </div>
-
-                        {/* Review Progress */}
-                        {reviewStatus && reviewStatus.reviewers && reviewStatus.reviewers.length > 0 && (
-                            <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100">
-                                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                                    <h3 className="font-bold text-lg text-slate-900">Review Progress</h3>
-                                    <span className="text-sm font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-                                        Overall: {reviewStatus.overallStatus || 'Pending'}
-                                    </span>
-                                </div>
-                                <div className="p-6">
-                                    <div className="space-y-4">
-                                        {reviewStatus.reviewers.map((reviewer: ReviewerProgress) => (
-                                            <div key={reviewer.userId} className="flex flex-col p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-10 rounded-full bg-blue-100 text-blue-600 flex flex-shrink-0 items-center justify-center font-bold">
-                                                            {reviewer.fullName ? reviewer.fullName.charAt(0).toUpperCase() : '?'}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-semibold text-slate-800 text-sm">{reviewer.fullName || 'Unknown Reviewer'}</p>
-                                                            <p className="text-xs text-slate-500">{reviewer.email}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        {reviewer.decision ? (
-                                                            <>
-                                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
-                                                                ${reviewer.decision === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                                    <i className={`pi ${reviewer.decision === 'Pass' ? 'pi-check-circle' : 'pi-times-circle'}`} />
-                                                                    {reviewer.decision}
-                                                                </span>
-                                                                <div className="text-xs text-slate-400 mt-1">
-                                                                    {formatDate(reviewer.reviewedAt)}
-                                                                </div>
-                                                            </>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-200 text-slate-600">
-                                                                <i className="pi pi-clock" /> Pending
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {reviewer.note && (
-                                                    <div className="mt-3 pt-3 border-t border-slate-200/60">
-                                                        <button
-                                                            onClick={() => toggleNote(reviewer.userId)}
-                                                            className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider hover:text-primary/80 transition-colors"
-                                                        >
-                                                            <i className={`pi ${expandedNotes[reviewer.userId] ? 'pi-minus-circle' : 'pi-plus-circle'}`} />
-                                                            {expandedNotes[reviewer.userId] ? 'Hide Feedback' : 'View Feedback'}
-                                                        </button>
-
-                                                        {expandedNotes[reviewer.userId] && (
-                                                            <div className="mt-2 p-3 bg-white/50 border border-slate-100 rounded-lg shadow-inner">
-                                                                <p className="text-sm text-slate-700 leading-relaxed italic">
-                                                                    "{reviewer.note}"
-                                                                </p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-
-                                        {reviewStatus.hodDecision && (
-                                            <div className="mt-4 p-4 border-l-4 border-purple-500 bg-purple-50 rounded-r-xl">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="font-bold text-purple-900 text-sm">Head of Department Decision</h4>
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold
-                                                        ${reviewStatus.hodDecision.decision === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {reviewStatus.hodDecision.decision}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-purple-800">
-                                                    <span className="font-semibold">{reviewStatus.hodDecision.fullName}</span> made the final decision.
-                                                </p>
-                                                {reviewStatus.hodDecision.note && (
-                                                    <p className="text-xs text-purple-700 mt-2 bg-purple-100/50 p-2 rounded">
-                                                        "{reviewStatus.hodDecision.note}"
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* Sidebar */}
@@ -466,10 +371,22 @@ const ThesisDetailPage = () => {
                             {/* Reviewer Actions */}
                             {/* Reviewer Actions - Don't show if user is the owner (unless owner is Lecturer) or already reviewed */}
                             {(() => {
-                                const hasReviewed = thesis.reviews?.some(rev => rev.reviewerId === user?.userId);
+                                const hasReviewed = thesis.reviews?.some(rev => rev.reviewerId === user?.userId && rev.decision && rev.decision !== 'Pending');
+                                const isAssigned = thesis.reviews?.some(rev => rev.reviewerId === user?.userId);
                                 const isOwner = thesis.userId === user?.userId;
-                                // Only block if user is owner AND NOT a lecturer
-                                const canEvaluate = isReviewer && thesis.status === 'Reviewing' && (!isOwner || isLecturer) && !hasReviewed;
+                                const reviewSlotsTaken = thesis.reviews?.length ?? 0;
+
+                                // Show evaluation button if:
+                                // 1. User is a reviewer
+                                // 2. Thesis is in Reviewing state
+                                // 3. User is not the owner (unless specific cases, but generally owner shouldn't review their own proposal manually)
+                                // 4. User hasn't submitted a final review yet
+                                // 5. User is either assigned to a slot OR there is an available slot (less than 2 reviewers)
+                                const canEvaluate = isReviewer && 
+                                                  (thesis.status === 'Reviewing' || thesis.status === 'On Mentor Inviting') && 
+                                                  !isOwner && 
+                                                  !hasReviewed && 
+                                                  (reviewSlotsTaken < 2 || isAssigned);
 
                                 if (canEvaluate) {
                                     return (
@@ -489,11 +406,27 @@ const ThesisDetailPage = () => {
                                 return null;
                             })()}
 
-                            {(isLecturer || isHOD) && thesis.userId === user?.userId && (
+                            {isHOD && (
                                 <div className="mt-10 pt-10 border-t border-slate-100">
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Access Management</h3>
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">HOD Final Authority</h3>
                                     <PrimeButton
-                                        label={thesis.isLocked ? 'Release Lock' : 'Enable Lock'}
+                                        label="Make Final Decision"
+                                        icon="pi pi-shield"
+                                        onClick={() => setHodDecisionVisible(true)}
+                                        className="p-button-sm w-full font-bold uppercase tracking-wider py-3"
+                                        style={{ backgroundColor: '#1e293b', borderColor: '#1e293b' }}
+                                    />
+                                    <p className="mt-3 text-[10px] text-slate-400 font-medium italic">
+                                        Note: Your decision will override all reviewer scores.
+                                    </p>
+                                </div>
+                            )}
+
+                            {thesis.status === 'Published' && (isLecturer || isHOD) && thesis.userId === user?.userId && (
+                                <div className="mt-10 pt-10 border-t border-slate-100">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Registration Management</h3>
+                                    <PrimeButton
+                                        label={thesis.isLocked ? 'Unlock Registration' : 'Lock Registration'}
                                         icon={thesis.isLocked ? 'pi pi-lock-open' : 'pi pi-lock'}
                                         onClick={handleToggleLockClick}
                                         loading={locking}
@@ -549,6 +482,13 @@ const ThesisDetailPage = () => {
                 visible={reviewModalVisible}
                 thesisId={id || ''}
                 onHide={() => setReviewModalVisible(false)}
+                onSuccess={fetchThesis}
+            />
+
+            <HodDecisionModal
+                visible={hodDecisionVisible}
+                thesisId={id || ''}
+                onHide={() => setHodDecisionVisible(false)}
                 onSuccess={fetchThesis}
             />
         </div>

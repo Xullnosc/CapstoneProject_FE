@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { MentorInvitationDTO } from '../../services/mentorInvitationService';
 
 // Simple relative time formatter (avoid date-fns dep)
@@ -54,51 +55,71 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
                     </p>
                 </div>
             </div>
-
             {/* Center Block: Details */}
-            <div className="flex flex-col gap-2 flex-1 px-0 md:px-6 md:border-x border-slate-100 min-w-0">
-                {/* Thesis Info */}
+            <div className="flex flex-col gap-4 flex-1 px-0 md:px-8 md:border-x border-slate-100 min-w-0">
+                {/* Thesis Info: Premium Proposal Card */}
                 {invitation.thesisTitle && (
-                    <div className="flex items-start gap-2 mb-1">
-                        <span className="material-symbols-outlined text-slate-400 text-base mt-0.5">description</span>
-                        <div className="flex flex-col">
-                            <span className="text-sm text-slate-700 line-clamp-2" title={invitation.thesisTitle}>
-                                {invitation.thesisTitle}
-                            </span>
-                            {invitation.thesisStatus && (
-                                <span className={`text-[10px] uppercase font-bold w-fit px-1.5 py-0.5 rounded border mt-1
-                                    ${invitation.thesisStatus === 'Published'
-                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
-                                    {invitation.thesisStatus}
-                                </span>
-                            )}
+                    <div className="group/thesis relative bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 border border-slate-100/80 shadow-sm hover:shadow-md hover:border-orange-100/50 transition-all duration-300">
+                        <div className="flex items-start gap-3">
+                            <div className="size-10 rounded-xl bg-white flex items-center justify-center text-slate-400 shadow-sm border border-slate-100 group-hover/thesis:border-orange-400/30 group-hover/thesis:text-orange-500 transition-all duration-500 shrink-0">
+                                <span className="material-symbols-outlined text-xl">description</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Capstone Proposal</span>
+                                </div>
+                                <h4 className="text-sm font-black text-slate-800 line-clamp-1 mb-2" title={invitation.thesisTitle}>
+                                    {invitation.thesisTitle}
+                                </h4>
+                                {invitation.thesisId && (
+                                    <Link
+                                        to={`/thesis/${invitation.thesisId}`}
+                                        className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-orange-600 hover:text-orange-700 transition-all group/link"
+                                    >
+                                        Review Proposal
+                                        <span className="material-symbols-outlined text-sm group-hover/link:translate-x-1 transition-transform">arrow_forward</span>
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
-                {/* Leader info */}
-                <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-base">person</span>
-                    <span className="text-sm text-slate-700 truncate">{invitation.invitedByEmail}</span>
-                </div>
-                {/* Invited date */}
-                <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-slate-400 text-base">schedule</span>
-                    <span className="text-sm text-slate-500">
-                        {invitation.createdAt
-                            ? new Date(invitation.createdAt).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                            })
-                            : '—'}
-                    </span>
+
+                {/* Meta Information: Leader & Dates */}
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <div className="flex items-center gap-2 group/meta">
+                        <div className="size-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover/meta:text-slate-600 transition-colors">
+                            <span className="material-symbols-outlined text-base">person</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Leader</span>
+                            <span className="text-xs font-semibold text-slate-600 truncate">{invitation.invitedByEmail}</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 group/meta">
+                        <div className="size-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover/meta:text-slate-600 transition-colors">
+                            <span className="material-symbols-outlined text-base">calendar_today</span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter leading-none">Invited Date</span>
+                            <span className="text-xs font-semibold text-slate-600">
+                                {invitation.createdAt
+                                    ? new Date(invitation.createdAt).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })
+                                    : '—'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Right Block: Status + Actions */}
             <div className="flex items-center gap-3 shrink-0">
-                <span className="bg-amber-100 text-amber-700 rounded-full text-xs px-3 py-1 font-medium">
+                <span className="bg-orange-50 text-orange-600 border border-orange-100 rounded-full text-[10px] px-3 py-1 font-black uppercase tracking-wider">
                     Pending
                 </span>
 
@@ -124,10 +145,10 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
                     <button
                         onClick={() => !isAtMaxTeams && !isProcessing && onAccept(invitation.invitationId)}
                         disabled={isAtMaxTeams || isProcessing}
-                        className={`rounded-full px-5 py-2 text-sm font-medium transition-colors
+                        className={`rounded-full px-5 py-2 text-sm font-bold transition-all shadow-sm
                             ${isAtMaxTeams || isProcessing
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-sky-500 text-white hover:bg-sky-600 shadow-sm shadow-sky-200 cursor-pointer'
+                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/50 shadow-none'
+                                : 'bg-[#f26f21] text-white hover:bg-[#d95d1a] shadow-orange-200/50 cursor-pointer active:scale-95'
                             }`}
                     >
                         {isProcessing ? (
