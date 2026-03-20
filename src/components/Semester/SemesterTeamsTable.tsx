@@ -1,29 +1,106 @@
+import React, { useState } from 'react';
 import type { TeamSimple } from '../../services/semesterService';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '../../services/authService';
+import { teamService } from '../../services/teamService';
+import Swal from '../../utils/swal';
 
 interface SemesterTeamsTableProps {
     teams?: TeamSimple[];
     isLoading?: boolean;
+    onRefresh?: () => void;
 }
 
-const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isLoading = false }) => {
+const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isLoading = false, onRefresh }) => {
     const navigate = useNavigate();
+    const currentUser = authService.getUser();
+    const isHod = currentUser?.roleName === 'HOD';
+
+    const [statusFilter, setStatusFilter] = useState<string>('All');
+
+    const filteredTeams = teams.filter(t => {
+        if (statusFilter === 'All') return true;
+        if (statusFilter === 'Special') return t.isSpecial;
+        if (t.isSpecial && statusFilter === 'Insufficient') return false;
+        return t.status === statusFilter;
+    });
+
+    const counts = {
+        All: teams.length,
+        Active: teams.filter(t => t.status === 'Active').length,
+        Insufficient: teams.filter(t => t.status === 'Insufficient' && !t.isSpecial).length,
+        Pending: teams.filter(t => t.status === 'Pending').length,
+        Special: teams.filter(t => t.isSpecial).length,
+    };
 
     const handleRowClick = (teamId: number) => {
         navigate(`/teams/${teamId}`);
+    };
+
+    const handleToggleSpecial = async (e: React.MouseEvent, teamId: number, currentStatus: boolean | undefined) => {
+        e.stopPropagation();
+
+        const action = currentStatus ? "unmark this team as special" : "mark this team as special";
+
+        const result = await Swal.fire({
+            title: 'Confirm',
+            text: `Are you sure you want to ${action}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f97316',
+            cancelButtonColor: '#9ca3af',
+            confirmButtonText: 'Yes, confirm',
+            cancelButtonText: 'Cancel'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await teamService.toggleSpecial(teamId);
+                Swal.fire('Success', `Team has been ${currentStatus ? 'unmarked' : 'marked'} as special.`, 'success');
+                if (onRefresh) {
+                    onRefresh();
+                } else {
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Something went wrong', 'error');
+            }
+        }
     };
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
                 {/* Toolbar buttons */}
-                <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1">
-                    <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
-                        Teams <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">{teams.length}</span>
+                <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1 flex-wrap">
+                    <button
+                        onClick={() => setStatusFilter('All')}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'All' ? 'bg-white text-gray-900 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
+                        All <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">{counts.All}</span>
                     </button>
-                    {/* Placeholder buttons for future implementation */}
-                    <button className="px-4 py-1.5 rounded-lg text-gray-500 text-sm font-bold hover:bg-gray-200/50 transition-all">Pending</button>
-                    <button className="px-4 py-1.5 rounded-lg text-gray-500 text-sm font-bold hover:bg-gray-200/50 transition-all">Approved</button>
+                    <button
+                        onClick={() => setStatusFilter('Active')}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Active' ? 'bg-white text-emerald-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
+                        Active <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Active}</span>
+                    </button>
+                    <button
+                        onClick={() => setStatusFilter('Insufficient')}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Insufficient' ? 'bg-white text-red-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
+                        Insufficient <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Insufficient}</span>
+                    </button>
+                    <button
+                        onClick={() => setStatusFilter('Pending')}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Pending' ? 'bg-white text-amber-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
+                        Pending <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Pending}</span>
+                    </button>
+                    {isHod && (
+                        <button
+                            onClick={() => setStatusFilter('Special')}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Special' ? 'bg-white text-orange-500 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
+                            Special <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Special}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -55,17 +132,17 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                     <td className="px-6 py-4"><div className="h-8 bg-gray-100 rounded-lg w-8 ml-auto"></div></td>
                                 </tr>
                             ))
-                        ) : teams.length === 0 ? (
+                        ) : filteredTeams.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="px-6 py-12 text-center">
                                     <div className="flex flex-col items-center justify-center text-gray-400 gap-3">
                                         <span className="material-symbols-outlined text-4xl opacity-50">group_off</span>
-                                        <span className="text-sm font-medium">No teams found in this semester</span>
+                                        <span className="text-sm font-medium">No teams found matching current filter</span>
                                     </div>
                                 </td>
                             </tr>
                         ) : (
-                            teams.map((team) => (
+                            filteredTeams.map((team) => (
                                 <tr
                                     key={team.teamId}
                                     onClick={() => handleRowClick(team.teamId)}
@@ -80,6 +157,9 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                                 {team.teamName.substring(0, 2)}
                                             </div>
                                             <span className="font-semibold text-gray-900 text-sm group-hover:text-orange-700 transition-colors">{team.teamName}</span>
+                                            {team.isSpecial && (
+                                                <span className="material-symbols-outlined text-orange-500 text-base" title="Team Đặc Biệt">star</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -94,12 +174,23 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleRowClick(team.teamId); }}
-                                            className="text-gray-400 hover:text-orange-600 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">arrow_forward</span>
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            {isHod && (
+                                                <button
+                                                    onClick={(e) => handleToggleSpecial(e, team.teamId, team.isSpecial)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm border ${team.isSpecial ? 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 hover:border-orange-300' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}
+                                                    title={team.isSpecial ? "Unmark as special" : "Mark as special"}
+                                                >
+                                                    {team.isSpecial ? "Unmark as special" : "Mark as special"}
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleRowClick(team.teamId); }}
+                                                className="text-gray-400 hover:text-orange-600 transition-colors p-2 rounded-lg hover:bg-white hover:shadow-sm"
+                                            >
+                                                <span className="material-symbols-outlined text-xl">arrow_forward</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

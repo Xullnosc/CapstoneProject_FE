@@ -15,6 +15,7 @@ export interface Team {
     teamAvatar?: string;
     semesterId: number;
     status: string;
+    isSpecial?: boolean;
     createdAt: string;
     memberCount: number;
     leaderName: string;

@@ -305,7 +305,7 @@ const SemesterDetailPage = () => {
 
                 {/* Content */}
                 {activeTab === 'teams' && (
-                    <SemesterTeamsTable teams={semester.teams || []} />
+                    <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
                 )}
                 {activeTab === 'whitelists' && (
                     <SemesterWhitelistsTable
