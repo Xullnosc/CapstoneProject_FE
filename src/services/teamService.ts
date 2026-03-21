@@ -80,5 +80,9 @@ export const teamService = {
     getMentorTeams: async (): Promise<Team[]> => {
         const response = await api.get<Team[]>('/team/my-mentor-teams');
         return response.data;
+    },
+
+    toggleSpecial: async (teamId: number): Promise<void> => {
+        await api.put(`/Team/${teamId}/special`);
     }
 };
