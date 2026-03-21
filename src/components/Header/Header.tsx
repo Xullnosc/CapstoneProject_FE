@@ -158,9 +158,21 @@ const Header = () => {
                             </div>
                         )}
                         {user?.roleName !== 'Admin' && isLecturer && (
-                            <div onClick={() => navigate('/mentor-invitations')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/mentor-invitations' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-envelope text-xl"></i>
-                                <span>Mentor Invitations</span>
+                            <>
+                                <div onClick={() => navigate('/mentor-invitations')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/mentor-invitations' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-envelope text-xl"></i>
+                                    <span>Mentor Invitations</span>
+                                </div>
+                                <div onClick={() => navigate('/application-review')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/application-review' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-file-edit text-xl"></i>
+                                    <span>Application Review</span>
+                                </div>
+                            </>
+                        )}
+                        {user?.roleName !== 'Admin' && isStudent && (
+                            <div onClick={() => navigate('/my-applications')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/my-applications' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-send text-xl"></i>
+                                <span>My Applications</span>
                             </div>
                         )}
                         {user?.roleName !== 'Admin' && (
@@ -228,7 +240,9 @@ const Header = () => {
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
+                            { id: 'my-applications', label: 'My Applications', icon: 'pi pi-send', path: '/my-applications', show: isStudent },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
+                            { id: 'application-review', label: 'App Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer },
                             { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: '/notifications', show: true, isNotification: true },
                             { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },

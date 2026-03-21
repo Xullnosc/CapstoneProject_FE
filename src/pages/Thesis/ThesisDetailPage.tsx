@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Thesis, ThesisReview } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
+import { applicationService } from '../../services/applicationService';
+import type { ApplicationStatus } from '../../types/application';
 import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
 import ThesisStatusBadge from '../../components/Thesis/ThesisStatusBadge';
@@ -34,6 +36,8 @@ const ThesisDetailPage = () => {
     const [cancelling, setCancelling] = useState(false);
     const [evaluating] = useState(false);
     const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
+    const [applyingForThesis, setApplyingForThesis] = useState(false);
+    const [existingAppStatus, setExistingAppStatus] = useState<ApplicationStatus | null>(null);
 
     const showSuccess = (message: string) => {
         Swal.fire({ icon: 'success', title: 'Success', text: message, timer: 3000, showConfirmButton: false });
@@ -54,10 +58,24 @@ const ThesisDetailPage = () => {
             if (isStudent) {
                 const team = await teamService.getMyTeam();
                 const curUser = authService.getUser();
+                let isUserLeader = false;
                 if (team && curUser) {
                     const member = team.members.find(m => m.studentCode === curUser.studentCode);
                     if (member?.role === 'Leader') {
                         setIsLeader(true);
+                        isUserLeader = true;
+                    }
+                }
+
+                if (data.status === 'Published' && isUserLeader) {
+                    try {
+                        const myApps = await applicationService.getMyApplications();
+                        const existingApp = myApps.find(a => a.thesisId === data.thesisId);
+                        if (existingApp) {
+                            setExistingAppStatus(existingApp.status);
+                        }
+                    } catch (err) {
+                        console.error('Failed to check existing application', err);
                     }
                 }
             }
@@ -382,11 +400,11 @@ const ThesisDetailPage = () => {
                                 // 3. User is not the owner (unless specific cases, but generally owner shouldn't review their own proposal manually)
                                 // 4. User hasn't submitted a final review yet
                                 // 5. User is either assigned to a slot OR there is an available slot (less than 2 reviewers)
-                                const canEvaluate = isReviewer && 
-                                                  (thesis.status === 'Reviewing' || thesis.status === 'On Mentor Inviting') && 
-                                                  !isOwner && 
-                                                  !hasReviewed && 
-                                                  (reviewSlotsTaken < 2 || isAssigned);
+                                const canEvaluate = isReviewer &&
+                                    (thesis.status === 'Reviewing' || thesis.status === 'On Mentor Inviting') &&
+                                    !isOwner &&
+                                    !hasReviewed &&
+                                    (reviewSlotsTaken < 2 || isAssigned);
 
                                 if (canEvaluate) {
                                     return (
@@ -422,6 +440,54 @@ const ThesisDetailPage = () => {
                                 </div>
                             )}
 
+                            {thesis.status === 'Published' && isStudent && isLeader && (
+                                <div className="mt-10 pt-10 border-t border-slate-100 mb-2">
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Thesis Registration</h3>
+                                    {existingAppStatus ? (
+                                        <PrimeButton
+                                            label={existingAppStatus === 'Pending' ? 'Application Pending Approval' : `Application ${existingAppStatus}`}
+                                            icon={existingAppStatus === 'Pending' ? 'pi pi-clock' : existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
+                                            disabled={true}
+                                            className="p-button-sm w-full font-bold uppercase tracking-wider py-3 disabled:opacity-75"
+                                            style={existingAppStatus === 'Pending' ? { backgroundColor: '#f59e0b', borderColor: '#f59e0b' } : existingAppStatus === 'Approved' ? { backgroundColor: '#10b981', borderColor: '#10b981' } : { backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                                        />
+                                    ) : (
+                                        <PrimeButton
+                                            label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'}
+                                            icon="pi pi-send"
+                                            onClick={async () => {
+                                                const result = await Swal.fire({
+                                                    title: 'Apply for this Thesis?',
+                                                    html: `Do you want to submit an application for <strong>"${thesis.title}"</strong>?`,
+                                                    icon: 'question',
+                                                    showCancelButton: true,
+                                                    confirmButtonColor: '#f97415',
+                                                    cancelButtonColor: '#64748b',
+                                                    confirmButtonText: 'Yes, apply',
+                                                    cancelButtonText: 'Cancel',
+                                                });
+                                                if (!result.isConfirmed) return;
+                                                setApplyingForThesis(true);
+                                                try {
+                                                    await applicationService.submitApplication(thesis.thesisId);
+                                                    showSuccess('Application submitted successfully!');
+                                                    fetchThesis();
+                                                } catch (err: unknown) {
+                                                    const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                                                    showError(axiosMsg || 'Failed to submit application.');
+                                                } finally {
+                                                    setApplyingForThesis(false);
+                                                }
+                                            }}
+                                            loading={applyingForThesis}
+                                            disabled={applyingForThesis}
+                                            className="p-button-sm p-button-orange w-full font-bold uppercase tracking-wider py-3"
+                                            style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                                        />
+                                    )}
+                                </div>
+                            )}
+
                             {thesis.status === 'Published' && (isLecturer || isHOD) && thesis.userId === user?.userId && (
                                 <div className="mt-10 pt-10 border-t border-slate-100">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Registration Management</h3>
@@ -436,7 +502,7 @@ const ThesisDetailPage = () => {
                             )}
 
                             {isStudent && isLeader && (thesis.status === 'Reviewing' || thesis.status === 'Registered' || thesis.status === 'On Mentor Inviting' || thesis.status === 'Need Update') && (
-                                <div className="mt-8">
+                                <div className="mt-8 mb-2">
                                     <PrimeButton
                                         label={cancelling ? 'Cancelling...' : 'Revoke Proposal'}
                                         icon="pi pi-trash"

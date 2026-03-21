@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
+import { applicationService } from '../../services/applicationService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
 
@@ -12,14 +13,38 @@ const PublishedThesisPage = () => {
     const [searchTitle, setSearchTitle] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
-    const handleRegisterClick = (thesis: Thesis) => {
-        Swal.fire({
-            title: 'Registration',
-            text: `Would you like to register your team for "${thesis.title}"? This feature will be available in the next update.`,
-            icon: 'info',
+    const handleRegisterClick = async (thesis: Thesis) => {
+        const result = await Swal.fire({
+            title: 'Register for Thesis?',
+            html: `Do you want to submit an application for <strong>"${thesis.title}"</strong>?`,
+            icon: 'question',
+            showCancelButton: true,
             confirmButtonColor: '#f97415',
-            confirmButtonText: 'Great, thanks!'
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, register',
+            cancelButtonText: 'Cancel',
         });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await applicationService.submitApplication(thesis.thesisId);
+            Swal.fire({
+                icon: 'success',
+                title: 'Application Submitted!',
+                text: 'Your application has been submitted successfully.',
+                timer: 2500,
+                showConfirmButton: false,
+            });
+        } catch (err: unknown) {
+            const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            const message = axiosMsg || (err instanceof Error ? err.message : 'Failed to submit application.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message,
+            });
+        }
     };
 
     // Debounce
