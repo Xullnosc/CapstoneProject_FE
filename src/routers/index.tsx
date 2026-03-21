@@ -19,6 +19,8 @@ import HodAccountsPage from '../pages/Admin/HodAccountsPage';
 import AccessLogsPage from '../pages/Admin/AccessLogsPage';
 import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
+import MyApplicationsPage from '../pages/Application/MyApplicationsPage';
+import ApplicationReviewPage from '../pages/Application/ApplicationReviewPage';
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(() => import('../pages/Notifications/NotificationsPage'));
@@ -75,6 +77,8 @@ const AppRouter = () => {
             }
           />
           <Route path="/published-thesis" element={<PublishedThesisPage />} />
+          <Route path="/my-applications" element={<MyApplicationsPage />} />
+          <Route path="/application-review" element={<ApplicationReviewPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
