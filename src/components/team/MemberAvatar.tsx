@@ -1,67 +1,78 @@
-import React, { useState } from 'react';
-import md5 from 'blueimp-md5';
+import React, { useMemo, useState } from "react";
+import md5 from "blueimp-md5";
 
 interface MemberAvatarProps {
-    email: string;
-    fullName: string;
-    avatarUrl?: string; // Original URL from DB (e.g., Google or uploaded)
-    className?: string;
+  email: string;
+  fullName: string;
+  avatarUrl?: string; // Original URL from DB (e.g., Google or uploaded)
+  className?: string;
 }
 
-const MemberAvatar: React.FC<MemberAvatarProps> = ({ email, fullName, avatarUrl, className }) => {
-    // Priority: DB Avatar -> Gravatar -> Local Initials (Fallback)
-    // We start by trying to show the image if an URL exists (DB) or assume Gravatar.
-    // If any image fails to load, we fall back to the next level.
+const MemberAvatar: React.FC<MemberAvatarProps> = ({
+  email,
+  fullName,
+  avatarUrl,
+  className,
+}) => {
+  // Always render initials background first so avatar is never blank.
+  const [imgSrc, setImgSrc] = useState<string | null>(
+    avatarUrl ||
+      (email
+        ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404`
+        : null),
+  );
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-    const [isImageError, setIsImageError] = useState(false);
-    const [imgSrc, setImgSrc] = useState<string | null>(
-        avatarUrl || (email ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404` : null)
+  React.useEffect(() => {
+    setImageLoaded(false);
+    setImgSrc(
+      avatarUrl ||
+        (email
+          ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404`
+          : null),
     );
+  }, [avatarUrl, email]);
 
-    React.useEffect(() => {
-        setIsImageError(false);
-        setImgSrc(avatarUrl || (email ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404` : null));
-    }, [avatarUrl, email]);
+  const initials = useMemo(() => {
+    const normalizedName = (fullName || "").trim();
+    if (normalizedName) {
+      return normalizedName.charAt(0).toUpperCase();
+    }
+    const normalizedEmail = (email || "").trim();
+    return normalizedEmail ? normalizedEmail.charAt(0).toUpperCase() : "?";
+  }, [email, fullName]);
 
-    const handleError = () => {
-
-
-        // Use a flag or check logic to verify what failed
-        if (imgSrc === avatarUrl && avatarUrl) {
-            // DB Avatar failed, try Gravatar
-            const gravatarUrl = `https://www.gravatar.com/avatar/${md5(email?.trim().toLowerCase() || '')}?d=404`;
-            setImgSrc(gravatarUrl);
-        } else {
-            // Gravatar (or other) failed, show Local Initials
-            setIsImageError(true);
-        }
-    };
-
-    // Render Local Initials Fallback
-    if (isImageError || !imgSrc) {
-        const initials = fullName
-            ? fullName.charAt(0).toUpperCase()
-            : email?.charAt(0).toUpperCase() || '?';
-
-        // Extract dimensions from className or default to w-10 h-10 size if parsing implies
-        // But simpler to just apply the same className and bg-color
-        // We'll use the orange theme that was requested
-        return (
-            <div className={`${className} bg-gradient-to-br from-orange-400 to-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-sm`}>
-                {initials}
-            </div>
-        );
+  const handleError = () => {
+    if (imgSrc === avatarUrl && avatarUrl) {
+      // DB avatar failed; try Gravatar once.
+      const gravatarUrl = `https://www.gravatar.com/avatar/${md5((email || "").trim().toLowerCase())}?d=404`;
+      setImageLoaded(false);
+      setImgSrc(gravatarUrl);
+      return;
     }
 
-    return (
+    // No image available; keep initials fallback only.
+    setImageLoaded(false);
+    setImgSrc(null);
+  };
+
+  return (
+    <div
+      className={`${className} relative overflow-hidden bg-gradient-to-br from-orange-400 to-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-sm`}
+    >
+      <span>{initials}</span>
+      {imgSrc && (
         <img
-            className={className}
-            src={imgSrc}
-            alt={fullName}
-            onError={handleError}
-            referrerPolicy="no-referrer"
+          className={`absolute inset-0 h-full w-full object-cover ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+          src={imgSrc}
+          alt={fullName || "User avatar"}
+          onLoad={() => setImageLoaded(true)}
+          onError={handleError}
+          referrerPolicy="no-referrer"
         />
-    );
+      )}
+    </div>
+  );
 };
 
 export default MemberAvatar;
