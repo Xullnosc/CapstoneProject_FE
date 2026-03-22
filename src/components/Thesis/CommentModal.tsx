@@ -7,14 +7,12 @@ import Swal from "../../utils/swal";
 interface CommentModalProps {
   visible: boolean;
   onHide: () => void;
-  thesisId: string;
   onSubmit: (comment: string) => Promise<void>;
 }
 
 const CommentModal: React.FC<CommentModalProps> = ({
   visible,
   onHide,
-  thesisId,
   onSubmit,
 }) => {
   const [comment, setComment] = useState("");

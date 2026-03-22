@@ -577,7 +577,6 @@ const ThesisDetailPage = () => {
 
       <CommentModal
         visible={commentModalVisible}
-        thesisId={id || ""}
         onHide={() => {
           setCommentModalVisible(false);
           void resumePolling();
