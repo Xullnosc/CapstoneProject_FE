@@ -7,6 +7,7 @@ export interface TeamSimple {
     teamName: string;
     status: string;
     memberCount: number;
+    isSpecial?: boolean;
 }
 
 export interface Whitelist {

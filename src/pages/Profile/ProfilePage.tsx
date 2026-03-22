@@ -69,6 +69,7 @@ const ProfilePage = () => {
             }
         };
         loadProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const breadcrumbItems = [
@@ -265,72 +266,72 @@ const ProfilePage = () => {
                                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">Professional Presence</h3>
                                 <div className="space-y-4 px-2">
                                     {(isEditing || formData.githubLink) && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-white shadow-sm">
-                                            <i className="pi pi-github text-xs" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center text-white shadow-sm">
+                                                <i className="pi pi-github text-xs" />
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">GitHub</p>
+                                                {isEditing ? (
+                                                    <InputText
+                                                        value={formData.githubLink}
+                                                        onChange={(e) => setFormData({ ...formData, githubLink: e.target.value })}
+                                                        placeholder="github.com/username"
+                                                        className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
+                                                    />
+                                                ) : (
+                                                    <a href={formatExternalLink(formData.githubLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#F26F21] transition-colors truncate block">
+                                                        {formData.githubLink}
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">GitHub</p>
-                                            {isEditing ? (
-                                                <InputText
-                                                    value={formData.githubLink}
-                                                    onChange={(e) => setFormData({ ...formData, githubLink: e.target.value })}
-                                                    placeholder="github.com/username"
-                                                    className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
-                                                />
-                                            ) : (
-                                                <a href={formatExternalLink(formData.githubLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#F26F21] transition-colors truncate block">
-                                                    {formData.githubLink}
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
                                     )}
 
                                     {(isEditing || formData.linkedinLink) && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#0077b5] flex items-center justify-center text-white shadow-sm">
-                                            <i className="pi pi-list-check text-xs" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-[#0077b5] flex items-center justify-center text-white shadow-sm">
+                                                <i className="pi pi-list-check text-xs" />
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Jira</p>
+                                                {isEditing ? (
+                                                    <InputText
+                                                        value={formData.linkedinLink}
+                                                        onChange={(e) => setFormData({ ...formData, linkedinLink: e.target.value })}
+                                                        placeholder="your-domain.atlassian.net"
+                                                        className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
+                                                    />
+                                                ) : (
+                                                    <a href={formatExternalLink(formData.linkedinLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#0077b5] transition-colors truncate block">
+                                                        {formData.linkedinLink}
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Jira</p>
-                                            {isEditing ? (
-                                                <InputText
-                                                    value={formData.linkedinLink}
-                                                    onChange={(e) => setFormData({ ...formData, linkedinLink: e.target.value })}
-                                                    placeholder="your-domain.atlassian.net"
-                                                    className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
-                                                />
-                                            ) : (
-                                                <a href={formatExternalLink(formData.linkedinLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#0077b5] transition-colors truncate block">
-                                                    {formData.linkedinLink}
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
                                     )}
 
                                     {(isEditing || formData.facebookLink) && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#1877f2] flex items-center justify-center text-white shadow-sm">
-                                            <i className="pi pi-facebook text-xs" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-[#1877f2] flex items-center justify-center text-white shadow-sm">
+                                                <i className="pi pi-facebook text-xs" />
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Facebook</p>
+                                                {isEditing ? (
+                                                    <InputText
+                                                        value={formData.facebookLink}
+                                                        onChange={(e) => setFormData({ ...formData, facebookLink: e.target.value })}
+                                                        placeholder="facebook.com/username"
+                                                        className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
+                                                    />
+                                                ) : (
+                                                    <a href={formatExternalLink(formData.facebookLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#1877f2] transition-colors truncate block">
+                                                        {formData.facebookLink}
+                                                    </a>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Facebook</p>
-                                            {isEditing ? (
-                                                <InputText
-                                                    value={formData.facebookLink}
-                                                    onChange={(e) => setFormData({ ...formData, facebookLink: e.target.value })}
-                                                    placeholder="facebook.com/username"
-                                                    className="w-full py-2! px-3! bg-white! border-gray-200! rounded-xl! focus:border-[#F26F21]! shadow-none text-xs font-bold text-gray-800 focus:ring-2! focus:ring-orange-500/10!"
-                                                />
-                                            ) : (
-                                                <a href={formatExternalLink(formData.facebookLink)} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-gray-800 hover:text-[#1877f2] transition-colors truncate block">
-                                                    {formData.facebookLink}
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
                                     )}
                                 </div>
                             </div>
@@ -404,116 +405,116 @@ const ProfilePage = () => {
                                     <h2 className="text-lg font-bold text-gray-900 uppercase tracking-tight">Account Details</h2>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Date of Birth</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        type="date"
-                                                        value={formData.dateOfBirth}
-                                                        onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.dateOfBirth || 'N/A'}
-                                                    </div>
-                                                )}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Date of Birth</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                type="date"
+                                                value={formData.dateOfBirth}
+                                                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.dateOfBirth || 'N/A'}
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Gender</label>
-                                                {isEditing ? (
-                                                    <Dropdown
-                                                        value={formData.gender}
-                                                        onChange={(e) => setFormData({ ...formData, gender: e.value })}
-                                                        options={[
-                                                            { label: 'Male', value: 'Male' },
-                                                            { label: 'Female', value: 'Female' },
-                                                            { label: 'Other', value: 'Other' }
-                                                        ]}
-                                                        placeholder="Select gender"
-                                                        className="w-full"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.gender || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Gender</label>
+                                        {isEditing ? (
+                                            <Dropdown
+                                                value={formData.gender}
+                                                onChange={(e) => setFormData({ ...formData, gender: e.value })}
+                                                options={[
+                                                    { label: 'Male', value: 'Male' },
+                                                    { label: 'Female', value: 'Female' },
+                                                    { label: 'Other', value: 'Other' }
+                                                ]}
+                                                placeholder="Select gender"
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.gender || 'N/A'}
                                             </div>
-                                            <div className="space-y-2 md:col-span-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Address</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        value={formData.address}
-                                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                                        placeholder="Enter address"
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.address || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Address</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                placeholder="Enter address"
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.address || 'N/A'}
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Major</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        value={formData.major}
-                                                        onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                                                        placeholder="e.g. Software Engineering"
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.major || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Major</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                value={formData.major}
+                                                onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                                                placeholder="e.g. Software Engineering"
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.major || 'N/A'}
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Personal ID (CCCD)</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        value={formData.personalId}
-                                                        onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
-                                                        placeholder="Citizen ID"
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.personalId || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Personal ID (CCCD)</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                value={formData.personalId}
+                                                onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
+                                                placeholder="Citizen ID"
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.personalId || 'N/A'}
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Place of Birth</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        value={formData.placeOfBirth}
-                                                        onChange={(e) => setFormData({ ...formData, placeOfBirth: e.target.value })}
-                                                        placeholder="City/Province"
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.placeOfBirth || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Place of Birth</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                value={formData.placeOfBirth}
+                                                onChange={(e) => setFormData({ ...formData, placeOfBirth: e.target.value })}
+                                                placeholder="City/Province"
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.placeOfBirth || 'N/A'}
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Enrollment Year</label>
-                                                {isEditing ? (
-                                                    <InputText
-                                                        value={formData.enrollmentYear}
-                                                        onChange={(e) => setFormData({ ...formData, enrollmentYear: e.target.value })}
-                                                        placeholder="e.g. 2022"
-                                                        className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
-                                                    />
-                                                ) : (
-                                                    <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
-                                                        {formData.enrollmentYear || 'N/A'}
-                                                    </div>
-                                                )}
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Enrollment Year</label>
+                                        {isEditing ? (
+                                            <InputText
+                                                value={formData.enrollmentYear}
+                                                onChange={(e) => setFormData({ ...formData, enrollmentYear: e.target.value })}
+                                                placeholder="e.g. 2022"
+                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                            />
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
+                                                {formData.enrollmentYear || 'N/A'}
                                             </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </Card>
