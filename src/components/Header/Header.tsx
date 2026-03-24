@@ -133,6 +133,12 @@ const Header = () => {
                                 <span>Homepage</span>
                             </div>
                         )}
+                        {user?.roleName !== 'Admin' && isStudent && (
+                            <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-list text-xl"></i>
+                                <span>List Thesis</span>
+                            </div>
+                        )}
                         {(canManageSemesters || isHOD) && user?.roleName !== 'Admin' && (
                             <div onClick={() => navigate('/semesters')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-calendar text-xl"></i>
@@ -165,14 +171,14 @@ const Header = () => {
                                 </div>
                                 <div onClick={() => navigate('/application-review')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/application-review' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-file-edit text-xl"></i>
-                                    <span>Application Review</span>
+                                    <span>Assignment Review</span>
                                 </div>
                             </>
                         )}
                         {user?.roleName !== 'Admin' && isStudent && (
                             <div onClick={() => navigate('/my-applications')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/my-applications' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-send text-xl"></i>
-                                <span>My Applications</span>
+                                <span>Thesis Assignments</span>
                             </div>
                         )}
                         {user?.roleName !== 'Admin' && (
@@ -237,13 +243,13 @@ const Header = () => {
 
                         const navItems: NavItem[] = [
                             { id: 'home', label: 'Homepage', icon: 'pi pi-home', path: '/home', show: true },
+                            { id: 'list-thesis', label: 'List Thesis', icon: 'pi pi-list', path: '/published-thesis', show: isStudent },
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
-                            { id: 'my-applications', label: 'My Applications', icon: 'pi pi-send', path: '/my-applications', show: isStudent },
+                            { id: 'my-applications', label: 'Assignments', icon: 'pi pi-send', path: '/my-applications', show: isStudent },
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
-                            { id: 'application-review', label: 'App Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer },
-                            { id: 'notifications', label: 'Notifications', icon: 'pi pi-bell', path: '/notifications', show: true, isNotification: true },
+                            { id: 'application-review', label: 'Assign Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer },
                             { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
@@ -344,7 +350,7 @@ const Header = () => {
 
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                {isHOD && (
+                {user && (
                     <div onClick={() => navigate('/notifications')} className={`mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${isNotificationsPath ? 'bg-orange-50 text-orange-600' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
                         <i className="pi pi-bell text-xl"></i>
                         {hasUnread && (

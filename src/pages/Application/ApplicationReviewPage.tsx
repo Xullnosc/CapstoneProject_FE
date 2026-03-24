@@ -136,7 +136,7 @@ const ApplicationReviewPage = () => {
 
     const breadcrumbItems = [
         { label: 'Home', to: '/home' },
-        { label: 'Application Review' },
+        { label: 'Assignment Review' },
     ];
 
     const thesisOptions = theses.map(t => ({ label: t.title, value: t.thesisId }));
@@ -151,10 +151,10 @@ const ApplicationReviewPage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                        Application Review
+                        Assignment Review
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Review and approve or reject student thesis applications.
+                        Review and assign thesis requests from student teams.
                     </p>
                 </div>
             </div>
@@ -230,9 +230,9 @@ const ApplicationReviewPage = () => {
                     <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                         <i className="pi pi-inbox text-4xl text-slate-300" />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-700 mb-1">No applications found</h3>
+                    <h3 className="text-lg font-semibold text-slate-700 mb-1">No assignments found</h3>
                     <p className="text-slate-400 text-sm">
-                        No team has registered for this thesis yet.
+                        No team has requested this thesis assignment yet.
                     </p>
                 </div>
             ) : (
@@ -343,7 +343,7 @@ const ApplicationReviewPage = () => {
 
                     {/* Summary */}
                     <p className="text-center text-xs text-slate-400 mt-3">
-                        Total {data.totalCount} application{data.totalCount !== 1 ? 's' : ''}
+                        Total {data.totalCount} assignment{data.totalCount !== 1 ? 's' : ''}
                     </p>
                 </>
             )}

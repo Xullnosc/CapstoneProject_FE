@@ -38,6 +38,7 @@ const ThesisDetailPage = () => {
     const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
     const [applyingForThesis, setApplyingForThesis] = useState(false);
     const [existingAppStatus, setExistingAppStatus] = useState<ApplicationStatus | null>(null);
+    const [existingAppId, setExistingAppId] = useState<number | null>(null);
 
     const showSuccess = (message: string) => {
         Swal.fire({ icon: 'success', title: 'Success', text: message, timer: 3000, showConfirmButton: false });
@@ -73,6 +74,7 @@ const ThesisDetailPage = () => {
                         const existingApp = myApps.find(a => a.thesisId === data.thesisId);
                         if (existingApp) {
                             setExistingAppStatus(existingApp.status);
+                            setExistingAppId(existingApp.id);
                         }
                     } catch (err) {
                         console.error('Failed to check existing application', err);
@@ -121,6 +123,36 @@ const ThesisDetailPage = () => {
             showError(message);
         } finally {
             setCancelling(false);
+        }
+    };
+
+    const handleCancelRequest = async () => {
+        if (!existingAppId) return;
+        const result = await Swal.fire({
+            title: 'Cancel Assignment Request?',
+            html: `Are you sure you want to cancel your request for <strong>"${thesis?.title}"</strong>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, cancel it',
+            cancelButtonText: 'No, keep it',
+        });
+
+        if (!result.isConfirmed) return;
+
+        setApplyingForThesis(true);
+        try {
+            await applicationService.cancelApplication(existingAppId);
+            showSuccess('Request cancelled successfully.');
+            setExistingAppStatus(null);
+            setExistingAppId(null);
+            fetchThesis();
+        } catch (err: unknown) {
+            const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            showError(axiosMsg || 'Failed to cancel request.');
+        } finally {
+            setApplyingForThesis(false);
         }
     };
 
@@ -283,7 +315,8 @@ const ThesisDetailPage = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
+                        {!isStudent && (
+                            <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
                             <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                                 <h3 className="font-black text-slate-900 tracking-tight">Reviewer Feedback</h3>
                                 <div className="px-3 py-1 bg-orange-100 rounded-full text-[10px] font-black text-orange-600 uppercase">
@@ -345,9 +378,11 @@ const ThesisDetailPage = () => {
                                 )}
                             </div>
                         </div>
+                        )}
 
                         {/* Version History */}
-                        <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
+                        {!isStudent && (
+                            <div className="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
                             <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                                 <h3 className="font-black text-slate-900 tracking-tight">Iteration Log</h3>
                                 <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase">
@@ -356,6 +391,7 @@ const ThesisDetailPage = () => {
                             </div>
                             <ThesisHistoryTable histories={thesis.histories ?? []} />
                         </div>
+                        )}
                     </div>
 
                     {/* Sidebar */}
@@ -444,13 +480,24 @@ const ThesisDetailPage = () => {
                                 <div className="mt-10 pt-10 border-t border-slate-100 mb-2">
                                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Thesis Registration</h3>
                                     {existingAppStatus ? (
-                                        <PrimeButton
-                                            label={existingAppStatus === 'Pending' ? 'Application Pending Approval' : `Application ${existingAppStatus}`}
-                                            icon={existingAppStatus === 'Pending' ? 'pi pi-clock' : existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
-                                            disabled={true}
-                                            className="p-button-sm w-full font-bold uppercase tracking-wider py-3 disabled:opacity-75"
-                                            style={existingAppStatus === 'Pending' ? { backgroundColor: '#f59e0b', borderColor: '#f59e0b' } : existingAppStatus === 'Approved' ? { backgroundColor: '#10b981', borderColor: '#10b981' } : { backgroundColor: '#ef4444', borderColor: '#ef4444' }}
-                                        />
+                                        existingAppStatus === 'Pending' ? (
+                                            <PrimeButton
+                                                label={applyingForThesis ? 'Cancelling...' : 'Cancel Assign'}
+                                                icon="pi pi-times"
+                                                onClick={handleCancelRequest}
+                                                loading={applyingForThesis}
+                                                className="p-button-sm w-full font-bold uppercase tracking-wider py-3"
+                                                style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                                            />
+                                        ) : (
+                                            <PrimeButton
+                                                label={`Application ${existingAppStatus}`}
+                                                icon={existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
+                                                disabled={true}
+                                                className="p-button-sm w-full font-bold uppercase tracking-wider py-3 disabled:opacity-75"
+                                                style={existingAppStatus === 'Approved' ? { backgroundColor: '#10b981', borderColor: '#10b981' } : { backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                                            />
+                                        )
                                     ) : (
                                         <PrimeButton
                                             label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'}
@@ -513,7 +560,8 @@ const ThesisDetailPage = () => {
                                 </div>
                             )}
 
-                            {isStudent && (
+                            {/* Submit Revision - Hide for students as per request */}
+                            {/* {isStudent && (
                                 <PrimeButton
                                     label="Submit Revision"
                                     icon="pi pi-upload"
@@ -521,7 +569,7 @@ const ThesisDetailPage = () => {
                                     className="p-button-sm p-button-orange w-full font-bold uppercase tracking-wider py-3 mt-4"
                                     style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
                                 />
-                            )}
+                            )} */}
 
                             {/* Info Context */}
                             <div className="mt-10 p-5 bg-slate-50 rounded-3xl border border-slate-100">
