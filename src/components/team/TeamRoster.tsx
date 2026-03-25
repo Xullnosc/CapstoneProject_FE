@@ -209,9 +209,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                             <span>Mentors Assigned: <span className="font-bold">{mentorName} & {mentor2Name}</span></span>
                         </div>
                     </div>
-                ) : !isLeader ? (
-                    <p className="text-gray-500 italic text-sm text-center">Waiting for Team Leader to select a mentor...</p>
-                ) : (
+                ) : isLeader ? (
                     <div className="text-center flex flex-col gap-2">
                         {mentorId && (
                             <div className="flex items-center justify-center gap-2 mb-2">
@@ -228,7 +226,9 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                             {mentorId ? "Invite Second Mentor" : "Invite Mentor"}
                         </button>
                     </div>
-                )}
+                ) : (!mentorId && !mentorId2) ? (
+                    <p className="text-gray-500 italic text-sm text-center">Waiting for Team Leader to select a mentor...</p>
+                ) : null}
             </div>
 
             {teamId && (

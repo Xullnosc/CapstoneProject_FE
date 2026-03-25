@@ -6,6 +6,7 @@ export interface LoginResponse {
     accessToken?: string;
     token: string;
     userInfo: {
+        userId: number;
         fullName: string;
         email: string;
         avatar: string;

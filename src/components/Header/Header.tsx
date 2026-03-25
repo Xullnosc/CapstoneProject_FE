@@ -155,6 +155,10 @@ const Header = () => {
                                     <i className="pi pi-history text-xl"></i>
                                     <span>Access Logs</span>
                                 </div>
+                                <div onClick={() => navigate('/admin/system-settings')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-cog text-xl"></i>
+                                    <span>System Settings</span>
+                                </div>
                             </>
                         )}
                         {user?.roleName !== 'Admin' && (isStudent || isLecturer) && (
@@ -338,9 +342,13 @@ const Header = () => {
                                     <i className="pi pi-id-card text-xl"></i>
                                     <span className="hidden lg:block whitespace-nowrap">HOD Accounts</span>
                                 </div>
-                                <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-history text-xl"></i>
                                     <span className="hidden lg:block whitespace-nowrap">Access Logs</span>
+                                </div>
+                                <div onClick={() => navigate('/admin/system-settings')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-cog text-xl"></i>
+                                    <span className="hidden lg:block whitespace-nowrap">System Settings</span>
                                 </div>
                             </>
                         )}
