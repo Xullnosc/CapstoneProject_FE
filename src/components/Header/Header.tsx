@@ -99,7 +99,7 @@ const Header = () => {
                 </button>
 
                 {/* Logo */}
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => (user?.roleName !== 'Admin' && !isHOD) && navigate('/home')}>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/home')}>
                     <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white">
                         <i className="pi pi-graduation-cap text-lg"></i>
                     </div>
@@ -127,12 +127,10 @@ const Header = () => {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        {user?.roleName !== 'Admin' && !isHOD && (
-                            <div onClick={() => navigate('/home')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/home' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-home text-xl"></i>
-                                <span>Homepage</span>
-                            </div>
-                        )}
+                        <div onClick={() => navigate('/home')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/home' || location.pathname === '/' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                            <i className="pi pi-home text-xl"></i>
+                            <span>Dashboard</span>
+                        </div>
                         {user?.roleName !== 'Admin' && isStudent && (
                             <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-list text-xl"></i>
@@ -154,6 +152,10 @@ const Header = () => {
                                 <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-history text-xl"></i>
                                     <span>Access Logs</span>
+                                </div>
+                                <div onClick={() => navigate('/admin/system-parameters')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-parameters') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-server text-xl"></i>
+                                    <span>System Config</span>
                                 </div>
                             </>
                         )}
@@ -320,6 +322,10 @@ const Header = () => {
             {(isHOD || user?.roleName === 'Admin') && (
                 <div className="hidden sm:flex items-center gap-8">
                     <nav className="flex items-center gap-4 lg:gap-6">
+                        <div onClick={() => navigate('/home')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname === '/home' || location.pathname === '/' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                            <i className="pi pi-home text-xl"></i>
+                            <span className="hidden lg:block whitespace-nowrap">Dashboard</span>
+                        </div>
                         {isHOD && (
                             <>
                                 <div onClick={() => navigate('/semesters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
@@ -341,6 +347,10 @@ const Header = () => {
                                 <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                                     <i className="pi pi-history text-xl"></i>
                                     <span className="hidden lg:block whitespace-nowrap">Access Logs</span>
+                                </div>
+                                <div onClick={() => navigate('/admin/system-parameters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-parameters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                    <i className="pi pi-server text-xl"></i>
+                                    <span className="hidden lg:block whitespace-nowrap">System Config</span>
                                 </div>
                             </>
                         )}
