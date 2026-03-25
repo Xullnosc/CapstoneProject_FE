@@ -11,9 +11,18 @@ interface CommentaryTimelineProps {
 }
 
 const decisionClasses: Record<string, string> = {
-  Pass: "bg-emerald-100 text-emerald-700",
-  Fail: "bg-rose-100 text-rose-700",
+  Pass: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  Fail: "bg-rose-50 text-rose-700 border-rose-100",
+  OK: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  Consider: "bg-rose-50 text-rose-700 border-rose-100",
   Pending: "bg-slate-100 text-slate-500",
+};
+
+const decisionLabelMap: Record<string, string> = {
+  Pass: "OK",
+  Fail: "Consider",
+  OK: "OK",
+  Consider: "Consider",
 };
 
 const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
@@ -43,12 +52,13 @@ const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
                 <MemberAvatar
                   email={event.actorEmail}
                   fullName={event.actorName}
+                  avatarUrl={event.actorAvatar ?? undefined}
                   className="w-6 h-6 rounded-full shrink-0"
                 />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-slate-900">
-                      {event.actorName}
+                      {event.actorName} {event.actorRole ? `(${event.actorRole.toLowerCase()})` : ""}
                     </span>
                     <span className="text-xs text-slate-500">
                       {event.label}
@@ -61,9 +71,9 @@ const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
               </div>
               {event.decision && (
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${decisionClasses[event.decision] ?? "bg-orange-100 text-orange-700"}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border-2 shadow-sm ${decisionClasses[event.decision] || decisionClasses.Pending}`}
                 >
-                  {event.decision}
+                  {decisionLabelMap[event.decision] || event.decision}
                 </span>
               )}
             </div>
@@ -71,6 +81,20 @@ const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
               <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
                 {event.content}
               </p>
+              
+              {event.checklistResults && event.checklistResults.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {event.checklistResults.map((result, idx) => (
+                    <span 
+                      key={idx} 
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100/50 shadow-sm animate-in fade-in zoom-in duration-300"
+                    >
+                      <i className="pi pi-check text-[9px]" />
+                      {result}
+                    </span>
+                  ))}
+                </div>
+              )}
               {event.fileUrl && (
                 <button
                   type="button"

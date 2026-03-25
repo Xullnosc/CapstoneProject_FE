@@ -16,6 +16,7 @@ import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 import HodAccountsPage from '../pages/Admin/HodAccountsPage';
 import AccessLogsPage from '../pages/Admin/AccessLogsPage';
+import SystemSettingsPage from '../pages/Admin/SystemSettingsPage';
 import SystemParametersPage from '../pages/Admin/SystemParametersPage';
 import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
@@ -46,6 +47,7 @@ const AppRouter = () => {
           <Route path="/admin/hod" element={<HodAccountsPage />} />
           <Route path="/admin/access-logs" element={<AccessLogsPage />} />
           <Route path="/admin/system-parameters" element={<SystemParametersPage />} />
+          <Route path="/admin/system-settings" element={<SystemSettingsPage />} />
         </Route>
       </Route>
 

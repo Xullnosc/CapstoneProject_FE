@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import type { Thesis, ThesisStatus } from '../../types/thesis';
@@ -56,10 +55,8 @@ const ThesisPage = () => {
     // Criteria State
     const [criteriaList, setCriteriaList] = useState<ChecklistDTO[]>([]);
     const [criteriaDialogVisible, setCriteriaDialogVisible] = useState(false);
-    const [newCriteriaTitle, setNewCriteriaTitle] = useState('');
     const [newCriteriaContent, setNewCriteriaContent] = useState('');
     const [editingCriteriaId, setEditingCriteriaId] = useState<number | null>(null);
-    const [editingTitle, setEditingTitle] = useState('');
     const [editingContent, setEditingContent] = useState('');
     const [isAddingCriteria, setIsAddingCriteria] = useState(false);
 
@@ -133,14 +130,12 @@ const ThesisPage = () => {
 
     // Criteria Handlers
     const addCriteria = async () => {
-        if (!newCriteriaTitle.trim() || !newCriteriaContent.trim()) return;
+        if (!newCriteriaContent.trim()) return;
         try {
             const created = await checklistService.create({
-                title: newCriteriaTitle.trim(),
                 content: newCriteriaContent.trim()
             });
             setCriteriaList(prev => [...prev, created]);
-            setNewCriteriaTitle('');
             setNewCriteriaContent('');
             Swal.fire({ icon: 'success', title: 'Criteria Added', timer: 1500, showConfirmButton: false });
         } catch (err) {
@@ -172,15 +167,14 @@ const ThesisPage = () => {
     };
 
     const updateCriteria = async () => {
-        if (!editingCriteriaId || !editingTitle.trim() || !editingContent.trim()) return;
+        if (!editingCriteriaId || !editingContent.trim()) return;
         try {
             await checklistService.update(editingCriteriaId, {
-                title: editingTitle.trim(),
                 content: editingContent.trim()
             });
             setCriteriaList(prev => prev.map(c =>
                 c.checklistId === editingCriteriaId
-                    ? { ...c, title: editingTitle.trim(), content: editingContent.trim(), updatedAt: new Date().toISOString() }
+                    ? { ...c, content: editingContent.trim(), updatedAt: new Date().toISOString() }
                     : c
             ));
             setEditingCriteriaId(null);
@@ -382,24 +376,18 @@ const ThesisPage = () => {
                                                 New Criteria
                                             </h3>
                                             <button
-                                                onClick={() => { setIsAddingCriteria(false); setNewCriteriaTitle(''); setNewCriteriaContent(''); }}
+                                                onClick={() => { setIsAddingCriteria(false); setNewCriteriaContent(''); }}
                                                 className="text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 p-1 transition-colors"
                                             >
                                                 <i className="pi pi-times text-[10px]" />
                                             </button>
                                         </div>
                                         <div className="space-y-3">
-                                            <InputText
-                                                value={newCriteriaTitle}
-                                                onChange={(e) => setNewCriteriaTitle(e.target.value)}
-                                                placeholder="Title (e.g. Innovation)"
-                                                className="w-full !py-2.5 !px-4 !rounded-xl !bg-white !border-slate-200 focus:!border-orange-500 focus:!ring-0 transition-all !text-sm font-bold shadow-none"
-                                            />
                                             <textarea
                                                 value={newCriteriaContent}
                                                 onChange={(e) => setNewCriteriaContent(e.target.value)}
-                                                placeholder="Describe the requirement..."
-                                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:border-orange-500 focus:outline-none transition-all text-sm min-h-[80px] resize-none shadow-none"
+                                                placeholder="Describe the evaluation criteria in detail..."
+                                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:border-orange-500 focus:outline-none transition-all text-sm min-h-[100px] resize-none shadow-none font-bold"
                                             />
                                             <div className="flex gap-2">
                                                 <Button
@@ -409,7 +397,7 @@ const ThesisPage = () => {
                                                 />
                                                 <Button
                                                     onClick={() => { addCriteria(); setIsAddingCriteria(false); }}
-                                                    disabled={!newCriteriaTitle.trim() || !newCriteriaContent.trim()}
+                                                    disabled={!newCriteriaContent.trim()}
                                                     className="flex-[2] !bg-orange-600 !border-none !rounded-xl !py-2 !text-xs font-bold"
                                                     icon="pi pi-check"
                                                     label="Save Criteria"
@@ -448,16 +436,10 @@ const ThesisPage = () => {
                                                     <i className="pi pi-times text-[10px]" />
                                                 </button>
                                             </div>
-                                            <InputText
-                                                value={editingTitle}
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                className="w-full !py-2.5 !px-4 !rounded-xl !bg-white !border-slate-200 focus:!border-orange-500 transition-all !text-sm font-bold shadow-none"
-                                                placeholder="Criteria Title"
-                                            />
                                             <textarea
                                                 value={editingContent}
                                                 onChange={(e) => setEditingContent(e.target.value)}
-                                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:border-orange-500 focus:outline-none transition-all text-sm min-h-[80px] resize-none shadow-none"
+                                                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 focus:border-orange-500 focus:outline-none transition-all text-sm min-h-[100px] resize-none shadow-none font-bold"
                                                 placeholder="Criteria Description"
                                             />
                                             <div className="flex gap-2 pt-1">
@@ -479,17 +461,13 @@ const ThesisPage = () => {
                                                 <i className="pi pi-check-circle text-sm" />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-black text-slate-800 mb-1 group-hover:text-orange-600 transition-colors uppercase tracking-tight">
-                                                    {item.title}
-                                                </h4>
-                                                <p className="text-slate-500 text-sm leading-relaxed">{item.content}</p>
+                                                <p className="text-slate-800 text-sm font-black leading-relaxed">{item.content}</p>
                                             </div>
                                             {isHOD && (
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all -mr-2">
                                                     <button
                                                         onClick={() => {
                                                             setEditingCriteriaId(item.checklistId);
-                                                            setEditingTitle(item.title);
                                                             setEditingContent(item.content);
                                                         }}
                                                         className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"

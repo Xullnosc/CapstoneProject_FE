@@ -11,8 +11,9 @@ const ResultTimelineItem: React.FC<ResultTimelineItemProps> = ({
   onFinalize,
   decision,
 }) => {
+  const displayDecision = decision === 'Pass' ? 'OK' : decision === 'Fail' ? 'Consider' : decision;
   const decisionText = decision
-    ? `Current final decision: ${decision}.`
+    ? `Current final decision: ${displayDecision}.`
     : "No final decision has been submitted yet.";
 
   return (

@@ -101,11 +101,12 @@ const buildConversationEvents = (
       id: `${thesis.thesisId}-proposal`,
       actorName: thesis.ownerName ?? "Student",
       actorEmail: thesis.ownerEmail ?? "",
-      label: "proposal submitted",
+      actorAvatar: thesis.ownerAvatar,
+      actorRole: "AUTHOR",
+      label: "promote",
       content: thesis.shortDescription ?? "No description provided.",
       timestamp: thesis.upDate ?? thesis.updateDate ?? new Date().toISOString(),
       timestampLabel: formatRelativeTime(thesis.upDate ?? thesis.updateDate),
-      decision: thesis.status,
     },
   ];
 
@@ -118,6 +119,7 @@ const buildConversationEvents = (
       eventId: event.eventId,
       actorName: event.actorName ?? `Participant ${index + 1}`,
       actorEmail: event.actorEmail ?? "",
+      actorAvatar: event.actorAvatar,
       label: timelineLabelByType[event.eventType] ?? "updated thesis review",
       content:
         mainComment?.body ??
@@ -128,6 +130,7 @@ const buildConversationEvents = (
             : "No additional details."),
       timestamp: event.createdAt,
       timestampLabel: formatRelativeTime(event.createdAt),
+      actorRole: event.actorRole,
       decision: event.decision ?? undefined,
       replies: event.comments.filter(
         (comment) => comment.parentCommentId || comment.id !== mainComment?.id,
@@ -137,7 +140,7 @@ const buildConversationEvents = (
 
   return [...baseEvents, ...reviewEvents].sort(
     (left, right) =>
-      new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
+      new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
   );
 };
 
@@ -174,6 +177,7 @@ const ThesisDetailPage = () => {
     pausePolling,
     resumePolling,
   } = useThesisCommentary(id, isStudent);
+  const isOwner = thesis?.userId === user?.userId;
 
   const showSuccess = useCallback((message: string) => {
     Swal.fire({
@@ -330,8 +334,8 @@ const ThesisDetailPage = () => {
     [thesis, reviewTimeline],
   );
 
-  const canReplyToTimeline = Boolean(isHOD || isReviewer || isLecturer);
-  const canComment = Boolean(isHOD || isReviewer || isLecturer);
+  const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
+  const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
 
   const handleAddReply = useCallback(
     async (eventId: number, body: string) => {
@@ -408,19 +412,34 @@ const ThesisDetailPage = () => {
   );
 
   const canEvaluate = useMemo(() => {
-    if (!thesis) return false;
-    const assignedReviewers = reviewStatus?.reviewers ?? [];
-    const hasReviewed = assignedReviewers.some(
-        (review) => review.userId === user?.userId && review.decision && review.decision !== "Pending"
-    );
-    return (
-      (isReviewer && (thesis.status === "Reviewing" || thesis.status === "On Mentor Inviting") && !hasReviewed) ||
-      isLecturer ||
-      isHOD
-    );
-  }, [isReviewer, isLecturer, isHOD, reviewStatus?.reviewers, thesis, user?.userId]);
+    if (!thesis || !user) return false;
+    
+    // Proposer cannot evaluate their own thesis
+    if (thesis.userId === user.userId) return false;
 
-  const canMakeHodDecision = Boolean(isHOD && thesis);
+    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Published' || thesis.status === 'Need Update';
+    
+    // HOD can always see the button to (re)finalize/veto
+    if (isHOD && isAvailableStatus) return true;
+
+    const hasReviewed = (reviewStatus?.reviewers ?? []).some(
+        (review) => review.userId === user.userId && review.decision
+    );
+
+    return (
+      isReviewer && isAvailableStatus && !hasReviewed
+    );
+  }, [isReviewer, isHOD, reviewStatus?.reviewers, thesis, user]);
+
+  const canMakeHodDecision = useMemo(() => {
+    if (!isHOD || !reviewStatus || !thesis || !user) return false;
+    
+    // HOD cannot finalize if they proposed the thesis
+    if (thesis.userId === user.userId) return false;
+
+    // HOD can ALWAYS (re)finalize their decision
+    return true;
+  }, [isHOD, reviewStatus, thesis, user]);
   const canToggleLock = Boolean(
     thesis &&
     thesis.status === "Published" &&
@@ -491,10 +510,17 @@ const ThesisDetailPage = () => {
                 <CommentarySidebar
                     thesis={thesis} reviewStatus={reviewStatus} submissionDateRaw={submissionDateStr} submissionDateLabel={submissionDateLabel} hodMembers={semesterHods}
                     canEvaluate={canEvaluate} canComment={canComment} canToggleLock={canToggleLock} canCancel={canCancel} canUploadRevision={canUploadRevision} locking={locking} cancelling={cancelling}
-                    onOpenReview={() => { pausePolling(); setReviewModalVisible(true); }}
+                    onOpenReview={() => { 
+                        pausePolling(); 
+                        if (isHOD && canMakeHodDecision) {
+                            setHodDecisionVisible(true);
+                        } else {
+                            setReviewModalVisible(true);
+                        }
+                    }}
                     onOpenComment={() => { pausePolling(); setCommentModalVisible(true); }}
                     onToggleLock={handleToggleLockClick} onCancel={handleCancelClick} onUploadRevision={() => { pausePolling(); setUploadModalVisible(true); }}
-                    infoMessage={isReviewer ? "Reviewers should..." : "Refreshed automatically."}
+                    isHOD={isHOD}
                 />
                 {thesis.status === 'Published' && isStudent && isLeader && (
                     <div className="bg-white rounded-2xl p-6 border shadow-sm">
@@ -537,8 +563,8 @@ const ThesisDetailPage = () => {
       </div>
 
       <UpdateThesisModal visible={uploadModalVisible} thesis={thesis} onHide={() => { setUploadModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
-      <ReviewSubmissionModal visible={reviewModalVisible} thesisId={id || ""} onHide={() => { setReviewModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
-      <HodDecisionModal visible={hodDecisionVisible} thesisId={id || ""} onHide={() => { setHodDecisionVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      <ReviewSubmissionModal visible={reviewModalVisible} thesisId={id || ""} thesisFileUrl={thesis.fileUrl ?? undefined} onHide={() => { setReviewModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      <HodDecisionModal visible={hodDecisionVisible} thesisId={id || ""} thesisFileUrl={thesis.fileUrl ?? undefined} onHide={() => { setHodDecisionVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
       <CommentModal visible={commentModalVisible} onHide={() => { setCommentModalVisible(false); void resumePolling(); }} onSubmit={handleAddComment} />
     </div>
   );

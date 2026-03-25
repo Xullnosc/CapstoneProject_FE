@@ -35,9 +35,9 @@ const STATUS_CONFIG: Record<ThesisStatus, { label: string; icon?: string; classe
         classes: 'bg-purple-50 text-purple-700 border-purple-100'
     },
     Rejected: {
-        label: 'Rejected',
-        icon: 'pi pi-times-circle',
-        classes: 'bg-rose-50 text-rose-700 border-rose-100'
+        label: "Consider",
+        icon: "pi pi-times-circle",
+        classes: "bg-rose-50 text-rose-600 border-rose-100",
     },
     Registered: {
         label: 'Registered',
