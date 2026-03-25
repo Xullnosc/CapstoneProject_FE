@@ -4,24 +4,30 @@ import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { applicationService } from '../../services/applicationService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
+import { authService } from '../../services/authService';
+import { teamService } from '../../services/teamService';
 import Swal from '../../utils/swal';
 
 const PublishedThesisPage = () => {
     const navigate = useNavigate();
     const [theses, setTheses] = useState<Thesis[]>([]);
+    const [appliedThesisIds, setAppliedThesisIds] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
     const [searchTitle, setSearchTitle] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const user = authService.getUser();
+    const isStudent = user?.roleName === 'Student';
+    const [isLeader, setIsLeader] = useState(false);
 
     const handleRegisterClick = async (thesis: Thesis) => {
         const result = await Swal.fire({
-            title: 'Register for Thesis?',
-            html: `Do you want to submit an application for <strong>"${thesis.title}"</strong>?`,
+            title: 'Request Thesis Assignment?',
+            html: `Do you want to request an assignment for <strong>"${thesis.title}"</strong>?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#f97415',
             cancelButtonColor: '#64748b',
-            confirmButtonText: 'Yes, register',
+            confirmButtonText: 'Yes, request',
             cancelButtonText: 'Cancel',
         });
 
@@ -31,11 +37,12 @@ const PublishedThesisPage = () => {
             await applicationService.submitApplication(thesis.thesisId);
             Swal.fire({
                 icon: 'success',
-                title: 'Application Submitted!',
-                text: 'Your application has been submitted successfully.',
+                title: 'Assignment Requested!',
+                text: 'Your request has been submitted successfully.',
                 timer: 2500,
                 showConfirmButton: false,
             });
+            fetchMyApplications();
         } catch (err: unknown) {
             const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
             const message = axiosMsg || (err instanceof Error ? err.message : 'Failed to submit application.');
@@ -46,6 +53,74 @@ const PublishedThesisPage = () => {
             });
         }
     };
+
+    const fetchMyApplications = useCallback(async () => {
+        if (!isStudent) return;
+        try {
+            const apps = await applicationService.getMyApplications();
+            // Map thesisId to application id for cancellation
+            const mapping = apps.reduce((acc, app) => ({ ...acc, [app.thesisId]: app.id }), {});
+            setAppliedThesisIds(mapping);
+        } catch (err) {
+            console.error('Failed to fetch my applications', err);
+        }
+    }, [isStudent]);
+
+    useEffect(() => {
+        fetchMyApplications();
+    }, [fetchMyApplications]);
+
+    const handleCancelClick = async (appId: number, thesisTitle: string) => {
+        const result = await Swal.fire({
+            title: 'Cancel Assignment Request?',
+            html: `Are you sure you want to cancel your request for <strong>"${thesisTitle}"</strong>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, cancel it',
+            cancelButtonText: 'No, keep it',
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await applicationService.cancelApplication(appId);
+            Swal.fire({
+                icon: 'success',
+                title: 'Cancelled',
+                text: 'Your request has been cancelled.',
+                timer: 2000,
+                showConfirmButton: false,
+            });
+            fetchMyApplications();
+        } catch (err: unknown) {
+            const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: axiosMsg || 'Failed to cancel request.',
+            });
+        }
+    };
+
+    useEffect(() => {
+        const checkLeaderStatus = async () => {
+            if (!isStudent) return;
+            try {
+                const team = await teamService.getMyTeam();
+                if (team) {
+                    const member = team.members.find(m => m.studentCode === user?.studentCode);
+                    if (member?.role === 'Leader') {
+                        setIsLeader(true);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check leader status', err);
+            }
+        };
+        checkLeaderStatus();
+    }, [isStudent, user?.studentCode]);
 
     // Debounce
     useEffect(() => {
@@ -88,7 +163,7 @@ const PublishedThesisPage = () => {
 
     const breadcrumbItems = [
         { label: 'Home', to: '/home' },
-        { label: 'Register Approved Thesis' }
+        { label: 'Thesis Assignments' }
     ];
 
     return (
@@ -102,10 +177,10 @@ const PublishedThesisPage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                        Available Thesis Repository
+                        Thesis Assignments
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Browse published, unlocked theses and register your team.
+                        Browse published, unlocked theses and request an assignment for your team.
                     </p>
                 </div>
             </div>
@@ -200,16 +275,27 @@ const PublishedThesisPage = () => {
                             <div className="px-6 pb-6 pt-2 flex gap-3">
                                 <button
                                     onClick={() => navigate(`/thesis/${thesis.thesisId}`)}
-                                    className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
+                                    className="flex-1 py-2.5 border-2 border-orange-500 text-orange-600 font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
                                 >
                                     View Details
                                 </button>
-                                <button
-                                    onClick={() => handleRegisterClick(thesis)}
-                                    className="flex-1 py-2.5 bg-primary text-white font-bold rounded-xl cursor-pointer hover:bg-primary/90 transition-colors shadow-sm text-sm"
-                                >
-                                    Register
-                                </button>
+                                {isStudent && isLeader && (
+                                    appliedThesisIds[thesis.thesisId] ? (
+                                        <button
+                                            onClick={() => handleCancelClick(appliedThesisIds[thesis.thesisId], thesis.title)}
+                                            className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl cursor-pointer hover:bg-red-600 transition-colors shadow-sm text-sm"
+                                        >
+                                            Cancel Assign
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleRegisterClick(thesis)}
+                                            className="flex-1 py-2.5 bg-orange-500 text-white font-bold rounded-xl cursor-pointer hover:bg-orange-600 transition-colors shadow-sm text-sm"
+                                        >
+                                            Request Assignment
+                                        </button>
+                                    )
+                                )}
                             </div>
                         </div>
                     ))}

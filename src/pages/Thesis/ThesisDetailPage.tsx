@@ -28,6 +28,8 @@ import {
   type Whitelist,
 } from "../../services/semesterService";
 import { thesisService } from "../../services/thesisService";
+import { applicationService } from "../../services/applicationService";
+import type { ApplicationStatus } from "../../types/application";
 import { useThesisCommentary } from "../../hooks/useThesisCommentary";
 import type {
   CommentaryEvent,
@@ -35,6 +37,7 @@ import type {
   ReviewTimelineEvent,
 } from "../../types/thesis";
 import Swal from "../../utils/swal";
+import { Button as PrimeButton } from "primereact/button";
 import styles from "./Thesis.module.css";
 
 const ThesisHistoryTable = lazy(
@@ -56,7 +59,6 @@ const formatDate = (dateStr: string | null | undefined) => {
 
 const formatRelativeTime = (dateStr: string | null | undefined) => {
   if (!dateStr) return "just now";
-
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return "just now";
 
@@ -145,10 +147,8 @@ const ThesisDetailPage = () => {
   const user = authService.getUser();
   const isStudent = user?.roleName === "Student";
   const isLecturer = user?.roleName === "Lecturer";
-  const isReviewer =
-    (user as { isReviewer?: boolean } | null)?.isReviewer === true;
-  const isHOD =
-    user?.roleName === "HOD" || user?.roleName === "Head of Department";
+  const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
+  const isHOD = user?.roleName === "HOD" || user?.roleName === "Head of Department";
 
   const [activeTab, setActiveTab] = useState<CommentaryTab>("conversations");
   const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -158,6 +158,11 @@ const ThesisDetailPage = () => {
   const [locking, setLocking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [semesterHods, setSemesterHods] = useState<Whitelist[]>([]);
+
+  // Application assignment related states
+  const [applyingForThesis, setApplyingForThesis] = useState(false);
+  const [existingAppStatus, setExistingAppStatus] = useState<ApplicationStatus | null>(null);
+  const [existingAppId, setExistingAppId] = useState<number | null>(null);
 
   const {
     thesis,
@@ -186,8 +191,41 @@ const ThesisDetailPage = () => {
 
   const refreshAfterAction = useCallback(async () => {
     pausePolling();
+    if (isStudent && isLeader && thesis?.status === 'Published') {
+        try {
+            const myApps = await applicationService.getMyApplications();
+            const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
+            if (existingApp) {
+                setExistingAppStatus(existingApp.status);
+                setExistingAppId(existingApp.id);
+            } else {
+                setExistingAppStatus(null);
+                setExistingAppId(null);
+            }
+        } catch (err) {
+            console.error('Failed to update application status', err);
+        }
+    }
     await resumePolling();
-  }, [pausePolling, resumePolling]);
+  }, [pausePolling, resumePolling, isStudent, isLeader, thesis]);
+
+  useEffect(() => {
+    const checkApplication = async () => {
+        if (isStudent && isLeader && thesis?.status === 'Published') {
+            try {
+                const myApps = await applicationService.getMyApplications();
+                const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
+                if (existingApp) {
+                    setExistingAppStatus(existingApp.status);
+                    setExistingAppId(existingApp.id);
+                }
+            } catch (err) {
+                console.error('Failed to check existing application', err);
+            }
+        }
+    };
+    void checkApplication();
+  }, [isStudent, isLeader, thesis?.status, thesis?.thesisId]);
 
   const executeCancel = useCallback(async () => {
     if (!id) return;
@@ -198,10 +236,8 @@ const ThesisDetailPage = () => {
       showSuccess("Thesis proposal has been cancelled.");
       await resumePolling();
     } catch (err) {
-      console.error("Failed to cancel thesis", err);
       const axiosError = err as { response?: { data?: { Message?: string } } };
-      const message =
-        axiosError.response?.data?.Message || "Failed to cancel thesis.";
+      const message = axiosError.response?.data?.Message || "Failed to cancel thesis.";
       showError(message);
     } finally {
       setCancelling(false);
@@ -224,21 +260,47 @@ const ThesisDetailPage = () => {
     });
   }, [executeCancel]);
 
+  const handleCancelRequest = useCallback(async () => {
+    if (!existingAppId) return;
+    const result = await Swal.fire({
+        title: 'Cancel Assignment Request?',
+        html: `Are you sure you want to cancel your request for <strong>"${thesis?.title}"</strong>?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Yes, cancel it',
+        cancelButtonText: 'No, keep it',
+    });
+
+    if (!result.isConfirmed) return;
+
+    setApplyingForThesis(true);
+    try {
+        await applicationService.cancelApplication(existingAppId);
+        showSuccess('Request cancelled successfully.');
+        setExistingAppStatus(null);
+        setExistingAppId(null);
+        await refreshAfterAction();
+    } catch (err: unknown) {
+        const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        showError(axiosMsg || 'Failed to cancel request.');
+    } finally {
+        setApplyingForThesis(false);
+    }
+  }, [existingAppId, thesis?.title, showSuccess, showError, refreshAfterAction]);
+
   const executeToggleLock = useCallback(async () => {
     if (!id) return;
     setLocking(true);
     pausePolling();
     try {
       const updatedThesis = await thesisService.toggleThesisLock(id);
-      showSuccess(
-        `Thesis ${updatedThesis.isLocked ? "locked" : "unlocked"} successfully.`,
-      );
+      showSuccess(`Thesis ${updatedThesis.isLocked ? "locked" : "unlocked"} successfully.`);
       await resumePolling();
     } catch (err) {
-      console.error("Failed to toggle lock", err);
       const axiosError = err as { response?: { data?: { Message?: string } } };
-      const message =
-        axiosError.response?.data?.Message || "Failed to toggle thesis lock.";
+      const message = axiosError.response?.data?.Message || "Failed to toggle thesis lock.";
       showError(message);
     } finally {
       setLocking(false);
@@ -251,14 +313,11 @@ const ThesisDetailPage = () => {
       title: thesis.isLocked ? "Unlock Registration?" : "Lock Registration?",
       text: thesis.isLocked
         ? "Unlocking will allow students to register for it once published."
-        : "Locking will prevent students from registering, even if published.",
+        : "Locking will prevent students from registering.",
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: thesis.isLocked ? "#10b981" : "#f59e0b",
-      cancelButtonColor: "#94a3b8",
-      confirmButtonText: thesis.isLocked
-        ? "Yes, Unlock"
-        : "Yes, Lock Registration",
+      confirmButtonText: thesis.isLocked ? "Yes, Unlock" : "Yes, Lock Registration",
     }).then((result: SweetAlertResult) => {
       if (result.isConfirmed) {
         void executeToggleLock();
@@ -307,23 +366,16 @@ const ThesisDetailPage = () => {
         setSemesterHods([]);
         return;
       }
-
       try {
         const result = await semesterService.getWhitelistsPaginated(
           thesis.semesterId,
-          {
-            page: 1,
-            pageSize: 200,
-            role: "HOD",
-          },
+          { page: 1, pageSize: 200, role: "HOD" },
         );
         setSemesterHods(result.items ?? []);
-      } catch (err) {
-        console.error("Failed to load semester HOD list", err);
+      } catch {
         setSemesterHods([]);
       }
     };
-
     void loadSemesterHods();
   }, [thesis?.semesterId]);
 
@@ -331,13 +383,18 @@ const ThesisDetailPage = () => {
   const submissionDateLabel = formatDate(submissionDateStr);
   const reviewers = reviewStatus?.reviewers ?? [];
   const reviewedCount = reviewers.filter((item) => item.reviewedAt).length;
-  const latestReviewer = [...reviewers]
-    .filter((item) => item.reviewedAt)
-    .sort(
-      (left, right) =>
-        new Date(right.reviewedAt ?? 0).getTime() -
-        new Date(left.reviewedAt ?? 0).getTime(),
-    )[0]?.fullName;
+  
+  // FIX: Type 'string | null' is not assignable to 'string | undefined'
+  const latestReviewer = useMemo(() => {
+    const sorted = [...reviewers]
+      .filter((item) => item.reviewedAt)
+      .sort((a, b) => {
+        const dateA = new Date(a.reviewedAt!).getTime();
+        const dateB = new Date(b.reviewedAt!).getTime();
+        return dateB - dateA;
+      });
+    return sorted[0]?.fullName ?? undefined;
+  }, [reviewers]);
 
   const breadcrumbItems = useMemo(
     () => [
@@ -353,31 +410,15 @@ const ThesisDetailPage = () => {
   const canEvaluate = useMemo(() => {
     if (!thesis) return false;
     const assignedReviewers = reviewStatus?.reviewers ?? [];
-    const hasReviewed = Boolean(
-      assignedReviewers.some(
-        (review) =>
-          review.userId === user?.userId &&
-          review.decision &&
-          review.decision !== "Pending",
-      ),
+    const hasReviewed = assignedReviewers.some(
+        (review) => review.userId === user?.userId && review.decision && review.decision !== "Pending"
     );
-    // Show for: Reviewers (who haven't reviewed), Lecturer (thesis owner), and HOD
     return (
-      (isReviewer &&
-        (thesis.status === "Reviewing" ||
-          thesis.status === "On Mentor Inviting") &&
-        !hasReviewed) ||
+      (isReviewer && (thesis.status === "Reviewing" || thesis.status === "On Mentor Inviting") && !hasReviewed) ||
       isLecturer ||
       isHOD
     );
-  }, [
-    isReviewer,
-    isLecturer,
-    isHOD,
-    reviewStatus?.reviewers,
-    thesis,
-    user?.userId,
-  ]);
+  }, [isReviewer, isLecturer, isHOD, reviewStatus?.reviewers, thesis, user?.userId]);
 
   const canMakeHodDecision = Boolean(isHOD && thesis);
   const canToggleLock = Boolean(
@@ -387,13 +428,8 @@ const ThesisDetailPage = () => {
     thesis.userId === user?.userId,
   );
   const canCancel = Boolean(
-    thesis &&
-    isStudent &&
-    isLeader &&
-    (thesis.status === "Reviewing" ||
-      thesis.status === "Registered" ||
-      thesis.status === "On Mentor Inviting" ||
-      thesis.status === "Need Update"),
+    thesis && isStudent && isLeader &&
+    (thesis.status === "Reviewing" || thesis.status === "Registered" || thesis.status === "On Mentor Inviting" || thesis.status === "Need Update")
   );
   const canUploadRevision = Boolean(isStudent && thesis);
 
@@ -405,7 +441,6 @@ const ThesisDetailPage = () => {
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 space-y-4">
             <div className="h-8 bg-slate-200 rounded w-3/4" />
             <div className="h-4 bg-slate-100 rounded w-full" />
-            <div className="h-4 bg-slate-100 rounded w-5/6" />
           </div>
         </div>
       </div>
@@ -415,174 +450,96 @@ const ThesisDetailPage = () => {
   if (error || !thesis) {
     return (
       <div className="flex items-center justify-center p-6 bg-slate-50 min-h-[60vh]">
-        <div className="bg-white rounded-3xl p-10 shadow-xl shadow-slate-200/50 max-w-md w-full text-center border border-slate-100">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i className="pi pi-exclamation-circle text-red-500 text-4xl" />
-          </div>
-          <h2 className="text-2xl font-black text-slate-800 mb-2">
-            Thesis not found
-          </h2>
-          <p className="text-slate-500 text-sm mb-8 leading-relaxed">{error}</p>
-          <button
-            type="button"
-            onClick={() =>
-              navigate(isHOD || isReviewer ? "/thesis" : "/my-thesis")
-            }
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-sm"
-          >
-            Return to List
-          </button>
+        <div className="bg-white rounded-3xl p-10 shadow-xl max-w-md w-full text-center border">
+          <i className="pi pi-exclamation-circle text-red-500 text-4xl mb-6" />
+          <h2 className="text-2xl font-black mb-2">Thesis not found</h2>
+          <p className="text-slate-500 text-sm mb-8">{error}</p>
+          <button type="button" onClick={() => navigate(isHOD || isReviewer ? "/thesis" : "/my-thesis")} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold">Return to List</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`p-6 lg:p-10 font-sans text-gray-800 bg-[#fafbfc] min-h-screen ${styles.thesisContainer}`}
-    >
+    <div className={`p-6 lg:p-10 font-sans bg-[#fafbfc] min-h-screen ${styles.thesisContainer}`}>
       <div className="max-w-[1440px] mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <PremiumBreadcrumb items={breadcrumbItems} />
-        </div>
-
-        <CommentaryHeader
-          thesis={thesis}
-          subtitle={`${thesis.ownerName ?? "Unknown author"} ${formatRelativeTime(submissionDateStr)}`}
-        />
-
-        <CommentaryTabs
-          activeTab={activeTab}
-          conversationCount={conversationEvents.length}
-          versionCount={thesis.histories?.length ?? 0}
-          onChange={setActiveTab}
-        />
-
+        <PremiumBreadcrumb items={breadcrumbItems} />
+        <CommentaryHeader thesis={thesis} subtitle={`${thesis.ownerName ?? "Unknown"} ${formatRelativeTime(submissionDateStr)}`} />
+        <CommentaryTabs activeTab={activeTab} conversationCount={conversationEvents.length} versionCount={thesis.histories?.length ?? 0} onChange={setActiveTab} />
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="order-2 lg:order-1 lg:col-span-9 space-y-6 relative">
-            <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-slate-300/45 z-0" />
             {activeTab === "conversations" ? (
               <>
                 <ResearchDocumentCard fileUrl={thesis.fileUrl} />
-                <ReviewProgressCard
-                  reviewedCount={reviewedCount}
-                  totalCount={reviewers.length}
-                  latestReviewer={latestReviewer ?? undefined}
-                />
-                <CommentaryTimeline
-                  events={conversationEvents}
-                  emptyMessage="Evaluation in progress. Waiting for reviewers..."
-                  canReply={canReplyToTimeline}
-                  onAddReply={handleAddReply}
-                />
-                <ResultTimelineItem
-                  canFinalize={canMakeHodDecision}
-                  onFinalize={() => {
-                    pausePolling();
-                    setHodDecisionVisible(true);
-                  }}
-                  decision={reviewStatus?.hodDecision?.decision}
-                />
+                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={reviewers.length} latestReviewer={latestReviewer} />
+                <CommentaryTimeline events={conversationEvents} emptyMessage="Evaluation in progress..." canReply={canReplyToTimeline} onAddReply={handleAddReply} />
+                <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
               </>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center">
-                  <h3 className="font-black text-slate-900 tracking-tight">
-                    Iteration Log
-                  </h3>
-                  <div className="px-3 py-1 bg-slate-100 rounded-full text-[10px] font-black text-slate-500 uppercase">
-                    {thesis.histories?.length ?? 0} Phases
-                  </div>
+              <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b bg-slate-50/80 flex justify-between items-center">
+                  <h3 className="font-black tracking-tight">Iteration Log</h3>
                 </div>
-                <Suspense
-                  fallback={
-                    <div className="p-8 text-sm text-slate-500">
-                      Loading version history...
-                    </div>
-                  }
-                >
+                <Suspense fallback={<div className="p-8 text-sm">Loading...</div>}>
                   <ThesisHistoryTable histories={thesis.histories ?? []} />
                 </Suspense>
               </div>
             )}
           </div>
-
           <div className="order-1 lg:order-2 lg:col-span-3">
-            <CommentarySidebar
-              thesis={thesis}
-              reviewStatus={reviewStatus}
-              submissionDateRaw={submissionDateStr}
-              submissionDateLabel={submissionDateLabel}
-              hodMembers={semesterHods}
-              canEvaluate={canEvaluate}
-              canComment={canComment}
-              canToggleLock={canToggleLock}
-              canCancel={canCancel}
-              canUploadRevision={canUploadRevision}
-              locking={locking}
-              cancelling={cancelling}
-              onOpenReview={() => {
-                pausePolling();
-                setReviewModalVisible(true);
-              }}
-              onOpenComment={() => {
-                pausePolling();
-                setCommentModalVisible(true);
-              }}
-              onToggleLock={handleToggleLockClick}
-              onCancel={handleCancelClick}
-              onUploadRevision={() => {
-                pausePolling();
-                setUploadModalVisible(true);
-              }}
-              infoMessage={
-                isReviewer
-                  ? "Reviewers should evaluate proposals based on academic rigor and technical feasibility."
-                  : "Status updates and decision progress are refreshed automatically."
-              }
-            />
+            <div className="space-y-6">
+                <CommentarySidebar
+                    thesis={thesis} reviewStatus={reviewStatus} submissionDateRaw={submissionDateStr} submissionDateLabel={submissionDateLabel} hodMembers={semesterHods}
+                    canEvaluate={canEvaluate} canComment={canComment} canToggleLock={canToggleLock} canCancel={canCancel} canUploadRevision={canUploadRevision} locking={locking} cancelling={cancelling}
+                    onOpenReview={() => { pausePolling(); setReviewModalVisible(true); }}
+                    onOpenComment={() => { pausePolling(); setCommentModalVisible(true); }}
+                    onToggleLock={handleToggleLockClick} onCancel={handleCancelClick} onUploadRevision={() => { pausePolling(); setUploadModalVisible(true); }}
+                    infoMessage={isReviewer ? "Reviewers should..." : "Refreshed automatically."}
+                />
+                {thesis.status === 'Published' && isStudent && isLeader && (
+                    <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">Registration</h3>
+                        {existingAppStatus ? (
+                            <PrimeButton
+                                label={existingAppStatus === 'Pending' ? (applyingForThesis ? 'Cancelling...' : 'Cancel Assign') : `Application ${existingAppStatus}`}
+                                icon={existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
+                                onClick={existingAppStatus === 'Pending' ? handleCancelRequest : undefined}
+                                loading={applyingForThesis} disabled={existingAppStatus !== 'Pending'}
+                                className="p-button-sm w-full font-bold uppercase py-3"
+                                style={{ backgroundColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444', borderColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444' }}
+                            />
+                        ) : (
+                            <PrimeButton
+                                label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'} icon="pi pi-send"
+                                onClick={async () => {
+                                    const res = await Swal.fire({ title: 'Apply?', icon: 'question', showCancelButton: true });
+                                    if (!res.isConfirmed) return;
+                                    setApplyingForThesis(true);
+                                    try {
+                                        await applicationService.submitApplication(thesis.thesisId);
+                                        showSuccess('Success!');
+                                        await refreshAfterAction();
+                                    } catch (err: unknown) {
+                                        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+                                        showError(msg || 'Failed');
+                                    } finally {
+                                        setApplyingForThesis(false);
+                                    }
+                                }}
+                                loading={applyingForThesis} className="p-button-sm p-button-orange w-full font-bold uppercase py-3" style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                            />
+                        )}
+                    </div>
+                )}
+            </div>
           </div>
         </main>
       </div>
 
-      <UpdateThesisModal
-        visible={uploadModalVisible}
-        thesis={thesis}
-        onHide={() => {
-          setUploadModalVisible(false);
-          void resumePolling();
-        }}
-        onSuccess={refreshAfterAction}
-      />
-
-      <ReviewSubmissionModal
-        visible={reviewModalVisible}
-        thesisId={id || ""}
-        onHide={() => {
-          setReviewModalVisible(false);
-          void resumePolling();
-        }}
-        onSuccess={refreshAfterAction}
-      />
-
-      <HodDecisionModal
-        visible={hodDecisionVisible}
-        thesisId={id || ""}
-        onHide={() => {
-          setHodDecisionVisible(false);
-          void resumePolling();
-        }}
-        onSuccess={refreshAfterAction}
-      />
-
-      <CommentModal
-        visible={commentModalVisible}
-        onHide={() => {
-          setCommentModalVisible(false);
-          void resumePolling();
-        }}
-        onSubmit={handleAddComment}
-      />
+      <UpdateThesisModal visible={uploadModalVisible} thesis={thesis} onHide={() => { setUploadModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      <ReviewSubmissionModal visible={reviewModalVisible} thesisId={id || ""} onHide={() => { setReviewModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      <HodDecisionModal visible={hodDecisionVisible} thesisId={id || ""} onHide={() => { setHodDecisionVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      <CommentModal visible={commentModalVisible} onHide={() => { setCommentModalVisible(false); void resumePolling(); }} onSubmit={handleAddComment} />
     </div>
   );
 };

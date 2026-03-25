@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Application } from '../../types/application';
 import { applicationService } from '../../services/applicationService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
+import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -14,6 +15,8 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; b
 
 const MyApplicationsPage = () => {
     const navigate = useNavigate();
+    const user = authService.getUser();
+    const hasTeam = user?.hasTeam;
     const [applications, setApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -83,7 +86,7 @@ const MyApplicationsPage = () => {
 
     const breadcrumbItems = [
         { label: 'Home', to: '/home' },
-        { label: 'My Applications' },
+        { label: 'Thesis Assignments' },
     ];
 
     return (
@@ -97,10 +100,10 @@ const MyApplicationsPage = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-                        My Applications
+                        Thesis Assignments
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Track the status of your team's thesis applications.
+                        Track the status of your team's thesis assignments.
                     </p>
                 </div>
             </div>
@@ -120,17 +123,21 @@ const MyApplicationsPage = () => {
             ) : applications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
                     <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                        <i className="pi pi-inbox text-4xl text-slate-300" />
+                        <i className={`${!hasTeam ? 'pi pi-users' : 'pi pi-inbox'} text-4xl text-slate-300`} />
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-700 mb-1">No applications yet</h3>
+                    <h3 className="text-lg font-semibold text-slate-700 mb-1">
+                        {!hasTeam ? 'No Team Yet' : 'No assignments yet'}
+                    </h3>
                     <p className="text-slate-400 text-sm">
-                        Your team hasn't submitted any thesis applications.
+                        {!hasTeam 
+                            ? 'You don’t have a team yet. Please create or join a team first.' 
+                            : "Your team hasn't submitted any thesis assignments yet."}
                     </p>
                     <button
-                        onClick={() => navigate('/published-thesis')}
-                        className="mt-6 px-6 py-2.5 bg-primary text-white font-bold rounded-xl cursor-pointer hover:bg-primary/90 transition-colors shadow-sm text-sm"
+                        onClick={() => navigate(!hasTeam ? '/teams' : '/published-thesis')}
+                        className="mt-6 px-6 py-3 bg-orange-500 text-white font-bold rounded-xl cursor-pointer hover:bg-orange-600 transition-colors shadow-sm text-sm"
                     >
-                        Browse Available Theses
+                        {!hasTeam ? 'Go to Team Management' : 'Browse Available Theses'}
                     </button>
                 </div>
             ) : (
@@ -183,7 +190,7 @@ const MyApplicationsPage = () => {
                                 <div className="px-6 pb-6 pt-2 flex gap-3">
                                     <button
                                         onClick={() => navigate(`/thesis/${app.thesisId}`)}
-                                        className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
+                                        className="flex-1 py-2.5 border-2 border-orange-500 text-orange-600 font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
                                     >
                                         View Thesis
                                     </button>

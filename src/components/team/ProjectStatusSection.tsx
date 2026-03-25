@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import Swal from '../../utils/swal';
 import type { Team } from '../../types/team';
+import { authService } from '../../services/authService';
 
 interface ProjectStatusSectionProps {
     team: Team | null;
@@ -9,7 +10,10 @@ interface ProjectStatusSectionProps {
 
 const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLeader }) => {
     const navigate = useNavigate();
-    if (!team) return null;
+    const user = authService.getUser();
+    const isStudent = user?.roleName === 'Student';
+
+    if (!team || !isStudent) return null;
     const hasTopic = !!team.topicId;
 
     const handleActionClick = (actionName: string) => {
@@ -64,21 +68,41 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
                                 {team.topicName || "Thesis Topic Assigned"}
                             </h3>
                             <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6">
-                                Optimizing city flow through decentralized neural networks and real-time sensor data integration.
+                                {team.description || "No description provided for this thesis topic."}
                             </p>
                         </div>
 
                         {/* Footer: Mentor & Actions */}
                         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pt-4 mt-auto border-t border-gray-100">
                             {/* Primary Mentor */}
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
-                                    <span className="material-symbols-outlined">school</span>
-                                </div>
-                                <div>
-                                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-0.5">Primary Mentor</p>
-                                    <p className="text-gray-900 font-bold text-sm">Dr. Sarah Jenkins</p>
-                                </div>
+                            <div className="flex items-center gap-6">
+                                {team.mentorName && (
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 transition-transform hover:scale-110">
+                                            <span className="material-symbols-outlined">school</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-0.5">Primary Mentor</p>
+                                            <p className="text-gray-900 font-bold text-sm tracking-tight">{team.mentorName}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {team.mentor2Name && (
+                                    <div className="flex items-center gap-3 border-l border-gray-100 pl-6">
+                                        <div className="size-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 transition-transform hover:scale-110">
+                                            <span className="material-symbols-outlined">school</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-0.5">Secondary Mentor</p>
+                                            <p className="text-gray-900 font-bold text-sm tracking-tight">{team.mentor2Name}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!team.mentorName && !team.mentor2Name && (
+                                    <p className="text-gray-400 text-sm italic font-medium">No mentor assigned yet</p>
+                                )}
                             </div>
 
                             {/* Actions */}

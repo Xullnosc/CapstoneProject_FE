@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputSwitch } from 'primereact/inputswitch';
 import { lecturerService, type Lecturer } from '../../services/lecturerService';
+import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 
 interface LecturerModalProps {
@@ -21,6 +22,9 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const currentUser = authService.getUser();
+    const isHOD = currentUser?.roleName === 'HOD';
+
     useEffect(() => {
         if (lecturerData) {
             setFormData({
@@ -30,11 +34,11 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
             setFormData({
                 email: '',
                 fullName: '',
-                campus: '',
+                campus: isHOD ? (currentUser?.campus || '') : '',
                 isActive: true
             });
         }
-    }, [lecturerData, isOpen]);
+    }, [lecturerData, isOpen, isHOD, currentUser?.campus]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target as HTMLInputElement;
@@ -139,23 +143,25 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-bold text-gray-700 ml-1">Campus</label>
-                        <Dropdown
-                            value={formData.campus}
-                            onChange={(e) => setFormData(prev => ({ ...prev, campus: e.value }))}
-                            options={campusOptions}
-                            optionLabel="label"
-                            placeholder="Select Campus"
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none text-gray-900"
-                            pt={{
-                                root: { style: { padding: '4px 8px' } },
-                                input: { className: 'text-sm font-medium py-2' },
-                                item: { className: 'text-sm' }
-                            }}
-                        />
-                    </div>
+                <div className={`grid ${isHOD ? 'grid-cols-1' : 'grid-cols-2'} gap-4`}>
+                    {!isHOD && (
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-gray-700 ml-1">Campus</label>
+                            <Dropdown
+                                value={formData.campus}
+                                onChange={(e) => setFormData(prev => ({ ...prev, campus: e.value }))}
+                                options={campusOptions}
+                                optionLabel="label"
+                                placeholder="Select Campus"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none text-gray-900"
+                                pt={{
+                                    root: { style: { padding: '4px 8px' } },
+                                    input: { className: 'text-sm font-medium py-2' },
+                                    item: { className: 'text-sm' }
+                                }}
+                            />
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-1.5 items-start">
                         <label className="text-sm font-bold text-gray-700 ml-1 mb-1">Status</label>
