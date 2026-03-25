@@ -11,7 +11,6 @@ import SemesterDetailPage from '../pages/Semester/SemesterDetailPage';
 import ThesisPage from '../pages/Thesis/ThesisPage';
 import ProposeThesisPage from '../pages/ProposeThesis/ProposeThesisPage';
 import MyThesisPage from '../pages/Thesis/MyThesisPage';
-import ThesisDetailPage from '../pages/Thesis/ThesisDetailPage';
 import MentorInvitationsPage from '../pages/Mentor/MentorInvitationsPage';
 import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
@@ -24,6 +23,7 @@ import ApplicationReviewPage from '../pages/Application/ApplicationReviewPage';
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(() => import('../pages/Notifications/NotificationsPage'));
+const ThesisDetailPage = lazy(() => import('../pages/Thesis/ThesisDetailPage'));
 
 const AppRouter = () => {
   return (
@@ -57,7 +57,21 @@ const AppRouter = () => {
           <Route path="/thesis" element={<ThesisPage />} />
           <Route path="/my-thesis" element={<MyThesisPage />} />
           <Route path="/review-thesis" element={<ThesisPage />} />
-          <Route path="/thesis/:id" element={<ThesisDetailPage />} />
+          <Route
+            path="/thesis/:id"
+            element={
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="text-center">
+                    <i className="pi pi-spin pi-spinner text-4xl text-orange-500 mb-4"></i>
+                    <p className="text-gray-500">Loading thesis details...</p>
+                  </div>
+                </div>
+              }>
+                <ThesisDetailPage />
+              </Suspense>
+            }
+          />
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
           <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />
           <Route path="/teams/my-teams" element={<MentorTeamsPage />} />
