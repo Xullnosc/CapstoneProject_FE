@@ -21,14 +21,13 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
     const filteredTeams = teams.filter(t => {
         if (statusFilter === 'All') return true;
         if (statusFilter === 'Special') return t.isSpecial;
-        if (t.isSpecial && statusFilter === 'Insufficient') return false;
         return t.status === statusFilter;
     });
 
     const counts = {
         All: teams.length,
         Active: teams.filter(t => t.status === 'Active').length,
-        Insufficient: teams.filter(t => t.status === 'Insufficient' && !t.isSpecial).length,
+        Insufficient: teams.filter(t => t.status === 'Insufficient').length,
         Pending: teams.filter(t => t.status === 'Pending').length,
         Special: teams.filter(t => t.isSpecial).length,
     };

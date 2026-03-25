@@ -381,7 +381,7 @@ const ThesisDetailPage = () => {
 
   const submissionDateStr = thesis?.upDate ?? thesis?.updateDate;
   const submissionDateLabel = formatDate(submissionDateStr);
-  const reviewers = reviewStatus?.reviewers ?? [];
+  const reviewers = useMemo(() => reviewStatus?.reviewers ?? [], [reviewStatus?.reviewers]);
   const reviewedCount = reviewers.filter((item) => item.reviewedAt).length;
   
   // FIX: Type 'string | null' is not assignable to 'string | undefined'
