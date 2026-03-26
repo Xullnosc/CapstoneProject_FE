@@ -88,6 +88,11 @@ export const semesterService = {
         return response.data.find(s => s.status === 'Active');
     },
 
+    getOrphanedStudents: async (semesterId: number): Promise<Whitelist[]> => {
+        const response = await api.get<Whitelist[]>(`/semester/${semesterId}/orphaned-students`);
+        return response.data;
+    },
+
     startSemester: async (id: number) => {
         await api.post(`/semester/${id}/start`);
     }

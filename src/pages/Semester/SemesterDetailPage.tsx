@@ -29,7 +29,7 @@ const SemesterDetailPage = () => {
     const [semester, setSemester] = useState<Semester | null>(null);
     const [loading, setLoading] = useState(true);
     const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
-    const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
+    const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams' | 'orphaned'>('whitelists');
     const [showWarning, setShowWarning] = useState(true);
 
     // Whitelist pagination states
@@ -37,6 +37,10 @@ const SemesterDetailPage = () => {
     const [lecturerData, setLecturerData] = useState<PagedResult<Whitelist> | null>(null);
     const [studentData, setStudentData] = useState<PagedResult<Whitelist> | null>(null);
     const [isWhitelistsLoading, setIsWhitelistsLoading] = useState(false);
+
+    // Orphaned students state
+    const [orphanedData, setOrphanedData] = useState<Whitelist[]>([]);
+    const [isOrphanedLoading, setIsOrphanedLoading] = useState(false);
 
     const [whitelistPage, setWhitelistPage] = useState(1);
     const [lecturerPage, setLecturerPage] = useState(1);
@@ -105,12 +109,29 @@ const SemesterDetailPage = () => {
         fetchLatestForm();
     }, [fetchSemesterDetail, fetchLatestForm]);
 
+    const fetchOrphanedStudents = useCallback(async () => {
+        if (!semesterId) return;
+        try {
+            setIsOrphanedLoading(true);
+            const data = await semesterService.getOrphanedStudents(semesterId);
+            setOrphanedData(data);
+        } catch (error) {
+            console.error('Failed to fetch orphaned students', error);
+        } finally {
+            setIsOrphanedLoading(false);
+        }
+    }, [semesterId]);
+
     useEffect(() => {
+        if (activeTab === 'orphaned') {
+            fetchOrphanedStudents();
+            return;
+        }
         const role = activeTab === 'lecturers' ? 'Lecturer' : activeTab === 'students' ? 'Student' : undefined;
         if (activeTab !== 'teams') {
             fetchWhitelists(role);
         }
-    }, [activeTab, fetchWhitelists]);
+    }, [activeTab, fetchWhitelists, fetchOrphanedStudents]);
 
     const handleEndSemester = async () => {
         if (!semester) return;
@@ -293,6 +314,15 @@ const SemesterDetailPage = () => {
                         <span className="material-symbols-outlined text-[18px]">person</span>
                         Students
                     </button>
+                    {canManage && (
+                        <button
+                            onClick={() => setActiveTab('orphaned')}
+                            className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'orphaned' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">person_off</span>
+                            Orphaned Students
+                        </button>
+                    )}
                     <div className="flex-1 hidden sm:block"></div>
                     <button
                         onClick={() => setActiveTab('teams')}
@@ -366,6 +396,18 @@ const SemesterDetailPage = () => {
                         ) : undefined}
                         onEdit={(student) => { setSelectedStudent(student); setIsStudentModalOpen(true); }}
                         onUpdate={refreshActiveTab}
+                        showStudentCode={true}
+                        isEnded={isEnded}
+                    />
+                )}
+                {activeTab === 'orphaned' && (
+                    <SemesterWhitelistsTable
+                        whitelists={orphanedData}
+                        isLoading={isOrphanedLoading}
+                        totalCount={orphanedData.length}
+                        page={0}
+                        onPageChange={() => {}}
+                        onUpdate={() => fetchOrphanedStudents()}
                         showStudentCode={true}
                         isEnded={isEnded}
                     />
