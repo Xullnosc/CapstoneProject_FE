@@ -16,6 +16,8 @@ import MentorTeamsPage from '../pages/Mentor/MentorTeamsPage';
 import LecturerManagementPage from '../pages/Lecturer/LecturerManagementPage';
 import HodAccountsPage from '../pages/Admin/HodAccountsPage';
 import AccessLogsPage from '../pages/Admin/AccessLogsPage';
+import SystemSettingsPage from '../pages/Admin/SystemSettingsPage';
+import SystemParametersPage from '../pages/Admin/SystemParametersPage';
 import PublishedThesisPage from '../pages/Thesis/PublishedThesisPage';
 import ProfilePage from '../pages/Profile/ProfilePage';
 import OtherProfilePage from '../pages/Profile/OtherProfilePage';
@@ -45,13 +47,21 @@ const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/admin/hod" element={<HodAccountsPage />} />
           <Route path="/admin/access-logs" element={<AccessLogsPage />} />
+          <Route path="/admin/system-parameters" element={<SystemParametersPage />} />
+          <Route path="/admin/system-settings" element={<SystemSettingsPage />} />
+        </Route>
+      </Route>
+
+      {/* Shared Home/Dashboard Route */}
+      <Route element={<ProtectedRoute allowedRoles={['Student', 'Lecturer', 'HOD', 'Admin']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/home" element={<Homepage />} />
         </Route>
       </Route>
 
       {/* General Routes - Restrict Admin from accessing these */}
       <Route element={<ProtectedRoute allowedRoles={['Student', 'Lecturer', 'HOD']} />}>
         <Route element={<MainLayout />}>
-          <Route path="/home" element={<Homepage />} />
           <Route path="/teams" element={<TeamCreate />} />
           <Route path="/teams/team" element={<TeamDetail />} />
           <Route path="/teams/:teamId" element={<TeamDetail />} />
