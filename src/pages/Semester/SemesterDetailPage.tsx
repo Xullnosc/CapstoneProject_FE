@@ -15,6 +15,7 @@ import SemesterModal from '../../components/Semester/SemesterModal';
 import ReviewerModal from '../../components/Semester/ReviewerModal';
 import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal';
 import WhitelistStudentModal from '../../components/Semester/WhitelistStudentModal';
+import ForceCreateTeamModal from '../../components/Semester/ForceCreateTeamModal';
 import ThesisFormModal from '../../components/Thesis/ThesisFormModal';
 import ThesisFormVersionsModal from '../../components/Thesis/ThesisFormVersionsModal';
 import type { ThesisForm } from '../../types/thesisForm';
@@ -40,6 +41,7 @@ const SemesterDetailPage = () => {
 
     // Orphaned students state
     const [orphanedData, setOrphanedData] = useState<Whitelist[]>([]);
+    const [isForceCreateOpen, setIsForceCreateOpen] = useState(false);
     const [isOrphanedLoading, setIsOrphanedLoading] = useState(false);
 
     const [whitelistPage, setWhitelistPage] = useState(1);
@@ -132,6 +134,7 @@ const SemesterDetailPage = () => {
             fetchWhitelists(role);
         }
     }, [activeTab, fetchWhitelists, fetchOrphanedStudents]);
+
 
     const handleEndSemester = async () => {
         if (!semester) return;
@@ -335,7 +338,20 @@ const SemesterDetailPage = () => {
 
                 {/* Content */}
                 {activeTab === 'teams' && (
-                    <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
+                    <>
+                        {canManage && !isEnded && (
+                            <div className="flex justify-end mb-4">
+                                <button
+                                    onClick={() => setIsForceCreateOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
+                                >
+                                    <span className="material-symbols-outlined text-lg">group_add</span>
+                                    Force Create Team
+                                </button>
+                            </div>
+                        )}
+                        <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
+                    </>
                 )}
                 {activeTab === 'whitelists' && (
                     <SemesterWhitelistsTable
@@ -469,6 +485,15 @@ const SemesterDetailPage = () => {
                     onSuccess={() => { setIsStudentModalOpen(false); refreshActiveTab(); }}
                     semesterId={semester.semesterId}
                     studentData={selectedStudent}
+                />
+            )}
+
+            {semester && (
+                <ForceCreateTeamModal
+                    isOpen={isForceCreateOpen}
+                    onClose={() => setIsForceCreateOpen(false)}
+                    onSuccess={() => { fetchOrphanedStudents(); refreshActiveTab(); }}
+                    semesterId={semester.semesterId}
                 />
             )}
         </div>

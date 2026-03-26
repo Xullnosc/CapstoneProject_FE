@@ -82,6 +82,11 @@ export const teamService = {
         return response.data;
     },
 
+    forceCreateTeam: async (data: { teamName: string; description?: string; semesterId: number; leaderEmail: string; memberEmails: string[] }): Promise<Team> => {
+        const response = await api.post<Team>('/team/force-create', data);
+        return response.data;
+    },
+
     toggleSpecial: async (teamId: number): Promise<void> => {
         await api.put(`/Team/${teamId}/special`);
     }
