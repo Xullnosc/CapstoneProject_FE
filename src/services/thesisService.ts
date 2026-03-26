@@ -152,4 +152,11 @@ export const thesisService = {
     );
     return response.data;
   },
+
+  /** POST /thesis/:id/force-assign - HOD: force-assign thesis to a team */
+  forceAssignThesis: async (id: string, teamId: number) => {
+    const response = await api.post(`/thesis/${id}/force-assign`, { teamId });
+    return response.data;
+  },
 };
+

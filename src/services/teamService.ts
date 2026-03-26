@@ -89,5 +89,10 @@ export const teamService = {
 
     toggleSpecial: async (teamId: number): Promise<void> => {
         await api.put(`/Team/${teamId}/special`);
-    }
+    },
+
+    getTeamsBySemester: async (semesterId: number): Promise<Team[]> => {
+        const response = await api.get<Team[]>(`/team/semester/${semesterId}`);
+        return response.data;
+    },
 };

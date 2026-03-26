@@ -35,6 +35,7 @@ export interface Thesis {
   upDate: string | null; // BE: "upDate"
   updateDate: string | null; // BE: "updateDate"
   isLocked: boolean;
+  teamId?: number | null;
   histories: ThesisHistory[] | null;
 
   reviews: ThesisReview[] | null;

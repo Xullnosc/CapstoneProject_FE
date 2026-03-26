@@ -28,6 +28,7 @@ import {
   type Whitelist,
 } from "../../services/semesterService";
 import { thesisService } from "../../services/thesisService";
+import ForceAssignThesisModal from "../../components/Thesis/ForceAssignThesisModal";
 import { applicationService } from "../../services/applicationService";
 import type { ApplicationStatus } from "../../types/application";
 import { useThesisCommentary } from "../../hooks/useThesisCommentary";
@@ -155,6 +156,7 @@ const ThesisDetailPage = () => {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [forceAssignVisible, setForceAssignVisible] = useState(false);
   const [locking, setLocking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [semesterHods, setSemesterHods] = useState<Whitelist[]>([]);
@@ -531,6 +533,18 @@ const ThesisDetailPage = () => {
                         )}
                     </div>
                 )}
+                {isHOD && thesis.status === 'Published' && !thesis.teamId && (
+                    <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                        <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">HOD Actions</h3>
+                        <PrimeButton
+                            label="Force Assign to Team"
+                            icon="pi pi-link"
+                            className="p-button-sm w-full font-bold uppercase py-3"
+                            style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                            onClick={() => setForceAssignVisible(true)}
+                        />
+                    </div>
+                )}
             </div>
           </div>
         </main>
@@ -539,6 +553,16 @@ const ThesisDetailPage = () => {
       <UpdateThesisModal visible={uploadModalVisible} thesis={thesis} onHide={() => { setUploadModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
       <ReviewSubmissionModal visible={reviewModalVisible} thesisId={id || ""} onHide={() => { setReviewModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
       <HodDecisionModal visible={hodDecisionVisible} thesisId={id || ""} onHide={() => { setHodDecisionVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      {thesis.semesterId && (
+        <ForceAssignThesisModal
+          isOpen={forceAssignVisible}
+          onClose={() => { setForceAssignVisible(false); void resumePolling(); }}
+          onSuccess={refreshAfterAction}
+          thesisId={thesis.thesisId}
+          thesisTitle={thesis.title}
+          semesterId={thesis.semesterId}
+        />
+      )}
       <CommentModal visible={commentModalVisible} onHide={() => { setCommentModalVisible(false); void resumePolling(); }} onSubmit={handleAddComment} />
     </div>
   );
