@@ -57,7 +57,7 @@ const OtherProfilePage = () => {
             try {
                 const data = await userService.getProfileByUserId(parsedUserId);
                 setProfile(data);
-            } catch (e: unknown) {
+            } catch {
                 Swal.fire({
                     icon: 'error',
                     title: 'Cannot load profile',
