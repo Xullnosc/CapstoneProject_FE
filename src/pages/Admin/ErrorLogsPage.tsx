@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { systemLogService, type SystemErrorLog } from '../../services/systemLogService';
-import { DataTable, type DataTableStateEvent, type DataTableRowEvent } from 'primereact/datatable';
+import { DataTable, type DataTableStateEvent, type DataTableRowEvent, type DataTableExpandedRows } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { ProgressBar } from 'primereact/progressbar';
@@ -16,7 +16,7 @@ const ErrorLogsPage: React.FC = () => {
         page: 1,
     });
     const [selectedLevel, setSelectedLevel] = useState<string>('All');
-    const [expandedRows, setExpandedRows] = useState<any[] | undefined>(undefined);
+    const [expandedRows, setExpandedRows] = useState<DataTableExpandedRows | SystemErrorLog[] | undefined>(undefined);
 
     const levels = [
         { label: 'All Levels', value: 'All' },
@@ -140,8 +140,8 @@ const ErrorLogsPage: React.FC = () => {
                     emptyMessage="No system error logs found."
                     stripedRows
                     rowHover
-                    expandedRows={expandedRows as any}
-                    onRowToggle={(e: DataTableRowEvent) => setExpandedRows(e.data as any[])}
+                    expandedRows={expandedRows}
+                    onRowToggle={(e: DataTableRowEvent) => setExpandedRows(e.data as DataTableExpandedRows | SystemErrorLog[])}
                     rowExpansionTemplate={rowExpansionTemplate}
                     tableStyle={{ minWidth: '50rem' }}
                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
