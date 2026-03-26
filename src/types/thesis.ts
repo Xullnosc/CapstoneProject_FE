@@ -9,6 +9,11 @@ export type ThesisStatus =
   | "Registered"
   | "Cancelled";
 
+export interface Checklist {
+  checklistId: number;
+  content: string;
+}
+
 // Matches ThesisHistoryDTO from backend
 export interface ThesisHistory {
   id: number;
@@ -32,9 +37,12 @@ export interface Thesis {
   userId: number;
   ownerName: string | null; // BE returns "ownerName" (not "uploaderName")
   ownerEmail: string | null;
+  ownerAvatar: string | null;
   upDate: string | null; // BE: "upDate"
   updateDate: string | null; // BE: "updateDate"
   isLocked: boolean;
+  mentorEmail1?: string | null;
+  mentorEmail2?: string | null;
   teamId?: number | null;
   histories: ThesisHistory[] | null;
 
@@ -65,6 +73,7 @@ export interface ReviewerProgress {
   userId: number;
   email: string | null;
   fullName: string | null;
+  avatar: string | null;
   decision: string | null;
   note: string | null;
   reviewedAt: string | null;
@@ -74,6 +83,7 @@ export interface HodDecision {
   hodId: number;
   email: string | null;
   fullName: string | null;
+  avatar: string | null;
   decision: string | null;
   note: string | null;
   decidedAt: string | null;
@@ -95,6 +105,7 @@ export interface ReviewTimelineComment {
   authorUserId: number;
   authorName: string | null;
   authorEmail: string | null;
+  authorAvatar: string | null;
   body: string;
   commentType: string;
   visibilityScope: string;
@@ -110,8 +121,10 @@ export interface ReviewTimelineEvent {
   actorRole: string;
   actorName: string | null;
   actorEmail: string | null;
+  actorAvatar: string | null;
   decision: string | null;
   createdAt: string;
+  checklistResults: string[];
   comments: ReviewTimelineComment[];
 }
 
@@ -119,6 +132,7 @@ export interface CommentaryEvent {
   id: string;
   actorName: string;
   actorEmail: string;
+  actorAvatar?: string | null;
   label: string;
   content: string;
   timestamp: string;
@@ -126,5 +140,7 @@ export interface CommentaryEvent {
   decision?: string;
   fileUrl?: string | null;
   eventId?: number;
+  actorRole?: string | null;
+  checklistResults?: string[];
   replies?: ReviewTimelineComment[];
 }

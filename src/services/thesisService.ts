@@ -5,6 +5,7 @@ import type {
   ThesisReviewStatus,
   ReviewTimelineEvent,
   ReviewTimelineComment,
+  Checklist,
 } from "../types/thesis";
 
 export type ThesisDecision = "Pass" | "Fail";
@@ -77,18 +78,25 @@ export const thesisService = {
     return response.data;
   },
 
-  /** PUT /thesis/:id/review - reviewer only: set Pass / Fail with optional comment and file */
   evaluateThesis: async (
     id: string,
-    data: { status: "Approve" | "Reject"; comment?: string; reviewFile?: File },
+    data: {
+      status: "OK" | "Consider";
+      comment?: string;
+      checkedChecklistIds?: number[]
+    },
   ): Promise<void> => {
     const formData = new FormData();
-    // Map FE 'Approve'/'Reject' to BE 'Pass'/'Fail'
-    const decision = data.status === "Approve" ? "Pass" : "Fail";
+    // Map FE 'OK'/'Consider' to BE 'Pass'/'Fail'
+    const decision = data.status === "OK" ? "Pass" : "Fail";
     formData.append("Decision", decision);
 
     if (data.comment) formData.append("Comment", data.comment);
-    if (data.reviewFile) formData.append("ReviewFile", data.reviewFile);
+    if (data.checkedChecklistIds && data.checkedChecklistIds.length > 0) {
+      data.checkedChecklistIds.forEach((id) => {
+        formData.append("CheckedChecklistIds", id.toString());
+      });
+    }
 
     await api.put(`/thesis/${id}/review`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -107,12 +115,20 @@ export const thesisService = {
     return response.data.data;
   },
 
-  /** PUT /thesis/:id/hod-decision - HOD: submit final decision (Pass/Fail) */
   submitHodDecision: async (
     id: string,
-    data: { decision: "Pass" | "Fail"; comment?: string },
+    data: {
+      decision: "OK" | "Consider";
+      comment?: string;
+      checkedChecklistIds?: number[]
+    },
   ): Promise<void> => {
-    await api.put(`/thesis/${id}/hod-decision`, data);
+    // Map FE 'OK'/'Consider' to BE 'Pass'/'Fail'
+    const payload = {
+      ...data,
+      decision: data.decision === "OK" ? "Pass" : "Fail"
+    };
+    await api.put(`/thesis/${id}/hod-decision`, payload);
   },
 
   /** GET /thesis/:id/review-status - get review status */
@@ -150,6 +166,12 @@ export const thesisService = {
         visibilityScope: data.visibilityScope,
       },
     );
+    return response.data;
+  },
+
+  /** GET /checklist - get all checklist items */
+  getChecklists: async (): Promise<Checklist[]> => {
+    const response = await api.get<Checklist[]>("/checklist");
     return response.data;
   },
 

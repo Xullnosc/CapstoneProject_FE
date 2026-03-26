@@ -25,14 +25,7 @@ const Login = () => {
     const userStr = localStorage.getItem('user');
     if (token && userStr) {
       try {
-        const user = JSON.parse(userStr);
-        if (user.roleName === 'Admin') {
-          navigate('/admin/hod');
-        } else if (user.roleName === 'HOD' || user.roleName === 'Head of Department') {
-          navigate('/semesters');
-        } else {
-          navigate('/home');
-        }
+        navigate('/home');
       } catch (e) {
         console.error("Error parsing user info from local storage", e);
         navigate('/home');
@@ -68,13 +61,7 @@ const Login = () => {
       timer: 1500,
       showConfirmButton: false
     }).then(() => {
-      if (response.userInfo.roleName === 'Admin') {
-        navigate('/admin/hod');
-      } else if (response.userInfo.roleName === 'HOD' || response.userInfo.roleName === 'Head of Department') {
-        navigate('/semesters');
-      } else {
-        navigate('/home');
-      }
+      navigate('/home');
     });
   };
 
