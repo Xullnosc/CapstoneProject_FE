@@ -490,7 +490,7 @@ const ThesisDetailPage = () => {
             {activeTab === "conversations" ? (
               <>
                 <ResearchDocumentCard fileUrl={thesis.fileUrl} />
-                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={reviewers.length} latestReviewer={latestReviewer} />
+                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={2} latestReviewer={latestReviewer} />
                 <CommentaryTimeline events={conversationEvents} emptyMessage="Evaluation in progress..." canReply={canReplyToTimeline} onAddReply={handleAddReply} />
                 <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
               </>
