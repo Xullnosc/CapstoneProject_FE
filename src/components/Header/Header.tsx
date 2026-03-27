@@ -195,6 +195,12 @@ const Header = () => {
                         )}
 
                         {user?.roleName !== 'Admin' && (
+                            <div onClick={() => navigate('/ai-settings')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/ai-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-bolt text-xl"></i>
+                                <span>AI Studio</span>
+                            </div>
+                        )}
+                        {user?.roleName !== 'Admin' && (
                             <div
                                 onClick={() => {
                                     navigate('/notifications');
@@ -251,6 +257,7 @@ const Header = () => {
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
                             { id: 'application-review', label: 'Assign Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer },
                             { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
+                            { id: 'ai-studio', label: 'AI Studio', icon: 'pi pi-bolt', path: '/ai-settings', show: true },
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
 
@@ -404,12 +411,12 @@ const Header = () => {
                             <MenuItem>
                                 {({ focus }) => (
                                     <button
-                                        onClick={() => navigate('/settings')}
+                                        onClick={() => navigate('/ai-settings')}
                                         className={`${focus ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
                                             } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
                                     >
                                         <i className={`pi pi-cog ${focus ? 'text-orange-500' : 'text-gray-400'}`}></i>
-                                        Settings
+                                        AI Studio
                                     </button>
                                 )}
                             </MenuItem>
