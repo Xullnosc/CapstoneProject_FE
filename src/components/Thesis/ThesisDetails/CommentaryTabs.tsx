@@ -7,6 +7,7 @@ interface CommentaryTabsProps {
   conversationCount: number;
   versionCount: number;
   onChange: (tab: CommentaryTab) => void;
+  showConversations?: boolean;
 }
 
 const TabButton = ({
@@ -46,17 +47,20 @@ const CommentaryTabs: React.FC<CommentaryTabsProps> = ({
   conversationCount,
   versionCount,
   onChange,
+  showConversations = true,
 }) => {
   return (
     <nav className="bg-white border-b border-slate-200/70 px-4 md:px-8 rounded-2xl">
       <div className="max-w-[1440px] mx-auto flex items-center gap-8">
-        <TabButton
-          active={activeTab === "conversations"}
-          label="Conversations"
-          icon="pi pi-comments"
-          count={conversationCount}
-          onClick={() => onChange("conversations")}
-        />
+        {showConversations && (
+          <TabButton
+            active={activeTab === "conversations"}
+            label="Conversations"
+            icon="pi pi-comments"
+            count={conversationCount}
+            onClick={() => onChange("conversations")}
+          />
+        )}
         <TabButton
           active={activeTab === "versions"}
           label="Versions"
