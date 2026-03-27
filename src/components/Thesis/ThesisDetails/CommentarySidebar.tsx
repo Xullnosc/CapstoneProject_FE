@@ -23,7 +23,7 @@ interface CommentarySidebarProps {
   onCancel: () => void;
   onUploadRevision: () => void;
   onOpenComment: () => void;
-  infoMessage: string;
+  isHOD?: boolean;
 }
 
 const Section = ({
@@ -61,7 +61,7 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
   onCancel,
   onUploadRevision,
   onOpenComment,
-  infoMessage,
+  isHOD,
 }) => {
   const reviewers = reviewStatus?.reviewers ?? [];
 
@@ -91,7 +91,7 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
                   </svg>
                 </span>
                 <span className="text-center leading-tight">
-                  Submit My Evaluation
+                  {isHOD ? "Finalize" : "Submit My Evaluation"}
                 </span>
               </button>
             )}
@@ -179,7 +179,7 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
                   <span
                     className={`text-[10px] font-bold ${reviewer.decision === "Pass" ? "text-emerald-600" : reviewer.decision === "Fail" ? "text-rose-600" : "text-slate-500"}`}
                   >
-                    {reviewer.decision ?? "Awaiting review"}
+                    {reviewer.decision === "Pass" ? "OK" : reviewer.decision === "Fail" ? "Consider" : (reviewer.decision ?? "Awaiting review")}
                   </span>
                 </div>
               ))
@@ -239,17 +239,6 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
           <SubmissionCalendar dateValue={submissionDateRaw} />
         </Section>
 
-        <Section title="Projects">
-          <div className="text-xs text-orange-600 font-semibold">
-            Thesis Review Workflow
-          </div>
-        </Section>
-
-        <Section title="Development">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            {infoMessage}
-          </p>
-        </Section>
       </div>
     </aside>
   );

@@ -8,6 +8,7 @@ import { teamService } from '../../services/teamService';
 import { authService } from '../../services/authService';
 import type { Team, TeamMember } from '../../types/team';
 import InviteMemberModal from '../../components/team/InviteMemberModal';
+import AdminDashboard from './AdminDashboard';
 
 const Homepage = () => {
     const navigate = useNavigate();
@@ -15,6 +16,7 @@ const Homepage = () => {
     const [loading, setLoading] = useState(true);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const currentUser = authService.getUser();
+    const isHODOrAdmin = currentUser?.roleName === 'HOD' || currentUser?.roleName === 'Head of Department' || currentUser?.roleName === 'Admin';
 
     useEffect(() => {
         const fetchTeam = async () => {
@@ -60,6 +62,10 @@ const Homepage = () => {
         { id: 3, title: 'Topic Approved', desc: "The topic 'Blockchain for Supply Chain' was just added.", time: 'YESTERDAY', color: 'bg-gray-400' },
         { id: 4, title: 'Welcome', desc: 'You have successfully logged into the Capstone Portal.', time: '2 DAYS AGO', color: 'bg-gray-400' },
     ];
+
+    if (isHODOrAdmin) {
+        return <AdminDashboard />;
+    }
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 fadein animation-duration-500">
