@@ -6,7 +6,10 @@ import type {
   SaveUserAISettingsRequest,
   AIChatRequest,
   AIChatResponse,
+  AIProviderType,
+  SaveUserAIProvider,
 } from '../types/ai';
+import { PROVIDER_META } from '../types/ai';
 
 export const aiService = {
   /** GET /api/ai/status — public, requires auth */
@@ -57,12 +60,28 @@ export const aiService = {
   },
 
   /** Convenience: test a provider connection with a simple ping message */
-  testConnection: async (provider?: string): Promise<AIChatResponse> => {
+  testConnection: async (
+    provider: AIProviderType,
+    providerSettings: SaveUserAIProvider,
+  ): Promise<AIChatResponse> => {
+    const providerMeta = PROVIDER_META.find((entry) => entry.key === provider);
+    const resolvedModel = providerSettings.model?.trim() || providerMeta?.defaultModel;
+
     return aiService.chat({
-      messages: [{ role: 'user', content: 'Ping — respond with "pong" only.' }],
-      systemPrompt: provider ? `You are a test assistant for the ${provider} provider.` : undefined,
+      provider,
+      providerSettings: {
+        apiKey: providerSettings.apiKey,
+        model: resolvedModel,
+        baseUrl: providerSettings.baseUrl,
+        apiVersion: providerSettings.apiVersion,
+        deploymentName: providerSettings.deploymentName,
+        timeoutSeconds: providerSettings.timeoutSeconds,
+        maxRetries: providerSettings.maxRetries,
+      },
+      messages: [{ role: 'user', content: 'Respond with exactly: pong' }],
+      systemPrompt: `You are a connectivity test assistant for ${provider}.`,
       temperature: 0,
-      maxTokens: 10,
+      maxTokens: 8,
       useCache: false,
     });
   },

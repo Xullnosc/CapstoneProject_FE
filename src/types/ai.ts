@@ -96,6 +96,18 @@ export interface AIChatResponse {
   };
 }
 
+// ─── Admin configuration update DTOs ─────────────────────────────────────────
+
+export interface CacheUpdate {
+  enabled: boolean;
+  defaultTtlSeconds: number;
+}
+
+export interface RateLimitUpdate {
+  requestsPerMinutePerUser: number;
+  requestsPerMinuteGlobal: number;
+}
+
 // ─── Provider metadata (for UI display) ──────────────────────────────────────
 
 export interface ProviderMeta {
@@ -140,8 +152,22 @@ export const PROVIDER_META: ProviderMeta[] = [
     key: 'GoogleGemini',
     label: 'Google Gemini',
     icon: 'pi pi-star',
-    defaultModel: 'gemini-1.5-pro',
-    modelOptions: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash-exp'],
+    defaultModel: 'gemini-2.5-pro',
+    modelOptions: [
+      'gemini-2.5-pro',
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+      'gemini-3-pro-preview',
+      'gemini-3-flash-preview',
+      'gemini-3.1-pro-preview',
+      'gemini-3.1-flash-lite-preview',
+      'gemini-pro',
+      'gemini-pro-vision'
+    ],
     requiresBaseUrl: false,
     requiresDeployment: false,
   },

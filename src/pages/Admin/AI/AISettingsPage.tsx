@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import axios from 'axios';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { authService } from '../../../services/authService';
@@ -74,6 +75,18 @@ const INITIAL_FORM: FormState = {
   providers: buildDefaultProviders(),
 };
 
+const getApiErrorDetails = (error: unknown): { message?: string; code?: string } => {
+  if (!axios.isAxiosError(error)) {
+    return {};
+  }
+
+  const data = error.response?.data as { message?: string; code?: string } | undefined;
+  return {
+    message: data?.message,
+    code: data?.code,
+  };
+};
+
 export default function AISettingsPage() {
   const toast = useRef<Toast>(null);
   const currentUser = authService.getUser();
@@ -86,7 +99,12 @@ export default function AISettingsPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [dirty, setDirty] = useState(false);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
-  const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set());
+  const [savedProviders, setSavedProviders] = useState<Set<string>>(new Set());
+  const [testedProviders, setTestedProviders] = useState<Set<string>>(new Set());
+
+  const connectedProviders = useMemo(() => {
+    return new Set<string>([...savedProviders, ...testedProviders]);
+  }, [savedProviders, testedProviders]);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -95,7 +113,8 @@ export default function AISettingsPage() {
       setUserSettings(settings);
       setForm(mapSettingsToForm(settings));
       setDirty(false);
-      setConnectedProviders(new Set(settings.providers.filter((provider) => provider.hasApiKey).map((provider) => provider.provider)));
+      setSavedProviders(new Set(settings.providers.filter((provider) => provider.hasApiKey).map((provider) => provider.provider)));
+      setTestedProviders(new Set());
     } catch {
       toast.current?.show({
         severity: 'error',
@@ -205,41 +224,48 @@ export default function AISettingsPage() {
 
     setTestingProvider(provider);
     try {
-      await aiService.chat({
-        provider,
-        providerSettings: {
-          apiKey: providerSettings.apiKey,
-          model: providerSettings.model,
-          baseUrl: providerSettings.baseUrl,
-          apiVersion: providerSettings.apiVersion,
-          deploymentName: providerSettings.deploymentName,
-          timeoutSeconds: providerSettings.timeoutSeconds,
-          maxRetries: providerSettings.maxRetries,
-        },
-        messages: [{ role: 'user', content: 'Respond with exactly: pong' }],
-        temperature: 0,
-        maxTokens: 8,
-        useCache: false,
-      });
+      await aiService.testConnection(provider, providerSettings);
 
-      setConnectedProviders((prev) => new Set(prev).add(provider));
+      setTestedProviders((prev) => new Set(prev).add(provider));
       toast.current?.show({
         severity: 'success',
-        summary: 'Connected',
-        detail: `${provider} responded successfully using your key.`,
+        summary: 'Connection Successful',
+        detail: 'Connection Successful',
         life: 3000,
       });
-    } catch {
-      setConnectedProviders((prev) => {
+    } catch (error) {
+      const { message, code } = getApiErrorDetails(error);
+      const normalizedMessage = message?.replace(/\s+/g, ' ').trim();
+      const isEmptyTextResponse = code === 'InvalidRequest'
+        && Boolean(normalizedMessage && /no text content/i.test(normalizedMessage));
+
+      if (isEmptyTextResponse) {
+        setTestedProviders((prev) => new Set(prev).add(provider));
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Connection Successful',
+          detail: 'Connection Successful',
+          life: 3000,
+        });
+        return;
+      }
+
+      setTestedProviders((prev) => {
         const next = new Set(prev);
         next.delete(provider);
         return next;
       });
+
+      const isQuotaIssue = code === 'QuotaExceeded'
+        || Boolean(normalizedMessage && /quota exceeded|plan and billing|free_tier|limit:\s*0/i.test(normalizedMessage));
+
       toast.current?.show({
         severity: 'error',
-        summary: 'Connection failed',
-        detail: `Could not connect to ${provider} using your current settings.`,
-        life: 5000,
+        summary: isQuotaIssue ? 'Quota exceeded' : 'Connection failed',
+        detail: isQuotaIssue
+          ? `${provider} quota is exhausted for this API key/project. Enable billing or increase quota in Google AI Studio, then retry.`
+          : normalizedMessage || `Could not connect to ${provider} using your current settings.`,
+        life: isQuotaIssue ? 8000 : 5000,
       });
     } finally {
       setTestingProvider(null);
