@@ -1,7 +1,9 @@
-import type { AIMetricsSummary } from '../../../../types/ai';
+import type { AIMetricsSummary } from "../../../../types/ai";
+import type { DashboardStats } from "../../../../services/dashboardService";
 
 interface Props {
   metrics: AIMetricsSummary | null;
+  dashboardStats: DashboardStats | null;
   loading: boolean;
 }
 
@@ -17,13 +19,23 @@ const Stat = ({
   accent?: boolean;
 }) => (
   <div className="bg-white rounded-xl border border-gray-200 p-5">
-    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-    <p className={`text-2xl font-bold ${accent ? 'text-orange-600' : 'text-gray-800'}`}>{value}</p>
+    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+      {label}
+    </p>
+    <p
+      className={`text-2xl font-bold ${accent ? "text-orange-600" : "text-gray-800"}`}
+    >
+      {value}
+    </p>
     {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
   </div>
 );
 
-export default function MetricsSummarySection({ metrics, loading }: Props) {
+export default function MetricsSummarySection({
+  metrics,
+  dashboardStats,
+  loading,
+}: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 text-gray-400">
@@ -45,24 +57,61 @@ export default function MetricsSummarySection({ metrics, loading }: Props) {
   const successRate =
     metrics.totalCalls > 0
       ? ((metrics.successfulCalls / metrics.totalCalls) * 100).toFixed(1)
-      : '—';
+      : "—";
 
   const cacheHitRate =
     metrics.totalCalls > 0
       ? ((metrics.cacheHits / metrics.totalCalls) * 100).toFixed(1)
-      : '—';
+      : "—";
 
   return (
     <div className="space-y-5">
-      {/* Summary grid */}
+      {/* Platform stats */}
+      {dashboardStats && (
+        <>
+          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            Platform
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <Stat
+              label="Users"
+              value={dashboardStats.totalUsers.toLocaleString()}
+            />
+            <Stat
+              label="Theses"
+              value={dashboardStats.totalTheses.toLocaleString()}
+            />
+            <Stat
+              label="Teams"
+              value={dashboardStats.totalTeams.toLocaleString()}
+            />
+            <Stat
+              label="Semesters"
+              value={dashboardStats.totalSemesters.toLocaleString()}
+            />
+          </div>
+        </>
+      )}
+
+      {/* AI metrics grid */}
+      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+        AI Usage
+      </h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Stat label="Total Calls" value={metrics.totalCalls.toLocaleString()} accent />
+        <Stat
+          label="Total Calls"
+          value={metrics.totalCalls.toLocaleString()}
+          accent
+        />
         <Stat
           label="Success Rate"
           value={`${successRate}%`}
           sub={`${metrics.successfulCalls.toLocaleString()} successful`}
         />
-        <Stat label="Failed Calls" value={metrics.failedCalls.toLocaleString()} />
+        <Stat
+          label="Failed Calls"
+          value={metrics.failedCalls.toLocaleString()}
+        />
         <Stat
           label="Cache Hit Rate"
           value={`${cacheHitRate}%`}
@@ -101,7 +150,9 @@ export default function MetricsSummarySection({ metrics, loading }: Props) {
                 return (
                   <div key={provider}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700">{provider}</span>
+                      <span className="font-medium text-gray-700">
+                        {provider}
+                      </span>
                       <span className="text-gray-500">
                         {count.toLocaleString()} ({pct}%)
                       </span>

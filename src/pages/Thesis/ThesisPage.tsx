@@ -67,9 +67,11 @@ const ThesisPage = () => {
     // HOD Decision Modal State
     const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
     const [selectedThesisId, setSelectedThesisId] = useState<string | null>(null);
+    const [selectedThesisFileUrl, setSelectedThesisFileUrl] = useState<string | null>(null);
 
     const handleHodDecision = (thesis: Thesis) => {
         setSelectedThesisId(thesis.thesisId);
+        setSelectedThesisFileUrl(thesis.fileUrl);
         setHodDecisionVisible(true);
     };
 
@@ -560,8 +562,10 @@ const ThesisPage = () => {
                     onHide={() => {
                         setHodDecisionVisible(false);
                         setSelectedThesisId(null);
+                        setSelectedThesisFileUrl(null);
                     }}
                     thesisId={selectedThesisId}
+                    thesisFileUrl={selectedThesisFileUrl ?? undefined}
                     onSuccess={fetchTheses}
                 />
             )}

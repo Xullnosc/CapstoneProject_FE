@@ -1,10 +1,10 @@
-import { useState, type MouseEvent } from 'react';
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
-import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
-import type { AIProviderType, SaveUserAIProvider } from '../../../../types/ai';
-import { PROVIDER_META } from '../../../../types/ai';
+import { useState, type MouseEvent } from "react";
+import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
+import { Dropdown } from "primereact/dropdown";
+import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
+import type { AIProviderType, SaveUserAIProvider } from "../../../../types/ai";
+import { PROVIDER_META } from "../../../../types/ai";
 
 interface Props {
   providers: Record<string, SaveUserAIProvider>;
@@ -22,11 +22,11 @@ interface Props {
   readOnly?: boolean;
 }
 
-const PROVIDER_OPTIONS = PROVIDER_META.map((p) => ({ label: p.label, value: p.key }));
-const FALLBACK_OPTIONS = [
-  { label: 'None', value: null },
-  ...PROVIDER_OPTIONS,
-];
+const PROVIDER_OPTIONS = PROVIDER_META.map((p) => ({
+  label: p.label,
+  value: p.key,
+}));
+const FALLBACK_OPTIONS = [{ label: "None", value: null }, ...PROVIDER_OPTIONS];
 
 export default function ApiKeySection({
   providers,
@@ -70,18 +70,21 @@ export default function ApiKeySection({
     const meta = PROVIDER_META.find((p) => p.key === key)!;
     return {
       provider: key,
-      apiKey: '',
+      apiKey: "",
       model: meta.defaultModel,
       baseUrl: null,
-      apiVersion: key === 'AzureOpenAI' ? '2024-05-01-preview' : null,
+      apiVersion: key === "AzureOpenAI" ? "2024-05-01-preview" : null,
       deploymentName: null,
       timeoutSeconds: 60,
       maxRetries: 2,
     };
   };
 
-  const selectedMeta = PROVIDER_META.find((provider) => provider.key === defaultProvider)!;
-  const providerData = providers[defaultProvider] ?? defaultProviderState(defaultProvider);
+  const selectedMeta = PROVIDER_META.find(
+    (provider) => provider.key === defaultProvider,
+  )!;
+  const providerData =
+    providers[defaultProvider] ?? defaultProviderState(defaultProvider);
   const isVisible = visibleKeys.has(defaultProvider);
   const isTesting = testingProvider === defaultProvider;
   const isConnected = connectedProviders.has(defaultProvider);
@@ -94,10 +97,10 @@ export default function ApiKeySection({
     confirmPopup({
       target: event.currentTarget,
       message: `Delete saved settings for ${selectedMeta.label}?`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptClassName: 'p-button-danger',
-      acceptLabel: 'Delete',
-      rejectLabel: 'Cancel',
+      icon: "pi pi-exclamation-triangle",
+      acceptClassName: "p-button-danger",
+      acceptLabel: "Delete",
+      rejectLabel: "Cancel",
       accept: () => {
         void onDeleteProvider(defaultProvider);
       },
@@ -115,29 +118,37 @@ export default function ApiKeySection({
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Provider</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Provider
+            </label>
             <Dropdown
               value={defaultProvider}
               options={PROVIDER_OPTIONS}
-              onChange={(e) => onDefaultProviderChange(e.value as AIProviderType)}
+              onChange={(e) =>
+                onDefaultProviderChange(e.value as AIProviderType)
+              }
               className="w-full"
               disabled={readOnly}
-              pt={{ root: { className: 'w-full' } }}
+              pt={{ root: { className: "w-full" } }}
             />
           </div>
           {showFallbackProvider && (
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">
                 Fallback Provider
-                <span className="ml-1 text-xs text-gray-400">(auto-used on error)</span>
+                <span className="ml-1 text-xs text-gray-400">
+                  (auto-used on error)
+                </span>
               </label>
               <Dropdown
                 value={fallbackProvider}
                 options={FALLBACK_OPTIONS}
-                onChange={(e) => onFallbackProviderChange(e.value as AIProviderType | null)}
+                onChange={(e) =>
+                  onFallbackProviderChange(e.value as AIProviderType | null)
+                }
                 className="w-full"
                 disabled={readOnly}
-                pt={{ root: { className: 'w-full' } }}
+                pt={{ root: { className: "w-full" } }}
               />
             </div>
           )}
@@ -148,12 +159,17 @@ export default function ApiKeySection({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <i className={`${selectedMeta.icon} text-orange-500`} />
-            <span className="font-semibold text-gray-800">{selectedMeta.label}</span>
+            <span className="font-semibold text-gray-800">
+              {selectedMeta.label}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             {isConnected && (
               <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-                <i className="pi pi-check-circle text-green-600" style={{ fontSize: '0.75rem' }} />
+                <i
+                  className="pi pi-check-circle text-green-600"
+                  style={{ fontSize: "0.75rem" }}
+                />
                 Connected
               </span>
             )}
@@ -170,8 +186,8 @@ export default function ApiKeySection({
               />
             )}
             <Button
-              label={isTesting ? 'Testing…' : 'Test Connection'}
-              icon={isTesting ? 'pi pi-spin pi-spinner' : 'pi pi-wifi'}
+              label={isTesting ? "Testing…" : "Test Connection"}
+              icon={isTesting ? "pi pi-spin pi-spinner" : "pi pi-wifi"}
               size="small"
               outlined
               severity="secondary"
@@ -183,12 +199,16 @@ export default function ApiKeySection({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">API Key</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            API Key
+          </label>
           <div className="relative">
             <InputText
-              type={isVisible ? 'text' : 'password'}
+              type={isVisible ? "text" : "password"}
               value={providerData.apiKey}
-              onChange={(e) => updateProvider(defaultProvider, 'apiKey', e.target.value)}
+              onChange={(e) =>
+                updateProvider(defaultProvider, "apiKey", e.target.value)
+              }
               placeholder={`Enter ${selectedMeta.label} API key…`}
               className="w-full pr-10"
               disabled={readOnly}
@@ -197,46 +217,67 @@ export default function ApiKeySection({
               type="button"
               onClick={() => toggleVisibility(defaultProvider)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label={isVisible ? 'Hide key' : 'Show key'}
+              aria-label={isVisible ? "Hide key" : "Show key"}
               disabled={readOnly}
             >
-              <i className={`pi ${isVisible ? 'pi-eye-slash' : 'pi-eye'}`} />
+              <i className={`pi ${isVisible ? "pi-eye-slash" : "pi-eye"}`} />
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-400">
-            Leave blank to keep the existing key saved in Redis for your account.
+            Leave blank to keep the existing key saved in Redis for your
+            account.
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-600 mb-1">Model</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Model
+          </label>
           <Dropdown
             value={providerData.model || selectedMeta.defaultModel}
-            options={selectedMeta.modelOptions.map((model) => ({ label: model, value: model }))}
+            options={selectedMeta.modelOptions.map((model) => ({
+              label: model,
+              value: model,
+            }))}
             optionLabel="label"
             optionValue="value"
             onChange={(e) => {
-              const selectedModel = typeof e.value === 'string'
-                ? e.value
-                : (e.value?.value as string | undefined);
-              updateProvider(defaultProvider, 'model', selectedModel?.trim() || selectedMeta.defaultModel);
+              const selectedModel =
+                typeof e.value === "string"
+                  ? e.value
+                  : (e.value?.value as string | undefined);
+              updateProvider(
+                defaultProvider,
+                "model",
+                selectedModel?.trim() || selectedMeta.defaultModel,
+              );
             }}
             filter
             filterBy="label"
             placeholder={`Select a ${selectedMeta.label} model…`}
             className="w-full"
             disabled={readOnly}
-            pt={{ root: { className: 'w-full' } }}
+            pt={{ root: { className: "w-full" } }}
           />
         </div>
 
         {selectedMeta.requiresBaseUrl && (
-          <div className={`grid grid-cols-1 ${showApiVersionField ? 'lg:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
+          <div
+            className={`grid grid-cols-1 ${showApiVersionField ? "lg:grid-cols-3" : "sm:grid-cols-2"} gap-4`}
+          >
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Base URL</label>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Base URL
+              </label>
               <InputText
-                value={providerData.baseUrl ?? ''}
-                onChange={(e) => updateProvider(defaultProvider, 'baseUrl', e.target.value || null)}
+                value={providerData.baseUrl ?? ""}
+                onChange={(e) =>
+                  updateProvider(
+                    defaultProvider,
+                    "baseUrl",
+                    e.target.value || null,
+                  )
+                }
                 placeholder="https://<resource>.openai.azure.com"
                 className="w-full"
                 disabled={readOnly}
@@ -244,10 +285,18 @@ export default function ApiKeySection({
             </div>
             {showApiVersionField && (
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">API Version</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  API Version
+                </label>
                 <InputText
-                  value={providerData.apiVersion ?? ''}
-                  onChange={(e) => updateProvider(defaultProvider, 'apiVersion', e.target.value || null)}
+                  value={providerData.apiVersion ?? ""}
+                  onChange={(e) =>
+                    updateProvider(
+                      defaultProvider,
+                      "apiVersion",
+                      e.target.value || null,
+                    )
+                  }
                   placeholder="2024-05-01-preview"
                   className="w-full"
                   disabled={readOnly}
@@ -256,10 +305,18 @@ export default function ApiKeySection({
             )}
             {selectedMeta.requiresDeployment && (
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Deployment Name</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Deployment Name
+                </label>
                 <InputText
-                  value={providerData.deploymentName ?? ''}
-                  onChange={(e) => updateProvider(defaultProvider, 'deploymentName', e.target.value || null)}
+                  value={providerData.deploymentName ?? ""}
+                  onChange={(e) =>
+                    updateProvider(
+                      defaultProvider,
+                      "deploymentName",
+                      e.target.value || null,
+                    )
+                  }
                   placeholder="my-gpt4o-deployment"
                   className="w-full"
                   disabled={readOnly}
@@ -271,11 +328,19 @@ export default function ApiKeySection({
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Timeout (seconds)</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Timeout (seconds)
+            </label>
             <InputText
               type="number"
               value={String(providerData.timeoutSeconds)}
-              onChange={(e) => updateProvider(defaultProvider, 'timeoutSeconds', parseInt(e.target.value, 10) || 60)}
+              onChange={(e) =>
+                updateProvider(
+                  defaultProvider,
+                  "timeoutSeconds",
+                  parseInt(e.target.value, 10) || 60,
+                )
+              }
               className="w-full"
               disabled={readOnly}
               min={5}
@@ -283,11 +348,19 @@ export default function ApiKeySection({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Max Retries</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">
+              Max Retries
+            </label>
             <InputText
               type="number"
               value={String(providerData.maxRetries)}
-              onChange={(e) => updateProvider(defaultProvider, 'maxRetries', parseInt(e.target.value, 10) || 2)}
+              onChange={(e) =>
+                updateProvider(
+                  defaultProvider,
+                  "maxRetries",
+                  parseInt(e.target.value, 10) || 2,
+                )
+              }
               className="w-full"
               disabled={readOnly}
               min={0}

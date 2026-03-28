@@ -16,7 +16,9 @@ import MentorTeamsPage from "../pages/Mentor/MentorTeamsPage";
 import LecturerManagementPage from "../pages/Lecturer/LecturerManagementPage";
 import HodAccountsPage from "../pages/Admin/HodAccountsPage";
 import AccessLogsPage from "../pages/Admin/AccessLogsPage";
+import AIStudioLayout from "../pages/Admin/AI/AIStudioLayout";
 import AISettingsPage from "../pages/Admin/AI/AISettingsPage";
+import AIApiKeysManagerPage from "../pages/Admin/AI/AIApiKeysManagerPage";
 import SystemSettingsPage from "../pages/Admin/SystemSettingsPage";
 import SystemParametersPage from "../pages/Admin/SystemParametersPage";
 import PublishedThesisPage from "../pages/Thesis/PublishedThesisPage";
@@ -133,7 +135,10 @@ const AppRouter = () => {
             element={<ApplicationReviewPage />}
           />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/ai-settings" element={<AISettingsPage />} />
+          <Route path="/ai-settings" element={<AIStudioLayout />}>
+            <Route index element={<AISettingsPage />} />
+            <Route path="api-keys" element={<AIApiKeysManagerPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>
