@@ -153,6 +153,7 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
                                 options={campusOptions}
                                 optionLabel="label"
                                 placeholder="Select Campus"
+                                appendTo="self"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none text-gray-900"
                                 pt={{
                                     root: { style: { padding: '4px 8px' } },

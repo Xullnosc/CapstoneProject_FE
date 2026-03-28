@@ -250,6 +250,7 @@ const ThesisPage = () => {
                                         optionLabel="semesterCode"
                                         optionValue="semesterId"
                                         placeholder="Select Semester"
+                                        appendTo="self"
                                         className="w-full min-w-[180px] h-[48px] bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all font-bold text-slate-700 text-sm shadow-sm"
                                         pt={{
                                             root: { className: 'flex items-center shadow-none' },
@@ -281,6 +282,17 @@ const ThesisPage = () => {
                                 >
                                     <i className="pi pi-cog" />
                                     <span>Evaluation Checklist</span>
+                                </button>
+                            )}
+                            
+                            {isHOD && (
+                                <button
+                                    onClick={() => navigate('/propose-thesis')}
+                                    className="h-[48px] flex items-center gap-2 px-6 bg-orange-600 text-white font-bold rounded-2xl hover:bg-orange-700 transition-all shadow-md text-sm whitespace-nowrap"
+                                    title="Propose New Thesis"
+                                >
+                                    <i className="pi pi-plus" />
+                                    <span>Propose</span>
                                 </button>
                             )}
                         </div>

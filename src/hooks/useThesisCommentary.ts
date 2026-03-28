@@ -7,6 +7,7 @@ import type {
   ThesisReviewStatus,
   ReviewTimelineEvent,
 } from "../types/thesis";
+import type { Team } from "../types/team";
 
 const DEFAULT_INTERVAL_MS = 30000;
 const ACTIVE_REVIEW_INTERVAL_MS = 15000;
@@ -58,6 +59,7 @@ export const useThesisCommentary = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLeader, setIsLeader] = useState(false);
+  const [team, setTeam] = useState<Team | null>(null);
 
   const inFlightRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
@@ -92,12 +94,13 @@ export const useThesisCommentary = (
         ]);
 
         if (isStudent) {
-          const team = await teamService.getMyTeam();
+          const teamData = await teamService.getMyTeam();
           const currentUser = authService.getUser();
-          const member = team?.members.find(
+          const member = teamData?.members.find(
             (item) => item.studentCode === currentUser?.studentCode,
           );
           setIsLeader(member?.role === "Leader");
+          setTeam(teamData);
         }
 
         const nextFingerprint = createFingerprint(
@@ -196,6 +199,7 @@ export const useThesisCommentary = (
       loading,
       error,
       isLeader,
+      team,
       refetch: fetchPayload,
       pausePolling,
       resumePolling,
@@ -210,6 +214,7 @@ export const useThesisCommentary = (
       reviewStatus,
       reviewTimeline,
       thesis,
+      team,
     ],
   );
 };

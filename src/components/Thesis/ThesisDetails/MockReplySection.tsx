@@ -59,6 +59,7 @@ const MockReplySection: React.FC<MockReplySectionProps> = ({
                 <MemberAvatar
                   email={reply.authorEmail ?? ""}
                   fullName={reply.authorName ?? "Participant"}
+                  avatarUrl={reply.authorAvatar ?? undefined}
                   className="w-5 h-5 rounded-full shrink-0"
                 />
                 <span className="text-xs font-semibold text-slate-700">

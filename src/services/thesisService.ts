@@ -16,6 +16,14 @@ interface ProposeThesisRequest {
   title: string;
   shortDescription?: string;
   file: File;
+  thesisNameEn: string;
+  thesisNameVi: string;
+  abbreviation: string;
+  isFromEnterprise: boolean;
+  enterpriseName?: string;
+  isApplied: boolean;
+  isAppUsed: boolean;
+  authorId?: number;
 }
 
 // ─── Update (upload new version) ────────────────────────────────────────────
@@ -33,6 +41,18 @@ export const thesisService = {
       formData.append("ShortDescription", data.shortDescription);
     }
     formData.append("File", data.file);
+    formData.append("ThesisNameEn", data.thesisNameEn);
+    formData.append("ThesisNameVi", data.thesisNameVi);
+    formData.append("Abbreviation", data.abbreviation);
+    formData.append("IsFromEnterprise", data.isFromEnterprise.toString());
+    if (data.enterpriseName) {
+      formData.append("EnterpriseName", data.enterpriseName);
+    }
+    formData.append("IsApplied", data.isApplied.toString());
+    formData.append("IsAppUsed", data.isAppUsed.toString());
+    if (data.authorId) {
+      formData.append("AuthorId", data.authorId.toString());
+    }
     const response = await api.post("/thesis/propose", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });

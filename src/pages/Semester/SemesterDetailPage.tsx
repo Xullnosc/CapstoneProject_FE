@@ -304,69 +304,65 @@ const SemesterDetailPage = () => {
                 </div>
 
                 {/* Content */}
-                {activeTab === 'teams' && (
+                {activeTab === 'teams' ? (
                     <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
-                )}
-                {activeTab === 'whitelists' && (
+                ) : (
                     <SemesterWhitelistsTable
-                        whitelists={whitelistData?.items || []}
+                        key="whitelist-table"
+                        whitelists={
+                            activeTab === 'whitelists' ? (whitelistData?.items || []) :
+                            activeTab === 'lecturers' ? (lecturerData?.items || []) :
+                            (studentData?.items || [])
+                        }
                         isLoading={isWhitelistsLoading}
-                        totalCount={whitelistData?.totalCount ?? 0}
-                        page={whitelistPage - 1}
-                        onPageChange={(p: number) => setWhitelistPage(p + 1)}
-                        headerAction={canManage && !isEnded ? (
-                            <button
-                                onClick={() => setIsImportModalOpen(true)}
-                                className="group relative flex items-center gap-2 px-5 py-2.5 bg-white text-gray-800 rounded-xl text-sm font-bold hover:text-green-600 transition-all border border-gray-200 shadow-sm hover:shadow-md hover:border-green-200 cursor-pointer overflow-hidden"
-                            >
-                                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
-                                <span className="material-symbols-outlined text-xl text-green-500 group-hover:rotate-12 transition-transform">upload_file</span>
-                                <span>Import Whitelist</span>
-                            </button>
-                        ) : undefined}
+                        totalCount={
+                            activeTab === 'whitelists' ? (whitelistData?.totalCount ?? 0) :
+                            activeTab === 'lecturers' ? (lecturerData?.totalCount ?? 0) :
+                            (studentData?.totalCount ?? 0)
+                        }
+                        page={
+                            (activeTab === 'whitelists' ? whitelistPage :
+                             activeTab === 'lecturers' ? lecturerPage :
+                             studentPage) - 1
+                        }
+                        onPageChange={(p: number) => {
+                            if (activeTab === 'whitelists') setWhitelistPage(p + 1);
+                            else if (activeTab === 'lecturers') setLecturerPage(p + 1);
+                            else setStudentPage(p + 1);
+                        }}
+                        headerAction={
+                            canManage && !isEnded ? (
+                                activeTab === 'whitelists' ? (
+                                    <button
+                                        onClick={() => setIsImportModalOpen(true)}
+                                        className="group relative flex items-center gap-2 px-5 py-2.5 bg-white text-gray-800 rounded-xl text-sm font-bold hover:text-green-600 transition-all border border-gray-200 shadow-sm hover:shadow-md hover:border-green-200 cursor-pointer overflow-hidden"
+                                    >
+                                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                                        <span className="material-symbols-outlined text-xl text-green-500 group-hover:rotate-12 transition-transform">upload_file</span>
+                                        <span>Import Whitelist</span>
+                                    </button>
+                                ) : activeTab === 'lecturers' ? (
+                                    <button
+                                        onClick={() => setIsReviewerModalOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">settings_account_box</span>
+                                        Reviewer List
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => { setSelectedStudent(null); setIsStudentModalOpen(true); }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors border border-blue-200 shadow-sm cursor-pointer"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">person_add</span>
+                                        Add Student
+                                    </button>
+                                )
+                            ) : undefined
+                        }
                         onUpdate={refreshActiveTab}
-                        isEnded={isEnded}
-                    />
-                )}
-                {activeTab === 'lecturers' && (
-                    <SemesterWhitelistsTable
-                        whitelists={lecturerData?.items || []}
-                        isLoading={isWhitelistsLoading}
-                        totalCount={lecturerData?.totalCount ?? 0}
-                        page={lecturerPage - 1}
-                        onPageChange={(p: number) => setLecturerPage(p + 1)}
-                        headerAction={canManage && !isEnded ? (
-                            <button
-                                onClick={() => setIsReviewerModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-lg">settings_account_box</span>
-                                Reviewer List
-                            </button>
-                        ) : undefined}
-                        onUpdate={refreshActiveTab}
-                        isEnded={isEnded}
-                    />
-                )}
-                {activeTab === 'students' && (
-                    <SemesterWhitelistsTable
-                        whitelists={studentData?.items || []}
-                        isLoading={isWhitelistsLoading}
-                        totalCount={studentData?.totalCount ?? 0}
-                        page={studentPage - 1}
-                        onPageChange={(p: number) => setStudentPage(p + 1)}
-                        headerAction={canManage && !isEnded ? (
-                            <button
-                                onClick={() => { setSelectedStudent(null); setIsStudentModalOpen(true); }}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors border border-blue-200 shadow-sm cursor-pointer"
-                            >
-                                <span className="material-symbols-outlined text-lg">person_add</span>
-                                Add Student
-                            </button>
-                        ) : undefined}
-                        onEdit={(student) => { setSelectedStudent(student); setIsStudentModalOpen(true); }}
-                        onUpdate={refreshActiveTab}
-                        showStudentCode={true}
+                        onEdit={activeTab === 'students' ? (student) => { setSelectedStudent(student); setIsStudentModalOpen(true); } : undefined}
+                        showStudentCode={activeTab === 'students'}
                         isEnded={isEnded}
                     />
                 )}

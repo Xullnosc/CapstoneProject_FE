@@ -42,10 +42,26 @@ const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
   }
 
   return (
-    <div className="space-y-6 relative">
-      {events.map((event) => (
-        <article key={event.id} className="relative z-10 pl-10">
-          <span className="absolute left-[10px] top-6 w-3 h-3 rounded-full bg-white border-2 border-slate-300 shadow-sm" />
+    <div className="space-y-6 relative overflow-hidden">
+      {events.map((event, idx) => {
+        const isLast = idx === events.length - 1;
+        const getCircleClass = () => {
+          if (event.decision === 'Pass' || event.decision === 'OK') {
+            return "border-emerald-500 bg-emerald-50";
+          }
+          if (event.decision === 'Fail' || event.decision === 'Consider') {
+            return "border-rose-500 bg-rose-50";
+          }
+          // Default / Proposer / Student submission
+          return "border-orange-500 bg-orange-50";
+        };
+
+        return (
+          <article key={event.id} className="relative z-10 pl-10">
+            {!isLast && (
+              <div className="absolute left-[15.5px] top-[34px] bottom-[-24px] w-[2px] bg-slate-100 -z-10" />
+            )}
+            <span className={`absolute left-[10px] top-6 w-3 h-3 rounded-full border-2 transition-all duration-300 z-10 ${getCircleClass()}`} />
           <div className="bg-white rounded-xl overflow-hidden border border-slate-300/25 shadow-sm hover:shadow-md transition-shadow">
             <div className="bg-slate-100/60 px-4 py-2.5 flex items-center justify-between gap-4 border-b border-slate-200/70">
               <div className="flex items-center gap-3 min-w-0">
@@ -128,8 +144,9 @@ const CommentaryTimeline: React.FC<CommentaryTimelineProps> = ({
               />
             </div>
           </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 };

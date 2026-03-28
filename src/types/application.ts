@@ -5,6 +5,7 @@ export interface Application {
     thesisId: string;
     thesisTitle: string | null;
     thesisOwnerName: string | null;
+    thesisOwnerAvatar: string | null;
     teamId: number;
     teamName: string | null;
     status: ApplicationStatus;
