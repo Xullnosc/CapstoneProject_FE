@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
 import type { AIProviderType, SaveUserAIProvider } from '../../../../types/ai';
 import { PROVIDER_META } from '../../../../types/ai';
 
@@ -47,7 +48,11 @@ export default function ApiKeySection({
   const toggleVisibility = (key: string) => {
     setVisibleKeys((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
       return next;
     });
   };
@@ -81,8 +86,28 @@ export default function ApiKeySection({
   const isTesting = testingProvider === defaultProvider;
   const isConnected = connectedProviders.has(defaultProvider);
 
+  const confirmDeleteProvider = (event: MouseEvent<HTMLElement>) => {
+    if (!onDeleteProvider) {
+      return;
+    }
+
+    confirmPopup({
+      target: event.currentTarget,
+      message: `Delete saved settings for ${selectedMeta.label}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptClassName: 'p-button-danger',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        void onDeleteProvider(defaultProvider);
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
+      <ConfirmPopup />
+
       {/* Provider selection */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">
@@ -140,7 +165,7 @@ export default function ApiKeySection({
                 text
                 severity="danger"
                 disabled={readOnly}
-                onClick={() => onDeleteProvider(defaultProvider)}
+                onClick={confirmDeleteProvider}
                 aria-label={`Delete ${selectedMeta.label}`}
               />
             )}
@@ -188,8 +213,17 @@ export default function ApiKeySection({
           <Dropdown
             value={providerData.model || selectedMeta.defaultModel}
             options={selectedMeta.modelOptions.map((model) => ({ label: model, value: model }))}
-            editable
-            onChange={(e) => updateProvider(defaultProvider, 'model', e.value as string)}
+            optionLabel="label"
+            optionValue="value"
+            onChange={(e) => {
+              const selectedModel = typeof e.value === 'string'
+                ? e.value
+                : (e.value?.value as string | undefined);
+              updateProvider(defaultProvider, 'model', selectedModel?.trim() || selectedMeta.defaultModel);
+            }}
+            filter
+            filterBy="label"
+            placeholder={`Select a ${selectedMeta.label} model…`}
             className="w-full"
             disabled={readOnly}
             pt={{ root: { className: 'w-full' } }}
