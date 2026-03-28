@@ -394,7 +394,14 @@ const Header = () => {
                 <Menu as="div" className="relative">
                     <MenuButton className="flex items-center gap-3 rounded-full hover:bg-gray-50 transition-colors p-1 pr-2 outline-none cursor-pointer">
                         <div className="text-right hidden sm:block">
-                            <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
+                            <div className="text-sm font-bold text-gray-800">
+                                {(() => {
+                                    const name = authService.getUser()?.fullName || 'User';
+                                    const words = name.trim().split(/\s+/);
+                                    if (words.length <= 2) return name;
+                                    return `${words[words.length - 2]} ${words[words.length - 1]}`;
+                                })()}
+                            </div>
                             <div className="text-xs text-gray-500">
                                 {authService.getUser()?.roleName || 'Student'}
                             </div>
