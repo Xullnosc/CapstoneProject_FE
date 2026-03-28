@@ -14,6 +14,23 @@ export interface Checklist {
   content: string;
 }
 
+export interface ThesisAIReviewChecklistItem {
+  checklistId: number;
+  checked: boolean;
+  reason?: string | null;
+}
+
+export interface ThesisAIReviewPreview {
+  suggestedDecision: "OK" | "Consider";
+  feedback: string;
+  checklist: ThesisAIReviewChecklistItem[];
+  warnings: string[];
+  usedMetadataFallback: boolean;
+  provider?: string | null;
+  model?: string | null;
+  generatedAtUtc: string;
+}
+
 // Matches ThesisHistoryDTO from backend
 export interface ThesisHistory {
   id: number;

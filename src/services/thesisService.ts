@@ -6,6 +6,7 @@ import type {
   ReviewTimelineEvent,
   ReviewTimelineComment,
   Checklist,
+  ThesisAIReviewPreview,
 } from "../types/thesis";
 
 export type ThesisDecision = "Pass" | "Fail";
@@ -149,6 +150,13 @@ export const thesisService = {
       decision: data.decision === "OK" ? "Pass" : "Fail"
     };
     await api.put(`/thesis/${id}/hod-decision`, payload);
+  },
+
+  getAiReviewPreview: async (id: string): Promise<ThesisAIReviewPreview> => {
+    const response = await api.post<ThesisAIReviewPreview>(
+      `/thesis/${id}/ai-review-preview`,
+    );
+    return response.data;
   },
 
   /** GET /thesis/:id/review-status - get review status */
