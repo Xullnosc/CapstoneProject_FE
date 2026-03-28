@@ -111,7 +111,9 @@ const buildConversationEvents = (
     },
   ];
 
-  const reviewEvents = timeline.map((event, index) => {
+  const reviewEvents = timeline
+    .filter((event) => event.eventType !== "REVIEWER_ASSIGNED" && event.eventType !== "REVIEWER_UNASSIGNED")
+    .map((event, index) => {
     const mainComment = event.comments.find(
       (comment) => !comment.parentCommentId,
     );
@@ -134,8 +136,9 @@ const buildConversationEvents = (
       actorRole: event.actorRole,
       decision: event.decision ?? undefined,
       replies: event.comments.filter(
-        (comment) => comment.parentCommentId || comment.id !== mainComment?.id,
+        (comment) => comment.parentCommentId || (mainComment && comment.id !== mainComment.id),
       ),
+      checklistResults: [],
     };
   });
 
@@ -180,6 +183,14 @@ const ThesisDetailPage = () => {
     resumePolling,
   } = useThesisCommentary(id, isStudent);
   const isOwner = thesis?.userId === user?.userId;
+  const showConversations = !isStudent || isOwner;
+
+  // Reset activeTab if showConversations changes (e.g. data finally loads)
+  useEffect(() => {
+    if (thesis && !showConversations && activeTab === "conversations") {
+      setActiveTab("versions");
+    }
+  }, [thesis, showConversations, activeTab]);
 
   const showSuccess = useCallback((message: string) => {
     Swal.fire({
@@ -331,10 +342,10 @@ const ThesisDetailPage = () => {
     });
   }, [executeToggleLock, thesis]);
 
-  const conversationEvents = useMemo(
-    () => (thesis ? buildConversationEvents(thesis, reviewTimeline) : []),
-    [thesis, reviewTimeline],
-  );
+  const conversationEvents = useMemo(() => {
+    if (!thesis) return [];
+    return buildConversationEvents(thesis, reviewTimeline);
+  }, [thesis, reviewTimeline]);
 
   const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
   const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
@@ -486,13 +497,13 @@ const ThesisDetailPage = () => {
       <div className="max-w-[1440px] mx-auto space-y-6">
         <PremiumBreadcrumb items={breadcrumbItems} />
         <CommentaryHeader thesis={thesis} subtitle={`${thesis.ownerName ?? "Unknown"} ${formatRelativeTime(submissionDateStr)}`} />
-        <CommentaryTabs activeTab={activeTab} conversationCount={conversationEvents.length} versionCount={thesis.histories?.length ?? 0} onChange={setActiveTab} />
+        <CommentaryTabs activeTab={activeTab} conversationCount={conversationEvents.length} versionCount={thesis.histories?.length ?? 0} onChange={setActiveTab} showConversations={showConversations} />
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="order-2 lg:order-1 lg:col-span-9 space-y-6 relative">
             {activeTab === "conversations" ? (
               <>
                 <ResearchDocumentCard fileUrl={thesis.fileUrl} />
-                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={reviewers.length} latestReviewer={latestReviewer} />
+                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={2} latestReviewer={latestReviewer} />
                 <CommentaryTimeline events={conversationEvents} emptyMessage="Evaluation in progress..." canReply={canReplyToTimeline} onAddReply={handleAddReply} />
                 <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
               </>

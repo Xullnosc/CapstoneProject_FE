@@ -239,7 +239,7 @@ const Header = () => {
 
             {/* Center Section: Dynamic Navigation & Action Button (Tablet/Desktop) */}
             {user?.roleName !== 'Admin' && !isHOD && (
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden sm:flex items-center gap-6 lg:gap-12">
+                <div className="hidden sm:flex items-center gap-2 lg:gap-4 xl:gap-6 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                     {(() => {
                         interface NavItem {
                             id: string;
@@ -264,32 +264,36 @@ const Header = () => {
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
 
-                        // Dynamic Balancing: If odd, add FPT Logo as filler (immediately right of the + button)
-                        if (navItems.length % 2 !== 0) {
-                            const insertIndex = Math.ceil(navItems.length / 2);
-                            navItems.splice(insertIndex, 0, {
-                                id: 'fpt-logo',
-                                label: 'FPT University',
-                                icon: 'https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png',
-                                path: 'https://fpt.edu.vn/',
-                                show: true,
-                                isExternal: true
-                            });
-                        }
+                        const displayNavItems = [...navItems];
+                        const isLogoFiller = displayNavItems.length % 2 !== 0;
 
-                        const mid = Math.ceil(navItems.length / 2);
-                        const leftItems = navItems.slice(0, mid);
-                        const rightItems = navItems.slice(mid);
+                        const mid = Math.ceil(displayNavItems.length / 2);
+                        const leftItems = displayNavItems.slice(0, mid);
+                        const rightItems = displayNavItems.slice(mid);
+
+                        const fptLogoItem: NavItem = {
+                            id: 'fpt-logo',
+                            label: 'FPT',
+                            icon: 'https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png',
+                            path: 'https://fpt.edu.vn',
+                            show: true,
+                            isExternal: true
+                        };
 
                         const renderItem = (item: NavItem) => (
                             <div
                                 key={item.id}
                                 onClick={() => item.isExternal ? window.open(item.path, '_blank') : item.path && navigate(item.path)}
-                                className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer whitespace-nowrap ${item.path && location.pathname.startsWith(item.path) ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'
-                                    }`}
+                                className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                                    item.path && (
+                                        item.path === '/home' 
+                                            ? (location.pathname === '/home' || location.pathname === '/')
+                                            : location.pathname.startsWith(item.path)
+                                    ) ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'
+                                }`}
                             >
                                 {item.id === 'fpt-logo' ? (
-                                    <img src={item.icon} alt="FPT" className="h-8 w-auto min-w-[100px] lg:h-9 lg:min-w-[130px] object-contain" />
+                                    <img src={item.icon} alt="FPT" className="h-6 lg:h-8 w-auto min-w-[80px] lg:min-w-[100px] object-contain" />
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
@@ -298,26 +302,30 @@ const Header = () => {
                                         )}
                                     </div>
                                 )}
-                                {item.id !== 'fpt-logo' && <span className="hidden lg:block">{item.label}</span>}
+                                {item.id !== 'fpt-logo' && <span className="hidden xl:block">{item.label}</span>}
                             </div>
                         );
 
                         return (
                             <>
-                                <nav className="flex items-center gap-3 lg:gap-6">
+                                <nav className="flex items-center gap-1.5 lg:gap-3">
                                     {leftItems.map(renderItem)}
                                 </nav>
 
-                                {(isStudent || isLecturer) && (
-                                    <button
-                                        onClick={() => navigate('/propose-thesis')}
-                                        className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none shrink-0"
-                                    >
-                                        <i className="pi pi-plus text-xl lg:text-2xl font-bold"></i>
-                                    </button>
-                                )}
+                                <div className="flex items-center gap-2 lg:gap-4">
+                                    {(isStudent || isLecturer) && (
+                                        <button
+                                            onClick={() => navigate('/propose-thesis')}
+                                            className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none shrink-0"
+                                        >
+                                            <i className="pi pi-plus text-lg lg:text-xl font-bold"></i>
+                                        </button>
+                                    )}
 
-                                <nav className="flex items-center gap-3 lg:gap-6">
+                                    {isLogoFiller && renderItem(fptLogoItem)}
+                                </div>
+
+                                <nav className="flex items-center gap-1.5 lg:gap-3">
                                     {rightItems.map(renderItem)}
                                 </nav>
                             </>
@@ -387,7 +395,14 @@ const Header = () => {
                 <Menu as="div" className="relative">
                     <MenuButton className="flex items-center gap-3 rounded-full hover:bg-gray-50 transition-colors p-1 pr-2 outline-none cursor-pointer">
                         <div className="text-right hidden sm:block">
-                            <div className="text-sm font-bold text-gray-800">{authService.getUser()?.fullName || 'User'}</div>
+                            <div className="text-sm font-bold text-gray-800">
+                                {(() => {
+                                    const name = authService.getUser()?.fullName || 'User';
+                                    const words = name.trim().split(/\s+/);
+                                    if (words.length <= 2) return name;
+                                    return `${words[words.length - 2]} ${words[words.length - 1]}`;
+                                })()}
+                            </div>
                             <div className="text-xs text-gray-500">
                                 {authService.getUser()?.roleName || 'Student'}
                             </div>

@@ -24,6 +24,7 @@ interface CommentarySidebarProps {
   onUploadRevision: () => void;
   onOpenComment: () => void;
   isHOD?: boolean;
+  infoMessage?: string;
 }
 
 const Section = ({
@@ -62,6 +63,7 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
   onUploadRevision,
   onOpenComment,
   isHOD,
+  infoMessage,
 }) => {
   const reviewers = reviewStatus?.reviewers ?? [];
 
@@ -179,7 +181,11 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
                   <span
                     className={`text-[10px] font-bold ${reviewer.decision === "Pass" ? "text-emerald-600" : reviewer.decision === "Fail" ? "text-rose-600" : "text-slate-500"}`}
                   >
-                    {reviewer.decision === "Pass" ? "OK" : reviewer.decision === "Fail" ? "Consider" : (reviewer.decision ?? "Awaiting review")}
+                    {reviewer.decision === "Pass"
+                      ? "OK"
+                      : reviewer.decision === "Fail"
+                        ? "Consider"
+                        : (reviewer.decision ?? "Awaiting review")}
                   </span>
                 </div>
               ))
@@ -239,6 +245,13 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
           <SubmissionCalendar dateValue={submissionDateRaw} />
         </Section>
 
+        {infoMessage && (
+          <Section title="Information">
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {infoMessage}
+            </p>
+          </Section>
+        )}
       </div>
     </aside>
   );
