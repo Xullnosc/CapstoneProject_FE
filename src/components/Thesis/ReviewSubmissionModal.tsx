@@ -144,7 +144,7 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                 mask: { className: 'backdrop-blur-sm bg-slate-900/40' }
             }}
         >
-            <div className="flex flex-col lg:flex-row gap-6 h-[70vh]">
+            <div className="flex flex-col lg:flex-row gap-6 h-[60vh]">
                 {/* Left Pane: Document Preview */}
                 <div className="flex-1 flex flex-col h-full border border-slate-100 rounded-[2rem] bg-slate-50 overflow-hidden shadow-inner relative">
                     <div className="absolute top-4 left-4 z-10">
