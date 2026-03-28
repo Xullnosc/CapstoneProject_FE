@@ -2,125 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
-import { applicationService } from '../../services/applicationService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
-import { authService } from '../../services/authService';
-import { teamService } from '../../services/teamService';
-import Swal from '../../utils/swal';
+import MemberAvatar from '../../components/team/MemberAvatar';
 
 const PublishedThesisPage = () => {
     const navigate = useNavigate();
     const [theses, setTheses] = useState<Thesis[]>([]);
-    const [appliedThesisIds, setAppliedThesisIds] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
     const [searchTitle, setSearchTitle] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    const user = authService.getUser();
-    const isStudent = user?.roleName === 'Student';
-    const [isLeader, setIsLeader] = useState(false);
-
-    const handleRegisterClick = async (thesis: Thesis) => {
-        const result = await Swal.fire({
-            title: 'Request Thesis Assignment?',
-            html: `Do you want to request an assignment for <strong>"${thesis.title}"</strong>?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#f97415',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Yes, request',
-            cancelButtonText: 'Cancel',
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-            await applicationService.submitApplication(thesis.thesisId);
-            Swal.fire({
-                icon: 'success',
-                title: 'Assignment Requested!',
-                text: 'Your request has been submitted successfully.',
-                timer: 2500,
-                showConfirmButton: false,
-            });
-            fetchMyApplications();
-        } catch (err: unknown) {
-            const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-            const message = axiosMsg || (err instanceof Error ? err.message : 'Failed to submit application.');
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: message,
-            });
-        }
-    };
-
-    const fetchMyApplications = useCallback(async () => {
-        if (!isStudent) return;
-        try {
-            const apps = await applicationService.getMyApplications();
-            // Map thesisId to application id for cancellation
-            const mapping = apps.reduce((acc, app) => ({ ...acc, [app.thesisId]: app.id }), {});
-            setAppliedThesisIds(mapping);
-        } catch (err) {
-            console.error('Failed to fetch my applications', err);
-        }
-    }, [isStudent]);
-
-    useEffect(() => {
-        fetchMyApplications();
-    }, [fetchMyApplications]);
-
-    const handleCancelClick = async (appId: number, thesisTitle: string) => {
-        const result = await Swal.fire({
-            title: 'Cancel Assignment Request?',
-            html: `Are you sure you want to cancel your request for <strong>"${thesisTitle}"</strong>?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#ef4444',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Yes, cancel it',
-            cancelButtonText: 'No, keep it',
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-            await applicationService.cancelApplication(appId);
-            Swal.fire({
-                icon: 'success',
-                title: 'Cancelled',
-                text: 'Your request has been cancelled.',
-                timer: 2000,
-                showConfirmButton: false,
-            });
-            fetchMyApplications();
-        } catch (err: unknown) {
-            const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: axiosMsg || 'Failed to cancel request.',
-            });
-        }
-    };
-
-    useEffect(() => {
-        const checkLeaderStatus = async () => {
-            if (!isStudent) return;
-            try {
-                const team = await teamService.getMyTeam();
-                if (team) {
-                    const member = team.members.find(m => m.studentCode === user?.studentCode);
-                    if (member?.role === 'Leader') {
-                        setIsLeader(true);
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to check leader status', err);
-            }
-        };
-        checkLeaderStatus();
-    }, [isStudent, user?.studentCode]);
 
     // Debounce
     useEffect(() => {
@@ -193,7 +83,7 @@ const PublishedThesisPage = () => {
                         type="text"
                         value={debouncedSearch}
                         onChange={(e) => setDebouncedSearch(e.target.value)}
-                        placeholder="Search thesis title..."
+                        placeholder="Search by thesis title or proposer..."
                         className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
                     />
                 </div>
@@ -243,19 +133,20 @@ const PublishedThesisPage = () => {
                                 </div>
 
                                 {/* Lecturer */}
-                                {thesis.ownerName && (
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="size-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">
-                                            {thesis.ownerName.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="text-slate-700 text-sm font-medium leading-none">{thesis.ownerName}</p>
-                                            {thesis.ownerEmail && (
-                                                <p className="text-slate-400 text-xs mt-0.5">{thesis.ownerEmail}</p>
-                                            )}
-                                        </div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <MemberAvatar
+                                        email={thesis.ownerEmail ?? ""}
+                                        fullName={thesis.ownerName ?? "Author"}
+                                        avatarUrl={thesis.ownerAvatar ?? undefined}
+                                        className="size-7 rounded-full shrink-0"
+                                    />
+                                    <div>
+                                        <p className="text-slate-700 text-sm font-medium leading-none">{thesis.ownerName}</p>
+                                        {thesis.ownerEmail && (
+                                            <p className="text-slate-400 text-xs mt-0.5">{thesis.ownerEmail}</p>
+                                        )}
                                     </div>
-                                )}
+                                </div>
 
                                 {/* Description */}
                                 {thesis.shortDescription && (
@@ -272,30 +163,13 @@ const PublishedThesisPage = () => {
                             </div>
 
                             {/* Actions */}
-                            <div className="px-6 pb-6 pt-2 flex gap-3">
+                            <div className="px-6 pb-6 pt-2">
                                 <button
                                     onClick={() => navigate(`/thesis/${thesis.thesisId}`)}
-                                    className="flex-1 py-2.5 border-2 border-orange-500 text-orange-600 font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
+                                    className="w-full py-3 bg-white border-2 border-orange-500 text-orange-600 font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
                                 >
                                     View Details
                                 </button>
-                                {isStudent && isLeader && (
-                                    appliedThesisIds[thesis.thesisId] ? (
-                                        <button
-                                            onClick={() => handleCancelClick(appliedThesisIds[thesis.thesisId], thesis.title)}
-                                            className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl cursor-pointer hover:bg-red-600 transition-colors shadow-sm text-sm"
-                                        >
-                                            Cancel Assign
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleRegisterClick(thesis)}
-                                            className="flex-1 py-2.5 bg-orange-500 text-white font-bold rounded-xl cursor-pointer hover:bg-orange-600 transition-colors shadow-sm text-sm"
-                                        >
-                                            Request Assignment
-                                        </button>
-                                    )
-                                )}
                             </div>
                         </div>
                     ))}

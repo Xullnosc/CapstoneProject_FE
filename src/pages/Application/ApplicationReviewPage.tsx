@@ -171,6 +171,7 @@ const ApplicationReviewPage = () => {
                             onChange={(e) => { setSelectedThesisId(e.value); setPage(1); }}
                             placeholder={thesesLoading ? "Loading..." : (thesisOptions.length === 0 ? "No published thesis" : "Select a thesis")}
                             disabled={thesesLoading || thesisOptions.length === 0}
+                            appendTo="self"
                             className="w-full border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm text-slate-900"
                             pt={{
                                 root: { className: 'h-[42px] flex items-center shadow-none' },
@@ -188,6 +189,7 @@ const ApplicationReviewPage = () => {
                             options={FILTER_STATUSES}
                             onChange={(e) => { setStatusFilter(e.value); setPage(1); }}
                             placeholder="Filter Status"
+                            appendTo="self"
                             className="w-full border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm text-slate-900"
                             pt={{
                                 root: { className: 'h-[42px] flex items-center shadow-none' },

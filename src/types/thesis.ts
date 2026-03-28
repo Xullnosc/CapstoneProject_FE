@@ -23,6 +23,7 @@ export interface ThesisHistory {
   note: string | null;
   uploadedBy: number;
   uploaderName: string | null;
+  uploaderAvatar: string | null;
   createdAt: string;
 }
 
@@ -43,6 +44,15 @@ export interface Thesis {
   isLocked: boolean;
   mentorEmail1?: string | null;
   mentorEmail2?: string | null;
+
+  thesisNameEn: string | null;
+  thesisNameVi: string | null;
+  abbreviation: string | null;
+  isFromEnterprise: boolean;
+  enterpriseName: string | null;
+  isApplied: boolean;
+  isAppUsed: boolean;
+
   histories: ThesisHistory[] | null;
 
   reviews: ThesisReview[] | null;

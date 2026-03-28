@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { InputSwitch } from "primereact/inputswitch";
+import MemberAvatar from "../team/MemberAvatar";
 import type { Thesis } from "../../types/thesis";
 import ThesisStatusBadge from "./ThesisStatusBadge";
 
@@ -88,9 +89,12 @@ const ThesisCard = ({
         {/* Author */}
         {thesis.ownerName && (
           <div className="flex items-center gap-3 mb-3">
-            <div className="size-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-xs font-bold flex-shrink-0">
-              {thesis.ownerName.charAt(0).toUpperCase()}
-            </div>
+            <MemberAvatar
+              email={thesis.ownerEmail ?? ""}
+              fullName={thesis.ownerName ?? "Author"}
+              avatarUrl={thesis.ownerAvatar ?? undefined}
+              className="size-7 rounded-full shrink-0"
+            />
             <span className="text-slate-600 text-sm font-medium">
               {thesis.ownerName}
             </span>

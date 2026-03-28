@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Application } from '../../types/application';
 import { applicationService } from '../../services/applicationService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
+import MemberAvatar from '../../components/team/MemberAvatar';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 
@@ -164,9 +165,12 @@ const MyApplicationsPage = () => {
                                     {/* Thesis Owner */}
                                     {app.thesisOwnerName && (
                                         <div className="flex items-center gap-2 mb-3">
-                                            <div className="size-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">
-                                                {app.thesisOwnerName.charAt(0).toUpperCase()}
-                                            </div>
+                                            <MemberAvatar
+                                                email={""}
+                                                fullName={app.thesisOwnerName ?? "Author"}
+                                                avatarUrl={app.thesisOwnerAvatar ?? undefined}
+                                                className="size-7 rounded-full shrink-0"
+                                            />
                                             <p className="text-slate-700 text-sm font-medium">{app.thesisOwnerName}</p>
                                         </div>
                                     )}

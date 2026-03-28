@@ -130,6 +130,7 @@ const ReviewerModal: FC<ReviewerModalProps> = ({ isOpen, onClose, lecturers, onU
                             options={availableLecturers}
                             optionLabel="fullName"
                             placeholder="Select a Lecturer"
+                            appendTo="self"
                             className="w-full md:w-14rem p-inputtext-sm border-gray-300 rounded-xl"
                             itemTemplate={lecturerOptionTemplate}
                             filter

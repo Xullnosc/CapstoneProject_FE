@@ -351,6 +351,7 @@ const HodAccountsPage = () => {
                 options={CAMPUSES}
                 onChange={(e) => setCampus(e.value)}
                 placeholder="Select Campus"
+                appendTo="self"
                 className="w-full text-sm"
                 disabled={isSubmitting}
               />

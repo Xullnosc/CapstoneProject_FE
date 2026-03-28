@@ -3,14 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { Checkbox } from 'primereact/checkbox';
+import type { CheckboxChangeEvent } from 'primereact/checkbox';
 import { authService } from '../../services/authService';
 import { thesisService } from '../../services/thesisService';
 import { teamService } from '../../services/teamService';
 import { thesisFormService } from '../../services/thesisFormService';
 import { semesterService } from '../../services/semesterService';
+import { userService, type UserInfo } from '../../services/userService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
 import type { ThesisForm } from '../../types/thesisForm';
+import { AutoComplete } from 'primereact/autocomplete';
+import type { AutoCompleteCompleteEvent } from 'primereact/autocomplete';
+import enterpriseData from '../../data/enterprises.json';
+import MemberAvatar from '../../components/team/MemberAvatar';
 
 const ProposeThesisPage = () => {
     const navigate = useNavigate();
@@ -22,9 +29,38 @@ const ProposeThesisPage = () => {
     const [accessMessage, setAccessMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+    const [user, setUser] = useState<UserInfo | undefined>(undefined);
+    const [isHOD, setIsHOD] = useState(false);
+    const [selectedLecturer, setSelectedLecturer] = useState<UserInfo | undefined>(undefined);
+    const [filteredLecturers, setFilteredLecturers] = useState<UserInfo[]>([]);
     const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
+    const [thesisNameEn, setThesisNameEn] = useState('');
+    const [thesisNameVi, setThesisNameVi] = useState('');
+    const [abbreviation, setAbbreviation] = useState('');
+    const [isFromEnterprise, setIsFromEnterprise] = useState(false);
+    const [enterpriseName, setEnterpriseName] = useState('');
+    const [isApplied, setIsApplied] = useState(false);
+    const [isAppUsed, setIsAppUsed] = useState(false);
+    const [filteredEnterprises, setFilteredEnterprises] = useState<string[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const searchEnterprise = (event: AutoCompleteCompleteEvent) => {
+        const query = event.query.toLowerCase();
+        const filtered = (enterpriseData as string[]).filter(item =>
+            item.toLowerCase().includes(query)
+        );
+        setFilteredEnterprises(filtered);
+    };
+
+    const searchLecturers = async (event: AutoCompleteCompleteEvent) => {
+        try {
+            const results = await userService.searchLecturers(event.query);
+            setFilteredLecturers(results);
+        } catch (error) {
+            console.error("Failed to search lecturers", error);
+        }
+    };
 
     useEffect(() => {
         const fetchLatestForm = async () => {
@@ -39,17 +75,20 @@ const ProposeThesisPage = () => {
         const checkAccess = async () => {
             setIsLoadingAccess(true);
             try {
-                const user = authService.getUser();
-                if (!user) {
+                const currentUser = authService.getUser();
+                setUser(currentUser);
+                if (!currentUser) {
                     setHasAccess(false);
                     setAccessMessage('Please log in to propose a thesis.');
                     return;
                 }
 
+                setIsHOD(currentUser.roleName === 'HOD' || currentUser.roleName === 'Head of Department' || currentUser.roleName === 'Admin');
+
                 // Based on user persona constraints
-                if (user.roleName === 'Lecturer' || user.roleName === 'Admin' || user.roleName === 'HOD') {
+                if (currentUser.roleName === 'Lecturer' || currentUser.roleName === 'Admin' || currentUser.roleName === 'HOD') {
                     setHasAccess(true);
-                } else if (user.roleName === 'Student') {
+                } else if (currentUser.roleName === 'Student') {
                     try {
                         const myTeam = await teamService.getMyTeam();
                         if (!myTeam) {
@@ -75,7 +114,7 @@ const ProposeThesisPage = () => {
                             }
 
                             // If not proposed, only leader has access to the propose form
-                            if (myTeam.leaderId !== user.userId) {
+                            if (user && myTeam.leaderId !== user.userId) {
                                 setHasAccess(false);
                                 setAccessMessage('Only the Team Leader can propose a thesis.');
                             } else {
@@ -97,7 +136,7 @@ const ProposeThesisPage = () => {
 
         checkAccess();
         fetchLatestForm();
-    }, [navigate]);
+    }, [navigate, user?.userId]);
 
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -147,11 +186,33 @@ const ProposeThesisPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!title.trim() || !description.trim() || !file) {
+        if (!title.trim() || !description.trim() || !file || !thesisNameEn.trim() || !thesisNameVi.trim() || !abbreviation.trim()) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Missing Fields',
-                text: 'Please fill in all fields and attach a file.',
+                text: 'Please fill in all mandatory fields (Title, English/Vietnamese Names, Abbreviation, Description) and attach a file.',
+                confirmButtonColor: '#f97415'
+            });
+            return;
+        }
+
+        // Abbreviation validation: Alphanumeric, max 5 characters
+        const abbrRegex = /^[a-zA-Z0-9]{1,5}$/;
+        if (!abbrRegex.test(abbreviation)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Abbreviation',
+                text: 'Abbreviation must only contain English letters and numbers, and be at most 5 characters long.',
+                confirmButtonColor: '#f97415'
+            });
+            return;
+        }
+
+        if (isFromEnterprise && !enterpriseName.trim()) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Enterprise Name',
+                text: 'Please provide the name of the enterprise.',
                 confirmButtonColor: '#f97415'
             });
             return;
@@ -162,7 +223,15 @@ const ProposeThesisPage = () => {
             await thesisService.proposeThesis({
                 title: title.trim(),
                 shortDescription: description.trim(),
-                file: file
+                file: file,
+                thesisNameEn: thesisNameEn.trim(),
+                thesisNameVi: thesisNameVi.trim(),
+                abbreviation: abbreviation.trim().toUpperCase(),
+                isFromEnterprise,
+                enterpriseName: isFromEnterprise ? enterpriseName.trim() : undefined,
+                isApplied,
+                isAppUsed,
+                authorId: selectedLecturer?.userId
             });
 
             Swal.fire({
@@ -171,7 +240,7 @@ const ProposeThesisPage = () => {
                 text: 'Thesis proposal submitted successfully!',
                 confirmButtonColor: '#f97415'
             }).then(() => {
-                navigate('/my-thesis');
+                navigate(isHOD ? '/thesis' : '/my-thesis');
             });
 
             // Reset form
@@ -290,19 +359,228 @@ const ProposeThesisPage = () => {
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
+                        {/* HOD: Select Author lecturer */}
+                        {isHOD && (
+                            <div className="flex flex-col gap-2 p-5 bg-orange-50/30 rounded-2xl border border-orange-100">
+                                <label htmlFor="lecturer" className="font-bold text-orange-900 flex items-center gap-2">
+                                    <i className="pi pi-user-plus"></i>
+                                    Author (Lecturer)
+                                </label>
+                                <p className="text-xs text-orange-600 mb-1">Search and select the lecturer who will be the primary author of this thesis topic.</p>
+
+                                {!selectedLecturer ? (
+                                <AutoComplete<UserInfo>
+                                    id="lecturer"
+                                    value={selectedLecturer}
+                                    suggestions={filteredLecturers}
+                                    completeMethod={searchLecturers}
+                                    field="fullName"
+                                    onChange={(e) => setSelectedLecturer(e.value)}
+                                    placeholder="Type lecturer name or email..."
+                                    className="w-full"
+                                    appendTo="self"
+                                    inputClassName="w-full p-4 rounded-xl border-2 border-orange-100 hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all duration-200 shadow-sm"
+                                    pt={{
+                                        dropdownButton: {
+                                            root: { className: 'bg-orange-500 border-orange-500 hover:bg-orange-600 hover:border-orange-600 rounded-r-xl w-12 transition-colors' }
+                                        },
+                                        loadingIcon: { className: 'text-orange-500' },
+                                        panel: { className: 'border-none shadow-2xl rounded-2xl overflow-hidden mt-2 animate-fade-in bg-white' },
+                                        list: { className: 'p-2' },
+                                        item: ({ context }: { context: { selected: boolean, focused: boolean } }) => ({
+                                            className: `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer mb-1 ${context.selected
+                                                ? 'bg-orange-500 text-white shadow-md'
+                                                : context.focused
+                                                    ? 'bg-orange-50 text-orange-900'
+                                                    : 'text-slate-700 hover:bg-orange-50/50'
+                                                }`
+                                        })
+                                    }}
+                                    itemTemplate={(item: UserInfo) => {
+                                        const isSelected = (selectedLecturer as unknown as UserInfo)?.userId === item.userId;
+                                        return (
+                                            <div className="flex items-center gap-3">
+                                                <MemberAvatar
+                                                    email={item.email}
+                                                    fullName={item.fullName}
+                                                    avatarUrl={item.avatar}
+                                                    className={`size-10 rounded-full shrink-0 border-2 ${isSelected ? 'border-white/30' : 'border-orange-100'}`}
+                                                />
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                                                        {item.fullName}
+                                                    </span>
+                                                    <span className={`text-xs truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                                                        {item.email}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    }}
+                                    dropdown
+                                />
+                                ) : (
+                                    <div className="flex items-center justify-between p-3 bg-white border-2 border-orange-200 rounded-2xl shadow-sm animate-fade-in">
+                                        <div className="flex items-center gap-4">
+                                            <MemberAvatar
+                                                email={selectedLecturer?.email ?? ""}
+                                                fullName={selectedLecturer?.fullName ?? ""}
+                                                avatarUrl={selectedLecturer?.avatar}
+                                                className="size-12 rounded-2xl shrink-0"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-lg text-slate-800 leading-tight">{selectedLecturer?.fullName}</span>
+                                                <span className="text-sm text-slate-500">{selectedLecturer?.email}</span>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            icon="pi pi-times"
+                                            onClick={() => setSelectedLecturer(undefined)}
+                                            className="p-button-rounded p-button-text p-button-danger hover:bg-red-50"
+                                            tooltip="Change Lecturer"
+                                            tooltipOptions={{ position: 'left' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Title Input */}
                         <div className="flex flex-col gap-2">
-                            <label htmlFor="title" className="font-semibold text-gray-700">Thesis Title <span className="text-red-500">*</span></label>
+                            <label htmlFor="title" className="font-semibold text-gray-700">Display Title <span className="text-red-500">*</span></label>
                             <InputText
                                 id="title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Enter a concise and descriptive title"
-                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-colors shadow-sm"
-                                pt={{
-                                    root: { className: 'font-medium text-gray-800' }
-                                }}
+                                placeholder="Enter a public display title"
+                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
                             />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* English Name */}
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="thesisNameEn" className="font-semibold text-gray-700">English Name <span className="text-red-500">*</span></label>
+                                <InputText
+                                    id="thesisNameEn"
+                                    value={thesisNameEn}
+                                    onChange={(e) => setThesisNameEn(e.target.value)}
+                                    placeholder="Official English Title"
+                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                />
+                            </div>
+
+                            {/* Vietnamese Name */}
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="thesisNameVi" className="font-semibold text-gray-700">Vietnamese Name <span className="text-red-500">*</span></label>
+                                <InputText
+                                    id="thesisNameVi"
+                                    value={thesisNameVi}
+                                    onChange={(e) => setThesisNameVi(e.target.value)}
+                                    placeholder="Official Vietnamese Title"
+                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Abbreviation & Classification Row */}
+                        <div className="flex flex-col md:flex-row items-end gap-6 overflow-hidden">
+                            {/* Abbreviation */}
+                            <div className="flex flex-col gap-2 w-full md:w-[180px]">
+                                <label htmlFor="abbreviation" className="font-semibold text-gray-700">Abbreviation <span className="text-red-500">*</span></label>
+                                <InputText
+                                    id="abbreviation"
+                                    value={abbreviation}
+                                    onChange={(e) => setAbbreviation(e.target.value.toUpperCase())}
+                                    placeholder="e.g. FCTMS"
+                                    maxLength={5}
+                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                />
+                            </div>
+
+                            {/* Applied & AppUsed Checkboxes */}
+                            <div className="flex items-center gap-6 pb-3 pt-2">
+                                <div 
+                                    className="flex items-center gap-2 group cursor-pointer transition-colors"
+                                    onClick={() => setIsApplied(!isApplied)}
+                                >
+                                    <Checkbox
+                                        inputId="isApplied"
+                                        checked={isApplied}
+                                        onChange={(e: CheckboxChangeEvent) => {
+                                            e.originalEvent?.stopPropagation();
+                                            setIsApplied(e.checked ?? false);
+                                        }}
+                                        pt={{
+                                            box: ({ context }: { context: { checked: boolean } }) => ({
+                                                className: context.checked ? 'bg-orange-500 border-orange-500' : ''
+                                            })
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium text-slate-600 group-hover:text-orange-600 transition-colors whitespace-nowrap select-none">Has Application Value</span>
+                                </div>
+                                <div 
+                                    className="flex items-center gap-2 group cursor-pointer transition-colors"
+                                    onClick={() => setIsAppUsed(!isAppUsed)}
+                                >
+                                    <Checkbox
+                                        inputId="isAppUsed"
+                                        checked={isAppUsed}
+                                        onChange={(e: CheckboxChangeEvent) => {
+                                            e.originalEvent?.stopPropagation();
+                                            setIsAppUsed(e.checked ?? false);
+                                        }}
+                                        pt={{
+                                            box: ({ context }: { context: { checked: boolean } }) => ({
+                                                className: context.checked ? 'bg-orange-500 border-orange-500' : ''
+                                            })
+                                        }}
+                                    />
+                                    <span className="text-sm font-medium text-slate-600 group-hover:text-orange-600 transition-colors whitespace-nowrap select-none">Uses App</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Enterprise Section */}
+                        <div className="flex flex-col gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shadow-inner">
+                            <div 
+                                className="flex items-center gap-2 group cursor-pointer transition-colors"
+                                onClick={() => setIsFromEnterprise(!isFromEnterprise)}
+                            >
+                                <Checkbox
+                                    inputId="isFromEnterprise"
+                                    checked={isFromEnterprise}
+                                    onChange={(e: CheckboxChangeEvent) => {
+                                        e.originalEvent?.stopPropagation();
+                                        setIsFromEnterprise(e.checked ?? false);
+                                        if (!(e.checked)) setEnterpriseName('');
+                                    }}
+                                    pt={{
+                                        box: ({ context }: { context: { checked: boolean } }) => ({
+                                            className: context.checked ? 'bg-orange-500 border-orange-500' : ''
+                                        })
+                                    }}
+                                />
+                                <span className="font-semibold text-gray-700 text-sm group-hover:text-orange-600 transition-colors select-none">Enterprise related</span>
+                            </div>
+
+                            {isFromEnterprise && (
+                                <div className="flex flex-col gap-2 animate-fade-in">
+                                    <label htmlFor="enterpriseName" className="text-sm font-medium text-gray-600">Enterprise Name <span className="text-red-500">*</span></label>
+                                    <AutoComplete
+                                        id="enterpriseName"
+                                        value={enterpriseName}
+                                        suggestions={filteredEnterprises}
+                                        completeMethod={searchEnterprise}
+                                        onChange={(e) => setEnterpriseName(e.value)}
+                                        placeholder="Name of the partnering company"
+                                        className="w-full"
+                                        appendTo="self"
+                                        inputClassName="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                        dropdown
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Description Input */}
