@@ -1,5 +1,6 @@
 import React from "react";
 import type { Thesis } from "../../../types/thesis";
+import ThesisStatusBadge from "../ThesisStatusBadge";
 
 interface CommentaryHeaderProps {
   thesis: Thesis;
@@ -22,10 +23,7 @@ const CommentaryHeader: React.FC<CommentaryHeaderProps> = ({
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-sm">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 font-semibold text-xs border border-orange-100">
-            <i className="pi pi-eye text-[12px] mr-1" />
-            {thesis.status}
-          </span>
+          <ThesisStatusBadge status={thesis.status} />
           <span className="text-slate-500 font-medium">{subtitle}</span>
         </div>
       </div>
