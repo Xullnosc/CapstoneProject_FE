@@ -8,6 +8,7 @@ export interface UserInfo {
     avatar?: string;
     roleName?: string;
     campus?: string;
+    campusId?: number;
     hasTeam?: boolean;
     pendingInvitationId?: number | null;
     phoneNumber?: string | null;

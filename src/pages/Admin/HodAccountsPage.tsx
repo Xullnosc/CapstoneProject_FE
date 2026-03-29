@@ -9,11 +9,11 @@ import { adminService, type HodAccount } from '../../services/adminService';
 import styles from './HodAccountsPage.module.css';
 
 const CAMPUSES = [
-  { label: 'FU-Hòa Lạc', value: 'FU-Hòa Lạc' },
-  { label: 'FU-Hồ Chí Minh', value: 'FU-Hồ Chí Minh' },
-  { label: 'FU-Đà Nẵng', value: 'FU-Đà Nẵng' },
-  { label: 'FU-Cần Thơ', value: 'FU-Cần Thơ' },
-  { label: 'FU-Quy Nhơn', value: 'FU-Quy Nhơn' },
+  { label: 'FU-Hòa Lạc', value: 1 },
+  { label: 'FU-Đà Nẵng', value: 2 },
+  { label: 'FU-Hồ Chí Minh', value: 3 },
+  { label: 'FU-Cần Thơ', value: 4 },
+  { label: 'FU-Quy Nhơn', value: 5 },
 ];
 
 const HodAccountsPage = () => {
@@ -30,7 +30,7 @@ const HodAccountsPage = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [campus, setCampus] = useState<string | null>(null);
+  const [campusId, setCampusId] = useState<number | null>(null);
 
   const trimmed = useMemo(() => {
     return {
@@ -38,10 +38,10 @@ const HodAccountsPage = () => {
       email: email.trim(),
       username: username.trim(),
       password,
-      campus: campus || '',
+      campusId: campusId || 0,
       search: search.trim(),
     };
-  }, [fullName, email, username, password, campus, search]);
+  }, [fullName, email, username, password, campusId, search]);
 
   const toast = (icon: 'success' | 'warning' | 'error', title: string, text: string) => {
     return Swal.fire({
@@ -77,7 +77,7 @@ const HodAccountsPage = () => {
     setEmail('');
     setUsername('');
     setPassword('');
-    setCampus(null);
+    setCampusId(null);
     setIsUpsertOpen(true);
   };
 
@@ -87,7 +87,7 @@ const HodAccountsPage = () => {
     setEmail(hod.email ?? '');
     setUsername(hod.username ?? '');
     setPassword('');
-    setCampus(hod.campus ?? null);
+    setCampusId(hod.campusId ?? null);
     setIsUpsertOpen(true);
   };
 
@@ -105,7 +105,7 @@ const HodAccountsPage = () => {
         email: trimmed.email,
         username: trimmed.username,
         password: trimmed.password,
-        campus: trimmed.campus,
+        campusId: trimmed.campusId,
       });
       await toast('success', 'Success', res?.message ?? 'HOD account created/updated successfully.');
 
@@ -113,7 +113,7 @@ const HodAccountsPage = () => {
       setEmail('');
       setUsername('');
       setPassword('');
-      setCampus(null);
+      setCampusId(null);
       setIsUpsertOpen(false);
       await load(trimmed.search || undefined);
     } catch (err) {
@@ -347,9 +347,9 @@ const HodAccountsPage = () => {
             <div className="space-y-1.5">
               <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Campus</label>
               <Dropdown
-                value={campus}
+                value={campusId}
                 options={CAMPUSES}
-                onChange={(e) => setCampus(e.value)}
+                onChange={(e) => setCampusId(e.value)}
                 placeholder="Select Campus"
                 appendTo="self"
                 className="w-full text-sm"
