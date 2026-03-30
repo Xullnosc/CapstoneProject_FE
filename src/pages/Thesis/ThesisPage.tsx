@@ -213,14 +213,14 @@ const ThesisPage = () => {
     };
 
     const breadcrumbItems = [
-        { label: 'Homepage', to: '/home' },
+        { label: 'Home', to: '/home' },
         { label: 'Thesis Management' }
     ];
 
     return (
         <div className={`min-h-screen bg-[#fafbfc] ${styles.thesisContainer}`}>
             {/* Page Header Area */}
-            <div className="bg-white border-b border-gray-100 mt-[-2rem] pt-8 pb-12">
+            <div className="bg-white border-b border-gray-100 pt-6 pb-12">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     {/* Breadcrumb */}
                     <div className="mb-6">
@@ -230,9 +230,6 @@ const ThesisPage = () => {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="p-1.5 bg-orange-50 rounded-lg text-orange-600">
-                                    <i className="pi pi-book text-xl" />
-                                </div>
                                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Thesis Administration</h1>
                             </div>
                             <p className="text-slate-500 text-sm max-w-2xl leading-relaxed">
