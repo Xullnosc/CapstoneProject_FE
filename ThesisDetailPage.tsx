@@ -1,1 +1,0 @@
-import React from 'react';\nimport { View, Text } from 'react-native';\n\nconst ThesisDetailPage = () => {\n    return (\n        <View>\n            <Text>Thesis Details</Text>\n            {/* Other content up to line 676 here */} \n            {/* Removed duplicated JSX from lines 677 to 715 */} \n        </View>\n    );\n};\n\nexport default ThesisDetailPage;\n
