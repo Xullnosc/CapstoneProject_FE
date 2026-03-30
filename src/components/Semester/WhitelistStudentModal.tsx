@@ -184,6 +184,7 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                         options={campusOptions}
                         optionLabel="label"
                         placeholder="Select Campus"
+                        appendTo="self"
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
                         pt={{
                             root: { style: { padding: '4px 8px' } },

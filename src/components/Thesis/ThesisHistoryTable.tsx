@@ -1,4 +1,5 @@
 import type { ThesisHistory } from '../../types/thesis';
+import MemberAvatar from '../team/MemberAvatar';
 
 interface Props {
     histories: ThesisHistory[];
@@ -64,7 +65,15 @@ const ThesisHistoryTable = ({ histories }: Props) => {
                                     {formatDate(h.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-600">
-                                    {h.uploaderName ?? '—'}
+                                    <div className="flex items-center gap-2">
+                                        <MemberAvatar
+                                            email={""}
+                                            fullName={h.uploaderName ?? "Uploader"}
+                                            avatarUrl={h.uploaderAvatar ?? undefined}
+                                            className="size-6 rounded-full shrink-0 shadow-none border-0"
+                                        />
+                                        <span>{h.uploaderName ?? '—'}</span>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 text-sm text-slate-600 italic">
                                     {h.note ? `"${h.note}"` : '—'}

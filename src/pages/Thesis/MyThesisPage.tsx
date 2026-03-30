@@ -28,7 +28,6 @@ const MyThesisPage = () => {
     const isStudent = user?.roleName === 'Student';
     const isLecturer = user?.roleName === 'Lecturer';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
-    const canUpload = isStudent; // Only students (team leader) upload
     const canProposeNew = isLecturer || isHOD; // Both lecturers and HODs can submit new theses
 
     const [theses, setTheses] = useState<Thesis[]>([]);
@@ -153,7 +152,7 @@ const MyThesisPage = () => {
                                     type="text"
                                     value={debouncedSearch}
                                     onChange={(e) => setDebouncedSearch(e.target.value)}
-                                    placeholder="Search by title..."
+                                    placeholder="Search by thesis title or proposer..."
                                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 transition-all"
                                 />
                             </div>
@@ -166,6 +165,7 @@ const MyThesisPage = () => {
                                 options={THESIS_STATUSES}
                                 onChange={(e) => setStatusFilter(e.value as ThesisStatus | '')}
                                 placeholder="Filter Status"
+                                appendTo="self"
                                 className="min-w-[170px] border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-slate-50 text-slate-900"
                                 pt={{
                                     root: { className: 'h-[48px] flex items-center shadow-none' },
@@ -209,7 +209,7 @@ const MyThesisPage = () => {
                         <ThesisCard
                             key={thesis.thesisId}
                             thesis={thesis}
-                            canUpload={canUpload}
+                            canUpload={isStudent && thesis.userId === user?.userId && thesis.status === 'Need Update'}
                             onUploadClick={handleUploadClick}
                             canLock={(isLecturer || isHOD) && thesis.userId === user?.userId && thesis.status === 'Published'}
                             showLockStatus={true}

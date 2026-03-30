@@ -70,34 +70,54 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
-                {/* Toolbar buttons */}
-                <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1 flex-wrap">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 bg-white z-10 relative">
+                {/* Modern Filter Tabs */}
+                <div className="flex items-center gap-6 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setStatusFilter('All')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'All' ? 'bg-white text-gray-900 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
-                        All <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">{counts.All}</span>
+                        className={`cursor-pointer px-1 py-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${statusFilter === 'All' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    >
+                        All Teams
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${statusFilter === 'All' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-400'}`}>
+                            {counts.All}
+                        </span>
                     </button>
                     <button
                         onClick={() => setStatusFilter('Active')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Active' ? 'bg-white text-emerald-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
-                        Active <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Active}</span>
+                        className={`cursor-pointer px-1 py-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${statusFilter === 'Active' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    >
+                        Active
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${statusFilter === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
+                            {counts.Active}
+                        </span>
                     </button>
                     <button
                         onClick={() => setStatusFilter('Insufficient')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Insufficient' ? 'bg-white text-red-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
-                        Insufficient <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Insufficient}</span>
+                        className={`cursor-pointer px-1 py-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${statusFilter === 'Insufficient' ? 'border-rose-500 text-rose-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    >
+                        Insufficient
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${statusFilter === 'Insufficient' ? 'bg-rose-100 text-rose-700' : 'bg-gray-100 text-gray-400'}`}>
+                            {counts.Insufficient}
+                        </span>
                     </button>
                     <button
                         onClick={() => setStatusFilter('Pending')}
-                        className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Pending' ? 'bg-white text-amber-600 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
-                        Pending <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Pending}</span>
+                        className={`cursor-pointer px-1 py-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${statusFilter === 'Pending' ? 'border-amber-500 text-amber-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                    >
+                        Pending
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${statusFilter === 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-400'}`}>
+                            {counts.Pending}
+                        </span>
                     </button>
                     {isHod && (
                         <button
                             onClick={() => setStatusFilter('Special')}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-all border ${statusFilter === 'Special' ? 'bg-white text-orange-500 border-gray-200/50' : 'text-gray-500 border-transparent hover:bg-gray-200/50'}`}>
-                            Special <span className="ml-1 text-xs px-1.5 py-0.5 rounded-md bg-gray-200">{counts.Special}</span>
+                            className={`cursor-pointer px-1 py-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${statusFilter === 'Special' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                        >
+                            Special
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${statusFilter === 'Special' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
+                                {counts.Special}
+                            </span>
                         </button>
                     )}
                 </div>
@@ -174,7 +194,7 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            {isHod && (
+                                            {isHod && team.status === 'Insufficient' && (
                                                 <button
                                                     onClick={(e) => handleToggleSpecial(e, team.teamId, team.isSpecial)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm border ${team.isSpecial ? 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 hover:border-orange-300' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}

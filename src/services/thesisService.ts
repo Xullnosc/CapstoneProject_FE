@@ -6,6 +6,7 @@ import type {
   ReviewTimelineEvent,
   ReviewTimelineComment,
   Checklist,
+  ThesisAIReviewPreview,
 } from "../types/thesis";
 
 export type ThesisDecision = "Pass" | "Fail";
@@ -15,6 +16,14 @@ interface ProposeThesisRequest {
   title: string;
   shortDescription?: string;
   file: File;
+  thesisNameEn: string;
+  thesisNameVi: string;
+  abbreviation: string;
+  isFromEnterprise: boolean;
+  enterpriseName?: string;
+  isApplied: boolean;
+  isAppUsed: boolean;
+  authorId?: number;
 }
 
 // ─── Update (upload new version) ────────────────────────────────────────────
@@ -32,6 +41,18 @@ export const thesisService = {
       formData.append("ShortDescription", data.shortDescription);
     }
     formData.append("File", data.file);
+    formData.append("ThesisNameEn", data.thesisNameEn);
+    formData.append("ThesisNameVi", data.thesisNameVi);
+    formData.append("Abbreviation", data.abbreviation);
+    formData.append("IsFromEnterprise", data.isFromEnterprise.toString());
+    if (data.enterpriseName) {
+      formData.append("EnterpriseName", data.enterpriseName);
+    }
+    formData.append("IsApplied", data.isApplied.toString());
+    formData.append("IsAppUsed", data.isAppUsed.toString());
+    if (data.authorId) {
+      formData.append("AuthorId", data.authorId.toString());
+    }
     const response = await api.post("/thesis/propose", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -129,6 +150,13 @@ export const thesisService = {
       decision: data.decision === "OK" ? "Pass" : "Fail"
     };
     await api.put(`/thesis/${id}/hod-decision`, payload);
+  },
+
+  getAiReviewPreview: async (id: string): Promise<ThesisAIReviewPreview> => {
+    const response = await api.post<ThesisAIReviewPreview>(
+      `/thesis/${id}/ai-review-preview`,
+    );
+    return response.data;
   },
 
   /** GET /thesis/:id/review-status - get review status */

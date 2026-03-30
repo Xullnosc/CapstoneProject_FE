@@ -197,11 +197,69 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
           </div>
         </Section>
 
+        {/* Thesis Details (Names, Abbreviation, Classification) */}
+        <Section title="Thesis Details">
+          <div className="space-y-4">
+            {/* Abbreviation & Names */}
+            <div className="space-y-3">
+              {thesis.abbreviation && (
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Abbreviation</span>
+                  <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded-md inline-block w-fit">{thesis.abbreviation}</span>
+                </div>
+              )}
+              {thesis.thesisNameEn && (
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Name (EN)</span>
+                  <span className="text-xs font-medium text-slate-600 leading-relaxed italic">"{thesis.thesisNameEn}"</span>
+                </div>
+              )}
+              {thesis.thesisNameVi && (
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Name (VI)</span>
+                  <span className="text-xs font-medium text-slate-600 leading-relaxed italic">"{thesis.thesisNameVi}"</span>
+                </div>
+              )}
+            </div>
+
+            {/* Classification Tags */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {thesis.isFromEnterprise && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100 shadow-sm" title={thesis.enterpriseName || "Enterprise Partner"}>
+                  <i className="pi pi-briefcase text-[10px]" />
+                  ENTERPRISE
+                </span>
+              )}
+              {thesis.isApplied && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-100 shadow-sm">
+                  <i className="pi pi-bolt text-[10px]" />
+                  APPLIED
+                </span>
+              )}
+              {thesis.isAppUsed && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 text-orange-700 text-[10px] font-bold border border-orange-100 shadow-sm">
+                  <i className="pi pi-mobile text-[10px]" />
+                  HAS APP
+                </span>
+              )}
+            </div>
+
+            {/* Enterprise Name Detail */}
+            {thesis.isFromEnterprise && thesis.enterpriseName && (
+              <div className="flex flex-col pt-1">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Enterprise Relationship</span>
+                <span className="text-xs font-bold text-slate-700">{thesis.enterpriseName}</span>
+              </div>
+            )}
+          </div>
+        </Section>
+
         <Section title="Author">
           <div className="flex items-center gap-2">
             <MemberAvatar
               email={thesis.ownerEmail ?? ""}
               fullName={thesis.ownerName ?? "Author"}
+              avatarUrl={thesis.ownerAvatar ?? undefined}
               className="w-7 h-7 rounded-full shrink-0"
             />
             <span className="text-xs font-medium text-slate-900">
