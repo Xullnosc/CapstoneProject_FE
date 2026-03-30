@@ -17,7 +17,7 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
     const [formData, setFormData] = useState<Partial<Lecturer>>({
         email: '',
         fullName: '',
-        campus: '',
+        campusId: 0,
         isActive: true
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,14 +31,28 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
                 ...lecturerData
             });
         } else {
+            // Helper to get campusId from string if numeric ID is missing (v3.0 migration fallback)
+            const getCampusIdFromName = (name?: string) => {
+                const map: Record<string, number> = {
+                    'FU-Hòa Lạc': 1,
+                    'FU-Đà Nẵng': 2,
+                    'FU-Hồ Chí Minh': 3,
+                    'FU-Cần Thơ': 4,
+                    'FU-Quy Nhơn': 5
+                };
+                return name ? (map[name] || 0) : 0;
+            };
+
+            const initialCampusId = currentUser?.campusId || getCampusIdFromName(currentUser?.campus);
+
             setFormData({
                 email: '',
                 fullName: '',
-                campus: isHOD ? (currentUser?.campus || '') : '',
+                campusId: isHOD ? initialCampusId : 0,
                 isActive: true
             });
         }
-    }, [lecturerData, isOpen, isHOD, currentUser?.campus]);
+    }, [lecturerData, isOpen, isHOD, currentUser?.campus, currentUser?.campusId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target as HTMLInputElement;
@@ -47,11 +61,11 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
     };
 
     const campusOptions = [
-        { label: 'FU-Hòa Lạc', value: 'FU-Hòa Lạc' },
-        { label: 'FU-Hồ Chí Minh', value: 'FU-Hồ Chí Minh' },
-        { label: 'FU-Đà Nẵng', value: 'FU-Đà Nẵng' },
-        { label: 'FU-Cần Thơ', value: 'FU-Cần Thơ' },
-        { label: 'FU-Quy Nhơn', value: 'FU-Quy Nhơn' }
+        { label: 'FU-Hòa Lạc', value: 1 },
+        { label: 'FU-Đà Nẵng', value: 2 },
+        { label: 'FU-Hồ Chí Minh', value: 3 },
+        { label: 'FU-Cần Thơ', value: 4 },
+        { label: 'FU-Quy Nhơn', value: 5 }
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +73,11 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
 
         if (!formData.email) {
             Swal.fire('Error', 'Email is required', 'error');
+            return;
+        }
+
+        if (!formData.campusId || formData.campusId === 0) {
+            Swal.fire('Error', 'Campus is required', 'error');
             return;
         }
 
@@ -148,8 +167,8 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-gray-700 ml-1">Campus</label>
                             <Dropdown
-                                value={formData.campus}
-                                onChange={(e) => setFormData(prev => ({ ...prev, campus: e.value }))}
+                                value={formData.campusId}
+                                onChange={(e) => setFormData(prev => ({ ...prev, campusId: e.value }))}
                                 options={campusOptions}
                                 optionLabel="label"
                                 placeholder="Select Campus"

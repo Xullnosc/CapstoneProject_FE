@@ -6,6 +6,7 @@ export interface Lecturer {
     fullName: string | null;
     avatar: string | null;
     campus: string | null;
+    campusId: number;
     isActive: boolean;
     createdAt?: string;
     updatedAt?: string;
