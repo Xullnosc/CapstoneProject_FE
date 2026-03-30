@@ -109,7 +109,7 @@ const ProfilePage = () => {
     }, []);
 
     const breadcrumbItems = [
-        { label: 'Homepage', to: '/home' },
+        { label: 'Home', to: '/home' },
         { label: 'Personal Profile' }
     ];
 

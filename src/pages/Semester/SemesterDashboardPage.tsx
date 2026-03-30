@@ -1,13 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import ActiveSemesterBanner from '../../components/Semester/ActiveSemesterBanner';
 import SemesterCard from '../../components/Semester/SemesterCard';
 import SemesterModal from '../../components/Semester/SemesterModal';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { semesterService } from '../../services/semesterService';
 import type { Semester } from '../../services/semesterService';
 
 import { authService } from '../../services/authService';
 import { getSemesterSeason, getSeasonColor, calculateSemesterStatus, formatSemesterDate } from '../../utils/semesterHelpers';
+
+const FILTER_OPTIONS = ['All', 'Ongoing', 'Upcoming', 'Ended'] as const;
+
+type SemesterCardViewModel = {
+    id: number;
+    code: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: 'Ongoing' | 'Upcoming' | 'Ended';
+    totalTeams: number;
+    activeTeams: number;
+    totalWhitelists: number;
+    isArchived: boolean;
+    season: string;
+    seasonColor: string;
+};
 
 const SemesterDashboardPage = () => {
     const user = authService.getUser();
@@ -17,11 +35,7 @@ const SemesterDashboardPage = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<'All' | 'Ongoing' | 'Upcoming' | 'Ended'>('All');
 
-    useEffect(() => {
-        fetchSemesters();
-    }, []);
-
-    const fetchSemesters = async () => {
+    const fetchSemesters = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await semesterService.getAllSemesters();
@@ -31,10 +45,14 @@ const SemesterDashboardPage = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchSemesters();
+    }, [fetchSemesters]);
 
     // Helper to map API data to UI format
-    const mapToCardProps = (sem: Semester) => {
+    const mapToCardProps = useCallback((sem: Semester): SemesterCardViewModel => {
         const season = getSemesterSeason(sem.semesterName);
         return {
             id: sem.semesterId,
@@ -50,20 +68,33 @@ const SemesterDashboardPage = () => {
             season: season,
             seasonColor: getSeasonColor(season)
         };
-    };
+    }, []);
 
-    const getFilteredSemesters = () => {
-        if (filterStatus === 'All') return semesters;
+    const semesterCards = useMemo(() => semesters.map(mapToCardProps), [semesters, mapToCardProps]);
 
-        return semesters.filter(s => {
-            const status = calculateSemesterStatus(s.status);
-            return status === filterStatus;
-        });
-    };
+    const activeSemesterCard = useMemo(
+        () => semesterCards.find(s => s.status === 'Ongoing') || null,
+        [semesterCards]
+    );
+
+    const filteredSemesterCards = useMemo(() => {
+        if (filterStatus === 'All') return semesterCards;
+        return semesterCards.filter(s => s.status === filterStatus);
+    }, [filterStatus, semesterCards]);
+
+    const breadcrumbItems = [
+        { label: 'Home', to: '/home' },
+        { label: 'Semesters' }
+    ];
 
     return (
         <div className="min-h-screen bg-white">
-            <div className="max-w-[1200px] mx-auto p-8 lg:p-12 space-y-8">
+            <main className="max-w-[1200px] mx-auto w-full px-6 py-6 space-y-8">
+                {/* Breadcrumb */}
+                <div className="mb-6">
+                    <PremiumBreadcrumb items={breadcrumbItems} />
+                </div>
+
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex flex-col gap-1">
@@ -97,13 +128,13 @@ const SemesterDashboardPage = () => {
                 </div>
 
                 {/* Banner */}
-                <ActiveSemesterBanner semester={semesters.find(s => s.status === 'Active') ? mapToCardProps(semesters.find(s => s.status === 'Active')!) : null} />
+                <ActiveSemesterBanner semester={activeSemesterCard} />
 
                 {/* Filters & Grid */}
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
                         <div className="flex gap-8 overflow-x-auto no-scrollbar">
-                            {(['All', 'Ongoing', 'Upcoming', 'Ended'] as const).map((status) => (
+                            {FILTER_OPTIONS.map((status) => (
                                 <button
                                     key={status}
                                     onClick={() => setFilterStatus(status)}
@@ -134,22 +165,22 @@ const SemesterDashboardPage = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {getFilteredSemesters().map(sem => (
-                                <SemesterCard key={sem.semesterId} semester={mapToCardProps(sem)} onRefresh={fetchSemesters} />
+                            {filteredSemesterCards.map(sem => (
+                                <SemesterCard key={sem.id} semester={sem} onRefresh={fetchSemesters} />
                             ))}
                         </div>
                     )}
 
                     {/* Pagination Mock */}
                     <div className="px-6 py-6 flex items-center justify-between border-t border-gray-100 mt-4">
-                        <p className="text-xs text-gray-500">Showing {getFilteredSemesters().length} semesters</p>
+                        <p className="text-xs text-gray-500">Showing {filteredSemesterCards.length} semesters</p>
                         <div className="flex gap-2">
                             <button className="px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-400 bg-white cursor-not-allowed" disabled>Previous</button>
                             <button className="cursor-pointer px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-900 bg-white hover:bg-gray-50 transition-colors">Next</button>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
 
             <SemesterModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchSemesters} />
         </div>
