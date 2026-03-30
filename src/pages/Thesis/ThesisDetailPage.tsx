@@ -674,11 +674,6 @@ const ThesisDetailPage = () => {
                   />
                 </div>
               )}
-                    }}
-                    onOpenComment={() => { pausePolling(); setCommentModalVisible(true); }}
-                    onToggleLock={handleToggleLockClick} onCancel={handleCancelClick} onUploadRevision={() => { pausePolling(); setUploadModalVisible(true); }}
-                    isHOD={isHOD}
-                />
                 {thesis.status === 'Published' && isStudent && isLeader && (
                     <div className="bg-white rounded-2xl p-6 border shadow-sm">
                         <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">Registration</h3>
