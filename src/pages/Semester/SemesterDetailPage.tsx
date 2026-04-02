@@ -431,7 +431,7 @@ const SemesterDetailPage = () => {
                         <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
                     </>
                 )}
-                {activeTab === 'whitelists' && (
+                {(activeTab === 'whitelists' || activeTab === 'lecturers' || activeTab === 'students') && (
                     <SemesterWhitelistsTable
                         key="whitelist-table"
                         whitelists={
