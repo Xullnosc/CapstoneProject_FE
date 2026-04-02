@@ -7,6 +7,7 @@ export interface CreateOrUpdateHodPayload {
   email: string;
   username: string;
   password: string;
+  campusId: number;
   campus?: string;
 }
 
@@ -20,6 +21,7 @@ export interface HodAccount {
   createdAt?: string;
   updatedAt?: string;
   campus?: string;
+  campusId?: number;
 }
 
 export const adminService = {

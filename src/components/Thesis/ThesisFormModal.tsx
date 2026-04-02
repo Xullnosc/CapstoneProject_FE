@@ -8,9 +8,11 @@ interface ThesisFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    semesterId: number;
+    isSemesterEnded: boolean;
 }
 
-const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSuccess, semesterId, isSemesterEnded }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -56,6 +58,16 @@ const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSu
     };
 
     const handleUpload = async () => {
+        if (isSemesterEnded) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Semester Ended',
+                text: 'Cannot upload thesis form for an ended semester.',
+                confirmButtonColor: '#f97415'
+            });
+            return;
+        }
+
         if (!selectedFile) {
             Swal.fire({
                 icon: 'warning',
@@ -68,7 +80,7 @@ const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSu
 
         try {
             setIsUploading(true);
-            await thesisFormService.uploadForm(selectedFile);
+            await thesisFormService.uploadForm(selectedFile, semesterId);
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
@@ -119,7 +131,7 @@ const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSu
                     label={isUploading ? "Uploading..." : "Upload"}
                     icon={isUploading ? "pi pi-spin pi-spinner" : "pi pi-upload"}
                     onClick={handleUpload}
-                    disabled={!selectedFile || isUploading}
+                    disabled={!selectedFile || isUploading || isSemesterEnded}
                     className="bg-orange-500 hover:bg-orange-600 border-none px-6 py-2 rounded-xl text-white font-semibold transition-all shadow-md shadow-orange-500/20"
                     type="button"
                 />
@@ -154,6 +166,11 @@ const ThesisFormModal: React.FC<ThesisFormModalProps> = ({ isOpen, onClose, onSu
                     Upload the latest official version of the Thesis Proposal Form. <br />
                     This form will be available globally for all semesters.
                 </p>
+                {isSemesterEnded && (
+                    <div className="rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-700 text-center font-medium">
+                        This semester has ended. Upload is disabled.
+                    </div>
+                )}
 
                 <div
                     className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-4 bg-white ${isDragging ? 'border-orange-500 bg-orange-50 scale-[1.02]' : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/30'

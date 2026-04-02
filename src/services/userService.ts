@@ -8,6 +8,7 @@ export interface UserInfo {
     avatar?: string;
     roleName?: string;
     campus?: string;
+    campusId?: number;
     hasTeam?: boolean;
     pendingInvitationId?: number | null;
     phoneNumber?: string | null;
@@ -63,6 +64,10 @@ export const userService = {
     },
     updateProfile: async (profileData: UpdateProfileDTO): Promise<UserInfo> => {
         const response = await api.put<UserInfo>('/users/profile', profileData);
+        return response.data;
+    },
+    updatePassword: async (passwordData: { newPassword: string }): Promise<{ message: string }> => {
+        const response = await api.put<{ message: string }>('/users/profile/password', passwordData);
         return response.data;
     }
 };

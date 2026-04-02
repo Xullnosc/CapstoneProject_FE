@@ -14,6 +14,23 @@ export interface Checklist {
   content: string;
 }
 
+export interface ThesisAIReviewChecklistItem {
+  checklistId: number;
+  checked: boolean;
+  reason?: string | null;
+}
+
+export interface ThesisAIReviewPreview {
+  suggestedDecision: "OK" | "Consider";
+  feedback: string;
+  checklist: ThesisAIReviewChecklistItem[];
+  warnings: string[];
+  usedMetadataFallback: boolean;
+  provider?: string | null;
+  model?: string | null;
+  generatedAtUtc: string;
+}
+
 // Matches ThesisHistoryDTO from backend
 export interface ThesisHistory {
   id: number;
@@ -23,6 +40,7 @@ export interface ThesisHistory {
   note: string | null;
   uploadedBy: number;
   uploaderName: string | null;
+  uploaderAvatar: string | null;
   createdAt: string;
 }
 
@@ -43,6 +61,15 @@ export interface Thesis {
   isLocked: boolean;
   mentorEmail1?: string | null;
   mentorEmail2?: string | null;
+
+  thesisNameEn: string | null;
+  thesisNameVi: string | null;
+  abbreviation: string | null;
+  isFromEnterprise: boolean;
+  enterpriseName: string | null;
+  isApplied: boolean;
+  isAppUsed: boolean;
+
   teamId?: number | null;
   histories: ThesisHistory[] | null;
 

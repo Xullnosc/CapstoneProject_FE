@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
+import { Password } from 'primereact/password';
 import { Avatar } from 'primereact/avatar';
 import { Tag } from 'primereact/tag';
 import { Divider } from 'primereact/divider';
@@ -9,7 +10,38 @@ import { authService } from '../../services/authService';
 import { userService } from '../../services/userService';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
-import type { AxiosError } from 'axios';
+
+const passwordIconStyle = `
+  .p-password {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+  .p-password input {
+    width: 100% !important;
+    padding-right: 3rem !important;
+  }
+  .p-password .p-password-toggle-mask,
+  .p-password-toggle-mask.pi {
+    position: absolute !important;
+    top: 50% !important;
+    right: 1.25rem !important;
+    transform: translateY(-50%) !important;
+    margin-top: 0 !important;
+    cursor: pointer;
+    z-index: 10;
+    line-height: normal !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .p-password-toggle-mask svg,
+  .p-password-toggle-mask i {
+    position: static !important;
+    transform: none !important;
+  }
+`;
 
 const ProfilePage = () => {
     const user = authService.getUser();
@@ -33,7 +65,9 @@ const ProfilePage = () => {
         major: user?.major || '',
         personalId: user?.personalId || '',
         placeOfBirth: user?.placeOfBirth || '',
-        enrollmentYear: user?.enrollmentYear?.toString() || ''
+        enrollmentYear: user?.enrollmentYear?.toString() || '',
+        newPassword: '',
+        confirmPassword: ''
     });
 
     const dataSource = profile || user;
@@ -60,7 +94,9 @@ const ProfilePage = () => {
                     major: data.major || '',
                     personalId: data.personalId || '',
                     placeOfBirth: data.placeOfBirth || '',
-                    enrollmentYear: data.enrollmentYear?.toString() || ''
+                    enrollmentYear: data.enrollmentYear?.toString() || '',
+                    newPassword: '',
+                    confirmPassword: ''
                 });
             } catch {
                 setProfile(user);
@@ -73,7 +109,7 @@ const ProfilePage = () => {
     }, []);
 
     const breadcrumbItems = [
-        { label: 'Homepage', to: '/home' },
+        { label: 'Home', to: '/home' },
         { label: 'Personal Profile' }
     ];
 
@@ -96,7 +132,9 @@ const ProfilePage = () => {
             major: dataSource?.major || '',
             personalId: dataSource?.personalId || '',
             placeOfBirth: dataSource?.placeOfBirth || '',
-            enrollmentYear: dataSource?.enrollmentYear?.toString() || ''
+            enrollmentYear: dataSource?.enrollmentYear?.toString() || '',
+            newPassword: '',
+            confirmPassword: ''
         });
     };
 
@@ -114,43 +152,69 @@ const ProfilePage = () => {
         }
 
         setLoading(true);
-        try {
-            const updatedUser = await userService.updateProfile({
-                fullName: formData.fullName,
-                phoneNumber: formData.phoneNumber,
-                githubLink: formData.githubLink,
-                linkedinLink: formData.linkedinLink,
-                facebookLink: formData.facebookLink,
-                dateOfBirth: formData.dateOfBirth || null,
-                gender: formData.gender || null,
-                address: formData.address || null,
-                major: formData.major || null,
-                personalId: formData.personalId || null,
-                placeOfBirth: formData.placeOfBirth || null,
-                enrollmentYear: formData.enrollmentYear ? parseInt(formData.enrollmentYear, 10) : null
-            });
+            try {
+                if (formData.newPassword) {
+                    if (formData.newPassword.length < 6) {
+                        throw new Error("Password must be at least 6 characters.");
+                    }
+                    if (formData.newPassword !== formData.confirmPassword) {
+                        throw new Error("New password and confirm password do not match.");
+                    }
+                    try {
+                        await userService.updatePassword({ newPassword: formData.newPassword });
+                    } catch (passwordError: unknown) {
+                        const axiosError = passwordError as { response?: { data?: { message?: string } } };
+                        const message = axiosError?.response?.data?.message || "Failed to update password.";
+                        throw new Error(`Password Error: ${message}`);
+                    }
+                }
 
-            setProfile(updatedUser);
-            authService.setUser(updatedUser);
+                try {
+                    const updatedUser = await userService.updateProfile({
+                        fullName: formData.fullName,
+                        phoneNumber: formData.phoneNumber,
+                        githubLink: formData.githubLink,
+                        linkedinLink: formData.linkedinLink,
+                        facebookLink: formData.facebookLink,
+                        dateOfBirth: formData.dateOfBirth || null,
+                        gender: formData.gender || null,
+                        address: formData.address || null,
+                        major: formData.major || null,
+                        personalId: formData.personalId || null,
+                        placeOfBirth: formData.placeOfBirth || null,
+                        enrollmentYear: formData.enrollmentYear ? parseInt(formData.enrollmentYear, 10) : null
+                    });
 
-            await Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Profile updated successfully!',
-                timer: 2000,
-                showConfirmButton: false
-            });
-            setIsEditing(false);
-        } catch (error: unknown) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: (error as AxiosError<{ message?: string }>)?.response?.data?.message || 'Failed to update profile. Please try again.',
-                confirmButtonColor: '#F26F21'
-            });
-        } finally {
-            setLoading(false);
-        }
+                    setProfile(updatedUser);
+                    authService.setUser(updatedUser);
+                } catch (profileError: unknown) {
+                    const axiosError = profileError as { response?: { data?: { message?: string } } };
+                    const message = axiosError?.response?.data?.message || "Failed to update profile details.";
+                    throw new Error(`Profile Error: ${message}`);
+                }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Account updated successfully!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                setIsEditing(false);
+            } catch (error: unknown) {
+                console.error("Profile save error:", error);
+                const axiosError = error as { response?: { data?: { message?: string } } };
+                const message = (error as Error).message || axiosError?.response?.data?.message || "An unexpected error occurred.";
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: message,
+                    confirmButtonColor: '#F26F21'
+                });
+            } finally {
+                setLoading(false);
+            }
     };
 
     const formatExternalLink = (url: string) => {
@@ -169,6 +233,7 @@ const ProfilePage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <style>{passwordIconStyle}</style>
             {/* Page Header Area - Aligned with Thesis Administration */}
             <div className="bg-white border-b border-gray-100 -mt-8 pt-8 pb-12">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -395,6 +460,51 @@ const ProfilePage = () => {
                                             </div>
                                         )}
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 px-1 uppercase tracking-wider">Account Password</label>
+                                        {isEditing ? (
+                                            <div className="flex flex-col gap-3 w-full p-fluid">
+                                                <Password
+                                                    value={formData.newPassword}
+                                                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                                                    placeholder="New password (leave blank to keep)"
+                                                    className="w-full"
+                                                    style={{ width: '100%' }}
+                                                    inputStyle={{ width: '100%' }}
+                                                    inputClassName="w-full py-3! px-4! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! rounded-xl!"
+                                                    toggleMask
+                                                    feedback={false}
+                                                />
+                                                {formData.newPassword && (
+                                                    <div className="space-y-1">
+                                                        <Password
+                                                            value={formData.confirmPassword}
+                                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                                            placeholder="Confirm new password"
+                                                            className="w-full"
+                                                            style={{ width: '100%' }}
+                                                            inputStyle={{ width: '100%' }}
+                                                            inputClassName={`w-full py-3! px-4! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! rounded-xl! ${formData.confirmPassword && formData.newPassword !== formData.confirmPassword ? 'border-red-500!' : ''}`}
+                                                            toggleMask
+                                                            feedback={false}
+                                                        />
+                                                        {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
+                                                            <p className="text-red-500 text-[10px] font-bold mt-1 px-1">
+                                                                <i className="pi pi-exclamation-circle mr-1" />
+                                                                Passwords do not match
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="px-4 py-3 bg-gray-50/50 rounded-xl border border-gray-100 font-bold text-gray-400 text-sm flex items-center justify-between shadow-inner">
+                                                <span>••••••••</span>
+                                                <i className="pi pi-shield text-[10px]" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <Divider className="my-10" />
@@ -432,6 +542,7 @@ const ProfilePage = () => {
                                                     { label: 'Other', value: 'Other' }
                                                 ]}
                                                 placeholder="Select gender"
+                                                appendTo="self"
                                                 className="w-full"
                                             />
                                         ) : (

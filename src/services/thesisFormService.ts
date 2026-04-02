@@ -12,8 +12,9 @@ export const thesisFormService = {
         return response.data;
     },
 
-    uploadForm: async (file: File): Promise<{ message: string; data: ThesisForm }> => {
+    uploadForm: async (file: File, semesterId: number): Promise<{ message: string; data: ThesisForm }> => {
         const formData = new FormData();
+        formData.append('SemesterId', String(semesterId));
         formData.append('File', file);
 
         const response = await api.post('/thesis-forms', formData, {

@@ -143,7 +143,7 @@ const Login = () => {
             onClick={() => setTab('hod-admin')}
             className={`flex-1 py-2 px-3 rounded-lg font-medium text-sm whitespace-nowrap transition ${tab === 'hod-admin' ? 'bg-[#F26F21] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
-            HOD / Admin
+            Credentials Login
           </button>
         </div>
 
@@ -157,6 +157,7 @@ const Login = () => {
                 optionLabel="name"
                 optionValue="name"
                 placeholder="Select campus"
+                appendTo="self"
                 className="w-full"
               />
             </div>
@@ -206,11 +207,11 @@ const Login = () => {
           >
             <div className={`flex flex-col gap-4 ${styles.hodForm}`}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username / Email</label>
                 <InputText
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
+                  placeholder="Enter username or email"
                   className="w-full"
                   disabled={isLoading}
                 />

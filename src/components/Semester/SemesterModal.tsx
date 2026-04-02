@@ -166,7 +166,7 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             onHide={onClose}
             className="w-full max-w-160"
             footer={footer}
-            blockScroll
+            blockScroll={false}
             draggable={false}
         >
             <form id="semester-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 pt-2">

@@ -32,9 +32,15 @@ export const SEMESTER_SEASON_COLORS = {
 } as const;
 
 export const SEMESTER_SEASON_GRADIENTS = {
-    [SEMESTER_SEASON.SPRING]: 'from-emerald-100 via-green-100 to-teal-50',
-    [SEMESTER_SEASON.SUMMER]: 'from-yellow-100 via-orange-100 to-amber-50',
-    [SEMESTER_SEASON.FALL]: 'from-amber-400 via-orange-400 to-rose-400',
+    [SEMESTER_SEASON.SPRING]: 'from-emerald-200 via-green-200 to-teal-100',
+    [SEMESTER_SEASON.SUMMER]: 'from-amber-200 via-yellow-200 to-orange-200',
+    [SEMESTER_SEASON.FALL]: 'from-amber-500 via-orange-500 to-rose-500',
+} as const;
+
+export const SEMESTER_SEASON_SOFT_GRADIENTS = {
+    [SEMESTER_SEASON.SPRING]: 'from-emerald-100 via-green-100 to-teal-100',
+    [SEMESTER_SEASON.SUMMER]: 'from-yellow-100 via-amber-100 to-orange-100',
+    [SEMESTER_SEASON.FALL]: 'from-orange-100 via-amber-100 to-rose-100',
 } as const;
 
 export const SEMESTER_STATUS_COLORS = {

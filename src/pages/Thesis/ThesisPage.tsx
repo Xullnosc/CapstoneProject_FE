@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import type { Thesis, ThesisStatus } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
 import { authService } from '../../services/authService';
 import { checklistService } from '../../services/checklistService';
+import { semesterService, type Semester } from '../../services/semesterService';
 import type { ChecklistDTO } from '../../types/checklist';
 import ThesisCard from '../../components/Thesis/ThesisCard';
 import HodDecisionModal from '../../components/Thesis/HodDecisionModal';
@@ -46,6 +48,8 @@ const ThesisPage = () => {
     const [searchTitle, setSearchTitle] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<ThesisStatus | 'Verified' | ''>('');
+    const [semesters, setSemesters] = useState<Semester[]>([]);
+    const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(null);
 
     // Stats (calculated from allTheses to remain consistent)
     const totalCount = allTheses.length;
@@ -63,9 +67,11 @@ const ThesisPage = () => {
     // HOD Decision Modal State
     const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
     const [selectedThesisId, setSelectedThesisId] = useState<string | null>(null);
+    const [selectedThesisFileUrl, setSelectedThesisFileUrl] = useState<string | null>(null);
 
     const handleHodDecision = (thesis: Thesis) => {
         setSelectedThesisId(thesis.thesisId);
+        setSelectedThesisFileUrl(thesis.fileUrl);
         setHodDecisionVisible(true);
     };
 
@@ -73,9 +79,9 @@ const ThesisPage = () => {
         setLoading(true);
         // Removed setLoading(true) as `loading` state was removed.
         try {
-            // First, fetch everything *without* filters to get accurate stats
+            // Fetch with semester filter if selected
             const fullData = await thesisService.getAllTheses({
-                // lecturerOnly: true // Removed to show student leader-proposed theses
+                semesterId: selectedSemesterId || undefined
             });
 
             // Filter out current user's theses and Cancelled ones for the repository view
@@ -107,7 +113,24 @@ const ThesisPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTitle, statusFilter, user?.userId]);
+    }, [searchTitle, statusFilter, user?.userId, selectedSemesterId]);
+
+    const fetchSemesters = useCallback(async () => {
+        try {
+            const data = await semesterService.getAllSemesters();
+            setSemesters(data);
+            
+            // Set default selected semester to the active one if not already set
+            if (!selectedSemesterId) {
+                const active = data.find(s => s.status === 'Active');
+                if (active) {
+                    setSelectedSemesterId(active.semesterId);
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch semesters', err);
+        }
+    }, [selectedSemesterId]);
 
     const fetchCriteria = useCallback(async () => {
         try {
@@ -117,6 +140,10 @@ const ThesisPage = () => {
             console.error('Failed to fetch criteria', err);
         }
     }, []);
+
+    useEffect(() => {
+        fetchSemesters();
+    }, [fetchSemesters]);
 
     useEffect(() => {
         fetchTheses();
@@ -186,14 +213,14 @@ const ThesisPage = () => {
     };
 
     const breadcrumbItems = [
-        { label: 'Homepage', to: '/home' },
+        { label: 'Home', to: '/home' },
         { label: 'Thesis Management' }
     ];
 
     return (
         <div className={`min-h-screen bg-[#fafbfc] ${styles.thesisContainer}`}>
             {/* Page Header Area */}
-            <div className="bg-white border-b border-gray-100 mt-[-2rem] pt-8 pb-12">
+            <div className="bg-white border-b border-gray-100 pt-6 pb-12">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     {/* Breadcrumb */}
                     <div className="mb-6">
@@ -203,9 +230,6 @@ const ThesisPage = () => {
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <div className="p-1.5 bg-orange-50 rounded-lg text-orange-600">
-                                    <i className="pi pi-book text-xl" />
-                                </div>
                                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Thesis Administration</h1>
                             </div>
                             <p className="text-slate-500 text-sm max-w-2xl leading-relaxed">
@@ -213,15 +237,62 @@ const ThesisPage = () => {
                             </p>
                         </div>
 
-                        {(isHOD || isReviewer) && (
-                            <button
-                                onClick={() => setCriteriaDialogVisible(true)}
-                                className="flex items-center gap-2 px-5 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-md text-sm"
-                            >
-                                <i className="pi pi-cog" />
-                                <span>Evaluation Checklist</span>
-                            </button>
-                        )}
+                        <div className="flex items-center gap-4">
+                            {isHOD && semesters.length > 0 && (
+                                <div className="relative group">
+                                    <Dropdown
+                                        value={selectedSemesterId}
+                                        options={semesters}
+                                        onChange={(e) => setSelectedSemesterId(e.value)}
+                                        optionLabel="semesterCode"
+                                        optionValue="semesterId"
+                                        placeholder="Select Semester"
+                                        appendTo="self"
+                                        className="w-full min-w-[180px] h-[48px] bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all font-bold text-slate-700 text-sm shadow-sm"
+                                        pt={{
+                                            root: { className: 'flex items-center shadow-none' },
+                                            input: { className: '!pl-11 pr-4 font-bold text-slate-700 border-none' },
+                                            trigger: { className: 'pr-4' },
+                                            item: { className: 'text-sm font-bold text-slate-700' },
+                                            list: { className: 'p-2' },
+                                            panel: { className: 'rounded-2xl border-slate-100 shadow-xl overflow-hidden' }
+                                        }}
+                                        itemTemplate={(option: Semester) => (
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span>{option.semesterCode}</span>
+                                                {option.status === 'Active' && (
+                                                    <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-black uppercase rounded-full">Active</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    />
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                                        <i className="pi pi-calendar text-orange-500" />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(isHOD || isReviewer) && (
+                                <button
+                                    onClick={() => setCriteriaDialogVisible(true)}
+                                    className="h-[48px] flex items-center gap-2 px-6 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-md text-sm whitespace-nowrap"
+                                >
+                                    <i className="pi pi-cog" />
+                                    <span>Evaluation Checklist</span>
+                                </button>
+                            )}
+                            
+                            {isHOD && (
+                                <button
+                                    onClick={() => navigate('/propose-thesis')}
+                                    className="h-[48px] flex items-center gap-2 px-6 bg-orange-600 text-white font-bold rounded-2xl hover:bg-orange-700 transition-all shadow-md text-sm whitespace-nowrap"
+                                    title="Propose New Thesis"
+                                >
+                                    <i className="pi pi-plus" />
+                                    <span>Propose</span>
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Quick Stats Grid */}
@@ -265,6 +336,7 @@ const ThesisPage = () => {
                                         </button>
                                     )}
                                 </div>
+
 
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-600 px-1">Current Status</label>
@@ -499,8 +571,10 @@ const ThesisPage = () => {
                     onHide={() => {
                         setHodDecisionVisible(false);
                         setSelectedThesisId(null);
+                        setSelectedThesisFileUrl(null);
                     }}
                     thesisId={selectedThesisId}
+                    thesisFileUrl={selectedThesisFileUrl ?? undefined}
                     onSuccess={fetchTheses}
                 />
             )}

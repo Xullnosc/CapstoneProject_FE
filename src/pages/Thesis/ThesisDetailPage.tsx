@@ -22,6 +22,7 @@ import HodDecisionModal from "../../components/Thesis/HodDecisionModal";
 import ReviewSubmissionModal from "../../components/Thesis/ReviewSubmissionModal";
 import UpdateThesisModal from "../../components/Thesis/UpdateThesisModal";
 import CommentModal from "../../components/Thesis/CommentModal";
+import ThesisPublicView from "../../components/Thesis/ThesisDetails/ThesisPublicView";
 import { authService } from "../../services/authService";
 import {
   semesterService,
@@ -48,7 +49,12 @@ const ThesisHistoryTable = lazy(
 const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return "—";
   try {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
+    let isoStr = dateStr.replace(" ", "T");
+    if (!isoStr.match(/[Z+-]\d{2}(:?\d{2})?$/)) {
+      isoStr = isoStr.endsWith("Z") ? isoStr : `${isoStr}Z`;
+    }
+    const date = new Date(isoStr);
+    return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "long",
       year: "numeric",
@@ -60,25 +66,51 @@ const formatDate = (dateStr: string | null | undefined) => {
 
 const formatRelativeTime = (dateStr: string | null | undefined) => {
   if (!dateStr) return "just now";
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "just now";
+  
+  // Robust UTC parsing: if no timezone offset or 'Z', append 'Z' to treat as UTC.
+  // Also ensure ISO 8601 'T' separator instead of space to be safer across browsers.
+  let isoStr = dateStr.replace(" ", "T");
+  if (!isoStr.match(/[Z+-]\d{2}(:?\d{2})?$/)) {
+    isoStr = isoStr.endsWith("Z") ? isoStr : `${isoStr}Z`;
+  }
+  
+  const date = new Date(isoStr);
+  if (Number.isNaN(date.getTime())) {
+    const backup = new Date(dateStr);
+    if (Number.isNaN(backup.getTime())) return "just now";
+    return backup.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  }
 
-  const diffMs = Date.now() - date.getTime();
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
   const diffInMinutes = Math.floor(diffMs / (1000 * 60));
-  const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const diffInHours = Math.floor(diffInMinutes / 60);
+
+  const timePart = date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   if (diffInMinutes < 1) return "just now";
-  if (diffInMinutes < 60) return relativeTime.format(-diffInMinutes, "minute");
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) return `today at ${timePart}`;
 
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return relativeTime.format(-diffInHours, "hour");
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+  if (isYesterday) return `yesterday at ${timePart}`;
 
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return relativeTime.format(-diffInDays, "day");
+  if (diffInHours < 24 * 7) {
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago at ${timePart}`;
+  }
 
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
@@ -111,7 +143,9 @@ const buildConversationEvents = (
     },
   ];
 
-  const reviewEvents = timeline.map((event, index) => {
+  const reviewEvents = timeline
+    .filter((event) => event.eventType !== "REVIEWER_ASSIGNED" && event.eventType !== "REVIEWER_UNASSIGNED")
+    .map((event, index) => {
     const mainComment = event.comments.find(
       (comment) => !comment.parentCommentId,
     );
@@ -134,8 +168,9 @@ const buildConversationEvents = (
       actorRole: event.actorRole,
       decision: event.decision ?? undefined,
       replies: event.comments.filter(
-        (comment) => comment.parentCommentId || comment.id !== mainComment?.id,
+        (comment) => comment.parentCommentId || (mainComment && comment.id !== mainComment.id),
       ),
+      checklistResults: [],
     };
   });
 
@@ -176,10 +211,19 @@ const ThesisDetailPage = () => {
     loading,
     error,
     isLeader,
+    team,
     pausePolling,
     resumePolling,
   } = useThesisCommentary(id, isStudent);
   const isOwner = thesis?.userId === user?.userId;
+  const showConversations = !isStudent || isOwner;
+
+  // Reset activeTab if showConversations changes (e.g. data finally loads)
+  useEffect(() => {
+    if (thesis && !showConversations && activeTab === "conversations") {
+      setActiveTab("versions");
+    }
+  }, [thesis, showConversations, activeTab]);
 
   const showSuccess = useCallback((message: string) => {
     Swal.fire({
@@ -296,6 +340,41 @@ const ThesisDetailPage = () => {
     }
   }, [existingAppId, thesis?.title, showSuccess, showError, refreshAfterAction]);
 
+  const handleApplyRequest = useCallback(async () => {
+    if (!thesis) return;
+
+    // Check team requirements: 5 members OR isSpecial
+    if (isStudent && team) {
+        const memberCount = team.members?.length ?? 0;
+        if (memberCount < 5 && !team.isSpecial) {
+            showError('Nhóm của bạn phải có đủ 5 thành viên hoặc là nhóm đặc biệt (Special Team) mới có thể đăng ký đề tài.');
+            return;
+        }
+    }
+
+    const res = await Swal.fire({ 
+        title: 'Apply for this Thesis?', 
+        html: `Are you sure you want to sign up for <strong>"${thesis.title}"</strong>?`,
+        icon: 'question', 
+        showCancelButton: true,
+        confirmButtonColor: '#f26f21',
+        confirmButtonText: 'Yes, Apply Now'
+    });
+    if (!res.isConfirmed) return;
+    
+    setApplyingForThesis(true);
+    try {
+        await applicationService.submitApplication(thesis.thesisId);
+        showSuccess('Application submitted successfully!');
+        await refreshAfterAction();
+    } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        showError(msg || 'Failed to submit application.');
+    } finally {
+        setApplyingForThesis(false);
+    }
+  }, [thesis, showSuccess, refreshAfterAction, showError]);
+
   const executeToggleLock = useCallback(async () => {
     if (!id) return;
     setLocking(true);
@@ -331,10 +410,10 @@ const ThesisDetailPage = () => {
     });
   }, [executeToggleLock, thesis]);
 
-  const conversationEvents = useMemo(
-    () => (thesis ? buildConversationEvents(thesis, reviewTimeline) : []),
-    [thesis, reviewTimeline],
-  );
+  const conversationEvents = useMemo(() => {
+    if (!thesis) return [];
+    return buildConversationEvents(thesis, reviewTimeline);
+  }, [thesis, reviewTimeline]);
 
   const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
   const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
@@ -452,7 +531,11 @@ const ThesisDetailPage = () => {
     thesis && isStudent && isLeader &&
     (thesis.status === "Reviewing" || thesis.status === "Registered" || thesis.status === "On Mentor Inviting" || thesis.status === "Need Update")
   );
-  const canUploadRevision = Boolean(isStudent && thesis);
+  const canUploadRevision = Boolean(
+    isStudent && 
+    isOwner && 
+    thesis?.status === "Need Update"
+  );
 
   if (loading) {
     return (
@@ -475,9 +558,25 @@ const ThesisDetailPage = () => {
           <i className="pi pi-exclamation-circle text-red-500 text-4xl mb-6" />
           <h2 className="text-2xl font-black mb-2">Thesis not found</h2>
           <p className="text-slate-500 text-sm mb-8">{error}</p>
-          <button type="button" onClick={() => navigate(isHOD || isReviewer ? "/thesis" : "/my-thesis")} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold">Return to List</button>
+          <PrimeButton onClick={() => navigate(isHOD || isReviewer ? "/thesis" : "/my-thesis")} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold border-0">Return to List</PrimeButton>
         </div>
       </div>
+    );
+  }
+
+  if (isStudent && !isOwner) {
+    return (
+        <ThesisPublicView 
+            thesis={thesis}
+            authorName={thesis.ownerName ?? "Unknown Author"}
+            relativeTime={formatRelativeTime(submissionDateStr)}
+            isLeader={isLeader}
+            team={team}
+            applyingForThesis={applyingForThesis}
+            existingAppStatus={existingAppStatus}
+            onApply={handleApplyRequest}
+            onCancelApply={handleCancelRequest}
+        />
     );
   }
 
@@ -485,14 +584,18 @@ const ThesisDetailPage = () => {
     <div className={`p-6 lg:p-10 font-sans bg-[#fafbfc] min-h-screen ${styles.thesisContainer}`}>
       <div className="max-w-[1440px] mx-auto space-y-6">
         <PremiumBreadcrumb items={breadcrumbItems} />
-        <CommentaryHeader thesis={thesis} subtitle={`${thesis.ownerName ?? "Unknown"} ${formatRelativeTime(submissionDateStr)}`} />
-        <CommentaryTabs activeTab={activeTab} conversationCount={conversationEvents.length} versionCount={thesis.histories?.length ?? 0} onChange={setActiveTab} />
+        <CommentaryHeader 
+          thesis={thesis} 
+          authorName={thesis.ownerName ?? "Unknown Author"} 
+          relativeTime={formatRelativeTime(submissionDateStr)} 
+        />
+        <CommentaryTabs activeTab={activeTab} conversationCount={conversationEvents.length} versionCount={thesis.histories?.length ?? 0} onChange={setActiveTab} showConversations={showConversations} />
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="order-2 lg:order-1 lg:col-span-9 space-y-6 relative">
             {activeTab === "conversations" ? (
               <>
                 <ResearchDocumentCard fileUrl={thesis.fileUrl} />
-                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={reviewers.length} latestReviewer={latestReviewer} />
+                <ReviewProgressCard reviewedCount={reviewedCount} totalCount={2} latestReviewer={latestReviewer} />
                 <CommentaryTimeline events={conversationEvents} emptyMessage="Evaluation in progress..." canReply={canReplyToTimeline} onAddReply={handleAddReply} />
                 <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
               </>
@@ -537,25 +640,24 @@ const ThesisDetailPage = () => {
                       style={{ backgroundColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444', borderColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444' }}
                     />
                   ) : (
-                    <PrimeButton
-                      label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'} icon="pi pi-send"
-                      onClick={async () => {
-                        const res = await Swal.fire({ title: 'Apply?', icon: 'question', showCancelButton: true });
-                        if (!res.isConfirmed) return;
-                        setApplyingForThesis(true);
-                        try {
-                          await applicationService.submitApplication(thesis.thesisId);
-                          showSuccess('Success!');
-                          await refreshAfterAction();
-                        } catch (err: unknown) {
-                          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-                          showError(msg || 'Failed');
-                        } finally {
-                          setApplyingForThesis(false);
-                        }
-                      }}
-                      loading={applyingForThesis} className="p-button-sm p-button-orange w-full font-bold uppercase py-3" style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
-                    />
+                    <div className="space-y-3">
+                      {isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial && (
+                        <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                          <p className="text-[10px] text-rose-600 font-medium leading-relaxed">
+                            <i className="pi pi-exclamation-triangle mr-1" />
+                            Nhóm cần đủ 5 thành viên hoặc là nhóm đặc biệt để đăng ký.
+                          </p>
+                        </div>
+                      )}
+                      <PrimeButton
+                        label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'} icon="pi pi-send"
+                        onClick={handleApplyRequest}
+                        loading={applyingForThesis}
+                        disabled={(isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial) || applyingForThesis}
+                        className="p-button-sm p-button-orange w-full font-bold uppercase py-3"
+                        style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                      />
+                    </div>
                   )}
                 </div>
               )}
