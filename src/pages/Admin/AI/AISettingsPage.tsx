@@ -4,10 +4,7 @@ import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { authService } from "../../../services/authService";
 import { aiService } from "../../../services/aiService";
-import { dashboardService } from "../../../services/dashboardService";
-import type { DashboardStats } from "../../../services/dashboardService";
 import type {
-  AIMetricsSummary,
   AIProviderType,
   SaveUserAIProvider,
   SaveUserAISettingsRequest,
@@ -15,7 +12,6 @@ import type {
 } from "../../../types/ai";
 import { PROVIDER_META } from "../../../types/ai";
 import ApiKeySection from "./components/ApiKeySection";
-import MetricsSummarySection from "./components/MetricsSummarySection";
 type FormState = {
   aiEnabled: boolean;
   defaultProvider: AIProviderType;
@@ -113,12 +109,7 @@ export default function AISettingsPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [metricsLoading, setMetricsLoading] = useState(true);
   const [userSettings, setUserSettings] = useState<UserAISettingsView | null>(
-    null,
-  );
-  const [metrics, setMetrics] = useState<AIMetricsSummary | null>(null);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
     null,
   );
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -156,26 +147,9 @@ export default function AISettingsPage() {
     }
   }, []);
 
-  const loadMetrics = useCallback(async () => {
-    try {
-      setMetricsLoading(true);
-      const [summary, stats] = await Promise.all([
-        aiService.getMetrics(),
-        dashboardService.getStats().catch(() => null),
-      ]);
-      setMetrics(summary);
-      setDashboardStats(stats);
-    } catch {
-      setMetrics(null);
-    } finally {
-      setMetricsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     loadSettings();
-    loadMetrics();
-  }, [loadSettings, loadMetrics]);
+  }, [loadSettings]);
 
   const patchProviders = (providers: Record<string, SaveUserAIProvider>) => {
     setForm((prev) => ({ ...prev, providers }));
@@ -434,33 +408,6 @@ export default function AISettingsPage() {
                     </p>
                   </div>
                 </div>
-              </section>
-
-              <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                      Usage
-                    </p>
-                    <h2 className="mt-2 text-xl font-semibold text-slate-900">
-                      Metrics snapshot
-                    </h2>
-                  </div>
-                  <Button
-                    label="Refresh"
-                    icon="pi pi-refresh"
-                    size="small"
-                    outlined
-                    severity="secondary"
-                    loading={metricsLoading}
-                    onClick={loadMetrics}
-                  />
-                </div>
-                <MetricsSummarySection
-                  metrics={metrics}
-                  dashboardStats={dashboardStats}
-                  loading={metricsLoading}
-                />
               </section>
             </div>
           </div>

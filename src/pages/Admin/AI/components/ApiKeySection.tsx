@@ -23,8 +23,9 @@ interface Props {
 }
 
 const PROVIDER_OPTIONS = PROVIDER_META.map((p) => ({
-  label: p.label,
+  label: p.key === "AzureOpenAI" ? `${p.label} (Coming soon)` : p.label,
   value: p.key,
+  disabled: p.key === "AzureOpenAI",
 }));
 const FALLBACK_OPTIONS = [{ label: "None", value: null }, ...PROVIDER_OPTIONS];
 
@@ -88,6 +89,7 @@ export default function ApiKeySection({
   const isVisible = visibleKeys.has(defaultProvider);
   const isTesting = testingProvider === defaultProvider;
   const isConnected = connectedProviders.has(defaultProvider);
+  const isComingSoonProvider = defaultProvider === "AzureOpenAI";
 
   const confirmDeleteProvider = (event: MouseEvent<HTMLElement>) => {
     if (!onDeleteProvider) {
@@ -124,6 +126,7 @@ export default function ApiKeySection({
             <Dropdown
               value={defaultProvider}
               options={PROVIDER_OPTIONS}
+              optionDisabled="disabled"
               onChange={(e) =>
                 onDefaultProviderChange(e.value as AIProviderType)
               }
@@ -162,6 +165,11 @@ export default function ApiKeySection({
             <span className="font-semibold text-gray-800">
               {selectedMeta.label}
             </span>
+            {isComingSoonProvider && (
+              <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                Coming soon
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {isConnected && (
@@ -191,12 +199,18 @@ export default function ApiKeySection({
               size="small"
               outlined
               severity="secondary"
-              disabled={isTesting || !providerData.apiKey}
+              disabled={isComingSoonProvider || isTesting || !providerData.apiKey}
               onClick={() => onTestConnection(defaultProvider)}
               className="!text-sm"
             />
           </div>
         </div>
+
+        {isComingSoonProvider && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            Azure OpenAI settings are coming soon.
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -211,14 +225,14 @@ export default function ApiKeySection({
               }
               placeholder={`Enter ${selectedMeta.label} API key…`}
               className="w-full pr-10"
-              disabled={readOnly}
+              disabled={readOnly || isComingSoonProvider}
             />
             <button
               type="button"
               onClick={() => toggleVisibility(defaultProvider)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               aria-label={isVisible ? "Hide key" : "Show key"}
-              disabled={readOnly}
+              disabled={readOnly || isComingSoonProvider}
             >
               <i className={`pi ${isVisible ? "pi-eye-slash" : "pi-eye"}`} />
             </button>
@@ -256,7 +270,7 @@ export default function ApiKeySection({
             filterBy="label"
             placeholder={`Select a ${selectedMeta.label} model…`}
             className="w-full"
-            disabled={readOnly}
+            disabled={readOnly || isComingSoonProvider}
             pt={{ root: { className: "w-full" } }}
           />
         </div>
@@ -280,7 +294,7 @@ export default function ApiKeySection({
                 }
                 placeholder="https://<resource>.openai.azure.com"
                 className="w-full"
-                disabled={readOnly}
+                disabled={readOnly || isComingSoonProvider}
               />
             </div>
             {showApiVersionField && (
@@ -299,7 +313,7 @@ export default function ApiKeySection({
                   }
                   placeholder="2024-05-01-preview"
                   className="w-full"
-                  disabled={readOnly}
+                  disabled={readOnly || isComingSoonProvider}
                 />
               </div>
             )}
@@ -319,7 +333,7 @@ export default function ApiKeySection({
                   }
                   placeholder="my-gpt4o-deployment"
                   className="w-full"
-                  disabled={readOnly}
+                  disabled={readOnly || isComingSoonProvider}
                 />
               </div>
             )}
@@ -342,7 +356,7 @@ export default function ApiKeySection({
                 )
               }
               className="w-full"
-              disabled={readOnly}
+              disabled={readOnly || isComingSoonProvider}
               min={5}
               max={300}
             />
@@ -362,7 +376,7 @@ export default function ApiKeySection({
                 )
               }
               className="w-full"
-              disabled={readOnly}
+              disabled={readOnly || isComingSoonProvider}
               min={0}
               max={5}
             />

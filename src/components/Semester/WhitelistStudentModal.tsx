@@ -1,6 +1,5 @@
 import { useState, useEffect, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
-import { Dropdown } from 'primereact/dropdown';
 import { whitelistService } from '../../services/whitelistService';
 import type { Whitelist } from '../../services/semesterService';
 import Swal from '../../utils/swal';
@@ -23,7 +22,6 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
     const [formData, setFormData] = useState<Partial<Whitelist>>({
         email: '',
         fullName: '',
-        campus: '',
         semesterId: semesterId,
         roleId: 3 // Assuming Student role ID is 3
     });
@@ -39,20 +37,11 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
             setFormData({
                 email: '',
                 fullName: '',
-                campus: '',
                 semesterId: semesterId,
                 roleId: 3
             });
         }
     }, [studentData, isOpen, semesterId]);
-
-    const campusOptions = [
-        { label: 'FU-Hòa Lạc', value: 'FU-Hòa Lạc' },
-        { label: 'FU-Hồ Chí Minh', value: 'FU-Hồ Chí Minh' },
-        { label: 'FU-Đà Nẵng', value: 'FU-Đà Nẵng' },
-        { label: 'FU-Cần Thơ', value: 'FU-Cần Thơ' },
-        { label: 'FU-Quy Nhơn', value: 'FU-Quy Nhơn' }
-    ];
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -75,7 +64,6 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                 whitelistId: studentData?.whitelistId,
                 email: formData.email,
                 fullName: formData.fullName,
-                campus: formData.campus,
                 semesterId: formData.semesterId,
                 roleId: formData.roleId,
                 studentCode: formData.studentCode,
@@ -173,24 +161,6 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                         onChange={handleChange}
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
                         placeholder="e.g. SE123456"
-                    />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-bold text-gray-700 ml-1">Campus</label>
-                    <Dropdown
-                        value={formData.campus}
-                        onChange={(e) => setFormData(prev => ({ ...prev, campus: e.value }))}
-                        options={campusOptions}
-                        optionLabel="label"
-                        placeholder="Select Campus"
-                        appendTo="self"
-                        className="w-full bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
-                        pt={{
-                            root: { style: { padding: '4px 8px' } },
-                            input: { className: 'text-sm font-medium py-2' },
-                            item: { className: 'text-sm' }
-                        }}
                     />
                 </div>
 
