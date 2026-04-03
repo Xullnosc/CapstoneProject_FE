@@ -373,7 +373,7 @@ const ThesisDetailPage = () => {
     } finally {
         setApplyingForThesis(false);
     }
-  }, [thesis, showSuccess, refreshAfterAction, showError]);
+  }, [thesis, showSuccess, refreshAfterAction, showError, isStudent, team]);
 
   const executeToggleLock = useCallback(async () => {
     if (!id) return;

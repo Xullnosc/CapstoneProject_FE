@@ -77,20 +77,23 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                         {members.map(member => (
                             <tr key={member.studentId} className="group hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className={`flex items-center gap-3 ${canViewProfile(member.studentId) ? 'cursor-pointer group/name' : ''}`}
+                                        onClick={() => goToProfile(member.studentId)}
+                                    >
                                         <MemberAvatar
                                             email={member.email || ''}
                                             fullName={member.fullName}
                                             avatarUrl={member.avatar}
-                                            className="size-10 rounded-full object-cover border border-gray-100"
+                                            className="size-10 rounded-full object-cover border border-gray-100 transition-transform group-hover/name:scale-110"
                                         />
                                         <div>
-                                            <p className="text-gray-900 font-bold text-sm">
+                                            <p className={`text-gray-900 font-bold text-sm ${canViewProfile(member.studentId) ? 'group-hover/name:text-orange-600 transition-colors' : ''}`}>
                                                 {member.fullName}
-                                                {member.studentId === currentUserId && <span className="text-orange-500 ml-1">(You)</span>}
-                                                {member.studentId === leaderId && <span className="text-orange-600 ml-1">(Leader)</span>}
+                                                {member.studentId === currentUserId && <span className="text-orange-500 ml-1 font-normal">(You)</span>}
+                                                {member.studentId === leaderId && <span className="text-orange-600 ml-1 font-normal text-xs bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100 uppercase tracking-tight italic">Leader</span>}
                                             </p>
-                                            <p className="text-gray-500 text-xs">ID: {member.studentCode} • {member.email}</p>
+                                            <p className="text-gray-500 text-[11px] font-mono tracking-tight opacity-70">MSSV: {member.studentCode}</p>
                                         </div>
                                     </div>
                                 </td>
@@ -106,20 +109,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex justify-end w-full gap-2">
-                                        <button
-                                            type="button"
-                                            disabled={!canViewProfile(member.studentId)}
-                                            onClick={() => goToProfile(member.studentId)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
-                                                ${canViewProfile(member.studentId)
-                                                    ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-orange-600'
-                                                    : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                                                }`}
-                                            title="View Profile"
-                                        >
-                                            <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
-                                            View
-                                        </button>
+
 
                                         {member.studentId === currentUserId ? (
                                             <button
@@ -161,19 +151,22 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                         {mentorId && (
                             <tr className="bg-blue-50/30 hover:bg-blue-50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className={`flex items-center gap-3 ${canViewProfile(mentorId) ? 'cursor-pointer group/mentor' : ''}`}
+                                        onClick={() => goToProfile(mentorId)}
+                                    >
                                         <MemberAvatar
                                             email={mentorEmail || ''}
                                             fullName={mentorName || 'Mentor'}
                                             avatarUrl={mentorAvatar}
-                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm transition-transform group-hover/mentor:scale-110"
                                         />
                                         <div>
-                                            <p className="text-gray-900 font-bold text-sm">
+                                            <p className={`text-gray-900 font-bold text-sm ${canViewProfile(mentorId) ? 'group-hover/mentor:text-blue-700 transition-colors' : ''}`}>
                                                 {mentorName}
-                                                {mentorId === currentUserId && <span className="text-blue-600 ml-1">(You)</span>}
+                                                {mentorId === currentUserId && <span className="text-blue-600 ml-1 font-normal">(You)</span>}
                                             </p>
-                                            <p className="text-gray-500 text-xs">Role: Mentor (1) • {mentorEmail}</p>
+                                            <p className="text-gray-500 text-[11px] font-mono tracking-tight opacity-70">Role: Primary Mentor</p>
                                         </div>
                                     </div>
                                 </td>
@@ -184,20 +177,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                        type="button"
-                                        disabled={!canViewProfile(mentorId)}
-                                        onClick={() => goToProfile(mentorId)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
-                                            ${canViewProfile(mentorId)
-                                                ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-blue-700'
-                                                : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                                            }`}
-                                        title="View Profile"
-                                    >
-                                        <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
-                                        View
-                                    </button>
+
                                 </td>
                             </tr>
                         )}
@@ -205,19 +185,22 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                         {mentorId2 && (
                             <tr className="bg-blue-50/30 hover:bg-blue-50 transition-colors">
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className={`flex items-center gap-3 ${canViewProfile(mentorId2) ? 'cursor-pointer group/mentor2' : ''}`}
+                                        onClick={() => goToProfile(mentorId2)}
+                                    >
                                         <MemberAvatar
                                             email={mentor2Email || ''}
                                             fullName={mentor2Name || 'Mentor'}
                                             avatarUrl={mentor2Avatar}
-                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                                            className="size-10 rounded-full object-cover border-2 border-blue-200 shadow-sm transition-transform group-hover/mentor2:scale-110"
                                         />
                                         <div>
-                                            <p className="text-gray-900 font-bold text-sm">
+                                            <p className={`text-gray-900 font-bold text-sm ${canViewProfile(mentorId2) ? 'group-hover/mentor2:text-blue-700 transition-colors' : ''}`}>
                                                 {mentor2Name}
-                                                {mentorId2 === currentUserId && <span className="text-blue-600 ml-1">(You)</span>}
+                                                {mentorId2 === currentUserId && <span className="text-blue-600 ml-1 font-normal">(You)</span>}
                                             </p>
-                                            <p className="text-gray-500 text-xs">Role: Mentor (2) • {mentor2Email}</p>
+                                            <p className="text-gray-500 text-[11px] font-mono tracking-tight opacity-70">Role: Secondary Mentor</p>
                                         </div>
                                     </div>
                                 </td>
@@ -228,20 +211,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                        type="button"
-                                        disabled={!canViewProfile(mentorId2)}
-                                        onClick={() => goToProfile(mentorId2)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
-                                            ${canViewProfile(mentorId2)
-                                                ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-blue-700'
-                                                : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                                            }`}
-                                        title="View Profile"
-                                    >
-                                        <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
-                                        View
-                                    </button>
+
                                 </td>
                             </tr>
                         )}

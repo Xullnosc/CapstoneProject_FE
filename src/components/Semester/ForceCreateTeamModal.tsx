@@ -39,8 +39,8 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
     const fetchOrphanedStudents = async () => {
         setIsLoadingStudents(true);
         try {
-            const data = await semesterService.getOrphanedStudents(semesterId);
-            setOrphanedStudents(data);
+            const data = await semesterService.getOrphanedStudents(semesterId, 1, 1000);
+            setOrphanedStudents(data.items);
         } catch {
             setOrphanedStudents([]);
         } finally {
@@ -55,6 +55,7 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
                 if (leaderEmail === email) setLeaderEmail(null);
                 return prev.filter(e => e !== email);
             }
+            if (prev.length >= 5) return prev;
             return [...prev, email];
         });
     };
@@ -64,6 +65,10 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
 
         if (!teamName.trim()) {
             Swal.fire({ icon: 'warning', title: 'Missing Info', text: 'Team name is required.' });
+            return;
+        }
+        if (teamName.trim().length < 3) {
+            Swal.fire({ icon: 'warning', title: 'Invalid Name', text: 'Team name must be at least 3 characters long.' });
             return;
         }
         if (selectedEmails.length === 0) {
@@ -88,7 +93,21 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
             onClose();
             onSuccess();
         } catch (error: unknown) {
-            const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to create team.';
+            let message = 'Failed to create team.';
+            
+            const err = error as { response?: { data?: { errors?: Record<string, string[]>, message?: string } } };
+
+            // Handle ASP.NET Core Validation Errors (errors object)
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                   message = errorMessages.join('\n');
+                }
+            } else if (err.response?.data?.message) {
+                message = err.response.data.message;
+            }
+
             Swal.fire({ icon: 'error', title: 'Error', text: message });
         } finally {
             setIsSubmitting(false);
@@ -156,11 +175,22 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
                     <label className="text-sm font-bold text-gray-700">
                         Select Members <span className="text-red-500">*</span>
                         {selectedEmails.length > 0 && (
-                            <span className="ml-2 text-xs font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
-                                {selectedEmails.length} selected
+                            <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                selectedEmails.length < 4 
+                                ? 'bg-amber-50 text-amber-600 border border-amber-100' 
+                                : 'bg-orange-50 text-orange-600'
+                            }`}>
+                                {selectedEmails.length} member{selectedEmails.length > 1 ? 's' : ''} 
+                                {selectedEmails.length < 4 && ' (Special)'}
+                                {selectedEmails.length === 5 && ' (Max reached)'}
                             </span>
                         )}
                     </label>
+                    {selectedEmails.length < 4 && selectedEmails.length > 0 && (
+                        <p className="text-[10px] text-amber-600 mt-0.5 italic">
+                            Teams with fewer than 4 members will stay as "Special" to bypass requirements.
+                        </p>
+                    )}
 
                     {isLoadingStudents ? (
                         <div className="flex items-center justify-center py-8 text-gray-400">
@@ -184,8 +214,9 @@ const ForceCreateTeamModal: FC<ForceCreateTeamModalProps> = ({
                                         <input
                                             type="checkbox"
                                             checked={isChecked}
+                                            disabled={!isChecked && selectedEmails.length >= 5}
                                             onChange={() => toggleMember(s.email)}
-                                            className="accent-orange-500 w-4 h-4 rounded"
+                                            className="accent-orange-500 w-4 h-4 rounded cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                                         />
                                         <img
                                             src={s.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.fullName || 'S')}&background=random&color=fff&size=32`}

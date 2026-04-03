@@ -95,8 +95,10 @@ export const semesterService = {
         return response.data.find(s => s.status === 'Active');
     },
 
-    getOrphanedStudents: async (semesterId: number): Promise<Whitelist[]> => {
-        const response = await api.get<Whitelist[]>(`/semester/${semesterId}/orphaned-students`);
+    getOrphanedStudents: async (semesterId: number, page: number = 1, pageSize: number = 10): Promise<PagedResult<Whitelist>> => {
+        const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/orphaned-students`, {
+            params: { page, pageSize }
+        });
         return response.data;
     },
 
