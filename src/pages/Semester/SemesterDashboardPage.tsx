@@ -30,25 +30,42 @@ type SemesterCardViewModel = {
 const SemesterDashboardPage = () => {
     const user = authService.getUser();
     const canManage = user?.roleName === 'HOD' || user?.roleName === 'Admin';
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [semesters, setSemesters] = useState<Semester[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [filterStatus, setFilterStatus] = useState<'All' | 'Ongoing' | 'Upcoming' | 'Ended'>('All');
+    const pageSize = 6;
 
-    const fetchSemesters = useCallback(async () => {
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [allSemesters, setAllSemesters] = useState<Semester[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [filterStatus, setFilterStatus] = useState<'All' | 'Ongoing' | 'Upcoming' | 'Ended'>('All');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalSemesterCount, setTotalSemesterCount] = useState(0);
+
+    const fetchSemesters = useCallback(async (page: number = 1, append: boolean = false) => {
         try {
-            setIsLoading(true);
-            const data = await semesterService.getAllSemesters();
-            setSemesters(data);
+            if (!append) setIsLoading(true);
+            else setIsLoadingMore(true);
+
+            const data = await semesterService.getAllSemestersPaginated(page, pageSize);
+            
+            if (append) {
+                setAllSemesters((prev) => [...prev, ...data.items]);
+            } else {
+                setAllSemesters(data.items);
+            }
+            
+            setTotalSemesterCount(data.totalCount);
+            setCurrentPage(page);
         } catch (error: unknown) {
             console.error("Failed to fetch semesters", error);
         } finally {
             setIsLoading(false);
+            setIsLoadingMore(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchSemesters();
+        fetchSemesters(1, false);
     }, [fetchSemesters]);
 
     // Helper to map API data to UI format
@@ -70,7 +87,7 @@ const SemesterDashboardPage = () => {
         };
     }, []);
 
-    const semesterCards = useMemo(() => semesters.map(mapToCardProps), [semesters, mapToCardProps]);
+    const semesterCards = useMemo(() => allSemesters.map(mapToCardProps), [allSemesters, mapToCardProps]);
 
     const activeSemesterCard = useMemo(
         () => semesterCards.find(s => s.status === 'Ongoing') || null,
@@ -78,9 +95,36 @@ const SemesterDashboardPage = () => {
     );
 
     const filteredSemesterCards = useMemo(() => {
-        if (filterStatus === 'All') return semesterCards;
-        return semesterCards.filter(s => s.status === filterStatus);
-    }, [filterStatus, semesterCards]);
+        const keyword = searchTerm.trim().toLowerCase();
+
+        return semesterCards.filter((semesterCard) => {
+            const matchesStatus = filterStatus === 'All' || semesterCard.status === filterStatus;
+            const matchesSearch =
+                keyword.length === 0 ||
+                semesterCard.name.toLowerCase().includes(keyword) ||
+                semesterCard.code.toLowerCase().includes(keyword);
+
+            return matchesStatus && matchesSearch;
+        });
+    }, [filterStatus, searchTerm, semesterCards]);
+
+    const visibleSemesterCards = useMemo(
+        () => filteredSemesterCards,
+        [filteredSemesterCards]
+    );
+
+    const canShowMore = visibleSemesterCards.length > 0 && allSemesters.length < totalSemesterCount;
+
+    const emptySemesterMessage = useMemo(() => {
+        if (filterStatus === 'Ongoing') return 'There is no on-going semester';
+        if (filterStatus === 'Upcoming') return 'There is no upcoming semester';
+        if (filterStatus === 'Ended') return 'There is no ended semester';
+        return 'There is no semester';
+    }, [filterStatus]);
+
+    const handleShowMore = async () => {
+        await fetchSemesters(currentPage + 1, true);
+    };
 
     const breadcrumbItems = [
         { label: 'Home', to: '/home' },
@@ -154,6 +198,8 @@ const SemesterDashboardPage = () => {
                                     className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm w-full md:w-64 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder:text-gray-400"
                                     placeholder="Search semesters..."
                                     type="text"
+                                    value={searchTerm}
+                                    onChange={(event) => setSearchTerm(event.target.value)}
                                 />
                             </div>
                         </div>
@@ -163,22 +209,30 @@ const SemesterDashboardPage = () => {
                         <div className="flex justify-center py-20">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                         </div>
+                    ) : visibleSemesterCards.length === 0 ? (
+                        <div className="py-16 rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 text-center">
+                            <p className="text-base font-semibold text-gray-600">{emptySemesterMessage}</p>
+                        </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredSemesterCards.map(sem => (
+                            {visibleSemesterCards.map(sem => (
                                 <SemesterCard key={sem.id} semester={sem} onRefresh={fetchSemesters} />
                             ))}
                         </div>
                     )}
 
-                    {/* Pagination Mock */}
-                    <div className="px-6 py-6 flex items-center justify-between border-t border-gray-100 mt-4">
-                        <p className="text-xs text-gray-500">Showing {filteredSemesterCards.length} semesters</p>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-400 bg-white cursor-not-allowed" disabled>Previous</button>
-                            <button className="cursor-pointer px-3 py-1.5 rounded border border-gray-200 text-xs font-medium text-gray-900 bg-white hover:bg-gray-50 transition-colors">Next</button>
+                    {/* Progressive reveal */}
+                    {canShowMore && (
+                        <div className="flex justify-center py-8 mt-4">
+                            <button
+                                onClick={handleShowMore}
+                                disabled={isLoadingMore}
+                                className="px-8 py-3 rounded-full border-2 border-stone-200 text-stone-600 font-bold tracking-tight hover:border-orange-600 hover:text-orange-600 transition-all duration-300 scale-95 active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoadingMore ? 'Loading...' : 'Show more'}
+                            </button>
                         </div>
-                    </div>
+                    )}
                 </div>
             </main>
 

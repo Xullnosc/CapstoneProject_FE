@@ -7,12 +7,8 @@ type NavItem = {
 };
 
 const SETTINGS_NAV: NavItem[] = [
-  { label: "General", icon: "pi pi-sliders-h" },
   { label: "AI Models", icon: "pi pi-sparkles", path: "/ai-settings" },
   { label: "API Keys", icon: "pi pi-key", path: "/ai-settings/api-keys" },
-  { label: "Usage", icon: "pi pi-chart-line" },
-  { label: "Billing", icon: "pi pi-wallet" },
-  { label: "Team", icon: "pi pi-users" },
 ];
 
 type AIStudioNavProps = {

@@ -23,6 +23,7 @@ interface SemesterFormInputs {
 
 const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, semesterData }) => {
     const isEditMode = !!semesterData;
+    const isLockedForEdit = isEditMode && !!semesterData && (semesterData.status === 'Active' || semesterData.status === 'Ended');
     const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = useForm<SemesterFormInputs>();
     const startDate = watch('startDate');
     const endDate = watch('endDate');
@@ -65,6 +66,15 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
     };
 
     const onSubmit = async (data: SemesterFormInputs) => {
+        if (isLockedForEdit) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Editing Locked',
+                text: semesterData?.status === 'Active' ? 'On-going semesters cannot be edited.' : 'Ended semesters cannot be edited.',
+            });
+            return;
+        }
+
         if (isEndDateInvalid) return;
 
         const logicError = validateLogic(data);
@@ -138,8 +148,8 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             >
                 {isEditMode ? 'Close' : 'Cancel'}
             </button>
-            {/* Show Save/Create button only if active or if it's create mode */}
-            {(!isEditMode || (semesterData && semesterData.status === 'Active')) && (
+            {/* Show submit button only when create mode or edit mode is allowed */}
+            {(!isEditMode || !isLockedForEdit) && (
                 <button
                     type="submit"
                     form="semester-form"
@@ -170,6 +180,13 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             draggable={false}
         >
             <form id="semester-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 pt-2">
+                {isEditMode && semesterData && semesterData.status === 'Active' && (
+                    <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                        <span className="material-symbols-outlined">lock</span>
+                        This semester is on-going and cannot be modified.
+                    </div>
+                )}
+
                 {isEditMode && semesterData && semesterData.status === 'Ended' && (
                     <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
                         <span className="material-symbols-outlined">lock</span>
@@ -177,7 +194,7 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
                     </div>
                 )}
 
-                <fieldset disabled={isEditMode && semesterData && semesterData.status === 'Ended'} className="contents disabled:opacity-60">
+                <fieldset disabled={isLockedForEdit} className="contents disabled:opacity-60">
                     {/* Hidden ID field for edit */}
                     {isEditMode && <input type="hidden" {...register('semesterId')} />}
 
