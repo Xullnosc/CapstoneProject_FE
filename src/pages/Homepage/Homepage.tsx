@@ -9,6 +9,7 @@ import { authService } from '../../services/authService';
 import type { Team, TeamMember } from '../../types/team';
 import InviteMemberModal from '../../components/team/InviteMemberModal';
 import AdminDashboard from './AdminDashboard';
+import LecturerDashboard from './LecturerDashboard';
 
 const Homepage = () => {
     const navigate = useNavigate();
@@ -17,8 +18,13 @@ const Homepage = () => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const currentUser = authService.getUser();
     const isHODOrAdmin = currentUser?.roleName === 'HOD' || currentUser?.roleName === 'Head of Department' || currentUser?.roleName === 'Admin';
+    const isLecturer = currentUser?.roleName === 'Lecturer';
 
     useEffect(() => {
+        if (isHODOrAdmin || isLecturer) {
+            setLoading(false);
+            return;
+        }
         const fetchTeam = async () => {
             try {
                 const myTeam = await teamService.getMyTeam();
@@ -30,8 +36,8 @@ const Homepage = () => {
             }
         };
 
-        fetchTeam();
-    }, []);
+        void fetchTeam();
+    }, [isHODOrAdmin, isLecturer]);
 
     // Generate Team Display Data
     const getTeamDisplay = () => {
@@ -65,6 +71,10 @@ const Homepage = () => {
 
     if (isHODOrAdmin) {
         return <AdminDashboard />;
+    }
+
+    if (isLecturer) {
+        return <LecturerDashboard />;
     }
 
     return (
