@@ -44,6 +44,10 @@ export const userService = {
         const response = await api.get<UserInfo>('/users/profile');
         return response.data;
     },
+    getProfileByUserId: async (userId: number): Promise<UserInfo> => {
+        const response = await api.get<UserInfo>(`/users/${userId}/profile`);
+        return response.data;
+    },
     searchStudents: async (term: string, teamId?: number): Promise<UserInfo[]> => {
         const url = teamId
             ? `/users/search?term=${term}&teamId=${teamId}`

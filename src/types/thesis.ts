@@ -70,6 +70,7 @@ export interface Thesis {
   isApplied: boolean;
   isAppUsed: boolean;
 
+  teamId?: number | null;
   histories: ThesisHistory[] | null;
 
   reviews: ThesisReview[] | null;

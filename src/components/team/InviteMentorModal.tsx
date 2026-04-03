@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { userService, type UserInfo } from '../../services/userService';
 import { mentorInvitationService } from '../../services/mentorInvitationService';
 import MemberAvatar from './MemberAvatar';
@@ -21,6 +22,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
     const [invitedUsers, setInvitedUsers] = useState<Record<number, number>>({}); // userId -> invitationId
     const [processingUsers, setProcessingUsers] = useState<Record<number, boolean>>({});
     const [hasSearched, setHasSearched] = useState(false);
+    const navigate = useNavigate();
 
     const performSearch = useCallback(async (term: string) => {
         setIsLoading(true);
@@ -191,6 +193,7 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                         searchResults.map(user => {
                             const isInvited = !!invitedUsers[user.userId];
                             const isProcessing = processingUsers[user.userId];
+                                const canViewProfile = user.userId > 0;
                             return (
                                 <div key={user.userId} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group">
                                     <div className="flex items-center gap-3">
@@ -206,32 +209,52 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                                         </div>
                                     </div>
 
-                                    <button
-                                        onClick={() => isInvited ? handleCancelInvite(user.userId) : handleInvite(user)}
-                                        disabled={isProcessing}
-                                        className={`
-                                            flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer
-                                            ${isInvited
-                                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                                : 'bg-orange-50 text-orange-600 hover:bg-orange-100 hover:shadow-orange-100'
-                                            }
-                                            ${isProcessing ? 'opacity-70 cursor-wait' : ''}
-                                        `}
-                                    >
-                                        {isProcessing ? (
-                                            <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
-                                        ) : isInvited ? (
-                                            <>
-                                                <span className="material-symbols-outlined text-lg">close</span>
-                                                Cancel
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="material-symbols-outlined text-lg">add</span>
-                                                Invite
-                                            </>
-                                        )}
-                                    </button>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => isInvited ? handleCancelInvite(user.userId) : handleInvite(user)}
+                                                disabled={isProcessing}
+                                                className={`
+                                                    flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all cursor-pointer
+                                                    ${isInvited
+                                                        ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                                        : 'bg-orange-50 text-orange-600 hover:bg-orange-100 hover:shadow-orange-100'
+                                                    }
+                                                    ${isProcessing ? 'opacity-70 cursor-wait' : ''}
+                                                `}
+                                            >
+                                                {isProcessing ? (
+                                                    <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                                                ) : isInvited ? (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-lg">close</span>
+                                                        Cancel
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-lg">add</span>
+                                                        Invite
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                disabled={!canViewProfile}
+                                                onClick={() => {
+                                                    if (!canViewProfile) return;
+                                                    navigate(`/profile/${user.userId}`);
+                                                }}
+                                                className={`px-3 py-2 rounded-lg text-sm font-bold border transition-colors cursor-pointer
+                                                    ${canViewProfile
+                                                        ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-orange-600'
+                                                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                                                    }`}
+                                                title={canViewProfile ? 'View Profile' : 'Profile not available'}
+                                            >
+                                                <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
+                                                View
+                                            </button>
+                                        </div>
                                 </div>
                             );
                         })

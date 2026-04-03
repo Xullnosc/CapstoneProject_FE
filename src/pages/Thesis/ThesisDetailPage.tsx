@@ -29,6 +29,7 @@ import {
   type Whitelist,
 } from "../../services/semesterService";
 import { thesisService } from "../../services/thesisService";
+import ForceAssignThesisModal from "../../components/Thesis/ForceAssignThesisModal";
 import { applicationService } from "../../services/applicationService";
 import type { ApplicationStatus } from "../../types/application";
 import { useThesisCommentary } from "../../hooks/useThesisCommentary";
@@ -193,6 +194,7 @@ const ThesisDetailPage = () => {
   const [reviewModalVisible, setReviewModalVisible] = useState(false);
   const [hodDecisionVisible, setHodDecisionVisible] = useState(false);
   const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [forceAssignVisible, setForceAssignVisible] = useState(false);
   const [locking, setLocking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [semesterHods, setSemesterHods] = useState<Whitelist[]>([]);
@@ -240,37 +242,37 @@ const ThesisDetailPage = () => {
   const refreshAfterAction = useCallback(async () => {
     pausePolling();
     if (isStudent && isLeader && thesis?.status === 'Published') {
-        try {
-            const myApps = await applicationService.getMyApplications();
-            const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
-            if (existingApp) {
-                setExistingAppStatus(existingApp.status);
-                setExistingAppId(existingApp.id);
-            } else {
-                setExistingAppStatus(null);
-                setExistingAppId(null);
-            }
-        } catch (err) {
-            console.error('Failed to update application status', err);
+      try {
+        const myApps = await applicationService.getMyApplications();
+        const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
+        if (existingApp) {
+          setExistingAppStatus(existingApp.status);
+          setExistingAppId(existingApp.id);
+        } else {
+          setExistingAppStatus(null);
+          setExistingAppId(null);
         }
+      } catch (err) {
+        console.error('Failed to update application status', err);
+      }
     }
     await resumePolling();
   }, [pausePolling, resumePolling, isStudent, isLeader, thesis]);
 
   useEffect(() => {
     const checkApplication = async () => {
-        if (isStudent && isLeader && thesis?.status === 'Published') {
-            try {
-                const myApps = await applicationService.getMyApplications();
-                const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
-                if (existingApp) {
-                    setExistingAppStatus(existingApp.status);
-                    setExistingAppId(existingApp.id);
-                }
-            } catch (err) {
-                console.error('Failed to check existing application', err);
-            }
+      if (isStudent && isLeader && thesis?.status === 'Published') {
+        try {
+          const myApps = await applicationService.getMyApplications();
+          const existingApp = myApps.find(a => a.thesisId === thesis.thesisId);
+          if (existingApp) {
+            setExistingAppStatus(existingApp.status);
+            setExistingAppId(existingApp.id);
+          }
+        } catch (err) {
+          console.error('Failed to check existing application', err);
         }
+      }
     };
     void checkApplication();
   }, [isStudent, isLeader, thesis?.status, thesis?.thesisId]);
@@ -311,30 +313,30 @@ const ThesisDetailPage = () => {
   const handleCancelRequest = useCallback(async () => {
     if (!existingAppId) return;
     const result = await Swal.fire({
-        title: 'Cancel Assignment Request?',
-        html: `Are you sure you want to cancel your request for <strong>"${thesis?.title}"</strong>?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Yes, cancel it',
-        cancelButtonText: 'No, keep it',
+      title: 'Cancel Assignment Request?',
+      html: `Are you sure you want to cancel your request for <strong>"${thesis?.title}"</strong>?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No, keep it',
     });
 
     if (!result.isConfirmed) return;
 
     setApplyingForThesis(true);
     try {
-        await applicationService.cancelApplication(existingAppId);
-        showSuccess('Request cancelled successfully.');
-        setExistingAppStatus(null);
-        setExistingAppId(null);
-        await refreshAfterAction();
+      await applicationService.cancelApplication(existingAppId);
+      showSuccess('Request cancelled successfully.');
+      setExistingAppStatus(null);
+      setExistingAppId(null);
+      await refreshAfterAction();
     } catch (err: unknown) {
-        const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        showError(axiosMsg || 'Failed to cancel request.');
+      const axiosMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      showError(axiosMsg || 'Failed to cancel request.');
     } finally {
-        setApplyingForThesis(false);
+      setApplyingForThesis(false);
     }
   }, [existingAppId, thesis?.title, showSuccess, showError, refreshAfterAction]);
 
@@ -466,7 +468,7 @@ const ThesisDetailPage = () => {
   const submissionDateLabel = formatDate(submissionDateStr);
   const reviewers = useMemo(() => reviewStatus?.reviewers ?? [], [reviewStatus?.reviewers]);
   const reviewedCount = reviewers.filter((item) => item.reviewedAt).length;
-  
+
   // FIX: Type 'string | null' is not assignable to 'string | undefined'
   const latestReviewer = useMemo(() => {
     const sorted = [...reviewers]
@@ -492,17 +494,17 @@ const ThesisDetailPage = () => {
 
   const canEvaluate = useMemo(() => {
     if (!thesis || !user) return false;
-    
+
     // Proposer cannot evaluate their own thesis
     if (thesis.userId === user.userId) return false;
 
     const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Published' || thesis.status === 'Need Update';
-    
+
     // HOD can always see the button to (re)finalize/veto
     if (isHOD && isAvailableStatus) return true;
 
     const hasReviewed = (reviewStatus?.reviewers ?? []).some(
-        (review) => review.userId === user.userId && review.decision
+      (review) => review.userId === user.userId && review.decision
     );
 
     return (
@@ -512,7 +514,7 @@ const ThesisDetailPage = () => {
 
   const canMakeHodDecision = useMemo(() => {
     if (!isHOD || !reviewStatus || !thesis || !user) return false;
-    
+
     // HOD cannot finalize if they proposed the thesis
     if (thesis.userId === user.userId) return false;
 
@@ -610,55 +612,67 @@ const ThesisDetailPage = () => {
           </div>
           <div className="order-1 lg:order-2 lg:col-span-3">
             <div className="space-y-6">
-                <CommentarySidebar
-                    thesis={thesis} reviewStatus={reviewStatus} submissionDateRaw={submissionDateStr} submissionDateLabel={submissionDateLabel} hodMembers={semesterHods}
-                    canEvaluate={canEvaluate} canComment={canComment} canToggleLock={canToggleLock} canCancel={canCancel} canUploadRevision={canUploadRevision} locking={locking} cancelling={cancelling}
-                    onOpenReview={() => { 
-                        pausePolling(); 
-                        if (isHOD && canMakeHodDecision) {
-                            setHodDecisionVisible(true);
-                        } else {
-                            setReviewModalVisible(true);
-                        }
-                    }}
-                    onOpenComment={() => { pausePolling(); setCommentModalVisible(true); }}
-                    onToggleLock={handleToggleLockClick} onCancel={handleCancelClick} onUploadRevision={() => { pausePolling(); setUploadModalVisible(true); }}
-                    isHOD={isHOD}
-                />
-                {thesis.status === 'Published' && isStudent && isLeader && (
-                    <div className="bg-white rounded-2xl p-6 border shadow-sm">
-                        <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">Registration</h3>
-                        {existingAppStatus ? (
-                            <PrimeButton
-                                label={existingAppStatus === 'Pending' ? (applyingForThesis ? 'Cancelling...' : 'Cancel Request') : `Status: ${existingAppStatus}`}
-                                icon={existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
-                                onClick={existingAppStatus === 'Pending' ? handleCancelRequest : undefined}
-                                loading={applyingForThesis} disabled={existingAppStatus !== 'Pending'}
-                                className="p-button-sm w-full font-bold uppercase py-3 border-0 !border-none !shadow-none !outline-none"
-                                style={{ backgroundColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444', boxShadow: 'none', border: 'none', outline: 'none' }}
-                            />
-                        ) : (
-                            <div className="space-y-3">
-                                {isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial && (
-                                    <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
-                                        <p className="text-[10px] text-rose-600 font-medium leading-relaxed">
-                                            <i className="pi pi-exclamation-triangle mr-1" />
-                                            Nhóm cần đủ 5 thành viên hoặc là nhóm đặc biệt để đăng ký.
-                                        </p>
-                                    </div>
-                                )}
-                                <PrimeButton
-                                    label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'} icon="pi pi-send"
-                                    onClick={handleApplyRequest}
-                                    loading={applyingForThesis} 
-                                    disabled={(isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial) || applyingForThesis}
-                                    className="p-button-sm p-button-orange w-full font-bold uppercase py-3 border-0 !border-none !shadow-none !outline-none" 
-                                    style={{ backgroundColor: '#f26f21', boxShadow: 'none', border: 'none', outline: 'none' }}
-                                />
-                            </div>
-                        )}
+              <CommentarySidebar
+                thesis={thesis} reviewStatus={reviewStatus} submissionDateRaw={submissionDateStr} submissionDateLabel={submissionDateLabel} hodMembers={semesterHods}
+                canEvaluate={canEvaluate} canComment={canComment} canToggleLock={canToggleLock} canCancel={canCancel} canUploadRevision={canUploadRevision} locking={locking} cancelling={cancelling}
+                onOpenReview={() => {
+                  pausePolling();
+                  if (isHOD && canMakeHodDecision) {
+                    setHodDecisionVisible(true);
+                  } else {
+                    setReviewModalVisible(true);
+                  }
+                }}
+                onOpenComment={() => { pausePolling(); setCommentModalVisible(true); }}
+                onToggleLock={handleToggleLockClick} onCancel={handleCancelClick} onUploadRevision={() => { pausePolling(); setUploadModalVisible(true); }}
+                isHOD={isHOD}
+              />
+              {thesis.status === 'Published' && isStudent && isLeader && (
+                <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                  <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">Registration</h3>
+                  {existingAppStatus ? (
+                    <PrimeButton
+                      label={existingAppStatus === 'Pending' ? (applyingForThesis ? 'Cancelling...' : 'Cancel Assign') : `Application ${existingAppStatus}`}
+                      icon={existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
+                      onClick={existingAppStatus === 'Pending' ? handleCancelRequest : undefined}
+                      loading={applyingForThesis} disabled={existingAppStatus !== 'Pending'}
+                      className="p-button-sm w-full font-bold uppercase py-3"
+                      style={{ backgroundColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444', borderColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444' }}
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      {isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial && (
+                        <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                          <p className="text-[10px] text-rose-600 font-medium leading-relaxed">
+                            <i className="pi pi-exclamation-triangle mr-1" />
+                            Nhóm cần đủ 5 thành viên hoặc là nhóm đặc biệt để đăng ký.
+                          </p>
+                        </div>
+                      )}
+                      <PrimeButton
+                        label={applyingForThesis ? 'Submitting...' : 'Apply for this Thesis'} icon="pi pi-send"
+                        onClick={handleApplyRequest}
+                        loading={applyingForThesis}
+                        disabled={(isStudent && team && (team.members?.length ?? 0) < 5 && !team.isSpecial) || applyingForThesis}
+                        className="p-button-sm p-button-orange w-full font-bold uppercase py-3"
+                        style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                      />
                     </div>
-                )}
+                  )}
+                </div>
+              )}
+              {isHOD && thesis.status === 'Published' && !thesis.teamId && (
+                <div className="bg-white rounded-2xl p-6 border shadow-sm">
+                  <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">HOD Actions</h3>
+                  <PrimeButton
+                    label="Force Assign to Team"
+                    icon="pi pi-link"
+                    className="p-button-sm w-full font-bold uppercase py-3"
+                    style={{ backgroundColor: '#f26f21', borderColor: '#f26f21' }}
+                    onClick={() => setForceAssignVisible(true)}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -667,6 +681,16 @@ const ThesisDetailPage = () => {
       <UpdateThesisModal visible={uploadModalVisible} thesis={thesis} onHide={() => { setUploadModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
       <ReviewSubmissionModal visible={reviewModalVisible} thesisId={id || ""} thesisFileUrl={thesis.fileUrl ?? undefined} onHide={() => { setReviewModalVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
       <HodDecisionModal visible={hodDecisionVisible} thesisId={id || ""} thesisFileUrl={thesis.fileUrl ?? undefined} onHide={() => { setHodDecisionVisible(false); void resumePolling(); }} onSuccess={refreshAfterAction} />
+      {thesis.semesterId && (
+        <ForceAssignThesisModal
+          isOpen={forceAssignVisible}
+          onClose={() => { setForceAssignVisible(false); void resumePolling(); }}
+          onSuccess={refreshAfterAction}
+          thesisId={thesis.thesisId}
+          thesisTitle={thesis.title}
+          semesterId={thesis.semesterId}
+        />
+      )}
       <CommentModal visible={commentModalVisible} onHide={() => { setCommentModalVisible(false); void resumePolling(); }} onSubmit={handleAddComment} />
     </div>
   );

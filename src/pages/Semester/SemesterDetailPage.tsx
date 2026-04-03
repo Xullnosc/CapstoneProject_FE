@@ -15,6 +15,7 @@ import SemesterModal from '../../components/Semester/SemesterModal';
 import ReviewerModal from '../../components/Semester/ReviewerModal';
 import ImportWhitelistModal from '../../components/Semester/ImportWhitelistModal';
 import WhitelistStudentModal from '../../components/Semester/WhitelistStudentModal';
+import ForceCreateTeamModal from '../../components/Semester/ForceCreateTeamModal';
 import ThesisFormModal from '../../components/Thesis/ThesisFormModal';
 import ThesisFormVersionsModal from '../../components/Thesis/ThesisFormVersionsModal';
 import type { ThesisForm } from '../../types/thesisForm';
@@ -88,7 +89,7 @@ const SemesterDetailPage = () => {
     const [semester, setSemester] = useState<Semester | null>(null);
     const [loading, setLoading] = useState(true);
     const [latestForm, setLatestForm] = useState<ThesisForm | null>(null);
-    const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams'>('whitelists');
+    const [activeTab, setActiveTab] = useState<'whitelists' | 'lecturers' | 'students' | 'teams' | 'orphaned'>('whitelists');
     const [showWarning, setShowWarning] = useState(true);
 
     // Whitelist pagination states
@@ -96,6 +97,11 @@ const SemesterDetailPage = () => {
     const [lecturerData, setLecturerData] = useState<PagedResult<Whitelist> | null>(null);
     const [studentData, setStudentData] = useState<PagedResult<Whitelist> | null>(null);
     const [isWhitelistsLoading, setIsWhitelistsLoading] = useState(false);
+
+    // Orphaned students state
+    const [orphanedData, setOrphanedData] = useState<Whitelist[]>([]);
+    const [isForceCreateOpen, setIsForceCreateOpen] = useState(false);
+    const [isOrphanedLoading, setIsOrphanedLoading] = useState(false);
 
     const [whitelistPage, setWhitelistPage] = useState(1);
     const [lecturerPage, setLecturerPage] = useState(1);
@@ -164,12 +170,30 @@ const SemesterDetailPage = () => {
         fetchLatestForm();
     }, [fetchSemesterDetail, fetchLatestForm]);
 
+    const fetchOrphanedStudents = useCallback(async () => {
+        if (!semesterId) return;
+        try {
+            setIsOrphanedLoading(true);
+            const data = await semesterService.getOrphanedStudents(semesterId);
+            setOrphanedData(data);
+        } catch (error) {
+            console.error('Failed to fetch orphaned students', error);
+        } finally {
+            setIsOrphanedLoading(false);
+        }
+    }, [semesterId]);
+
     useEffect(() => {
+        if (activeTab === 'orphaned') {
+            fetchOrphanedStudents();
+            return;
+        }
         const role = activeTab === 'lecturers' ? 'Lecturer' : activeTab === 'students' ? 'Student' : undefined;
         if (activeTab !== 'teams') {
             fetchWhitelists(role);
         }
-    }, [activeTab, fetchWhitelists]);
+    }, [activeTab, fetchWhitelists, fetchOrphanedStudents]);
+
 
     const handleEndSemester = async () => {
         if (!semester) return;
@@ -372,6 +396,16 @@ const SemesterDetailPage = () => {
                         <span className="material-symbols-outlined text-[18px]">person</span>
                         Students
                     </button>
+                    {canManage && (
+                        <button
+                            onClick={() => setActiveTab('orphaned')}
+                            className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'orphaned' ? 'border-red-500 text-red-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
+                        >
+                            <span className="material-symbols-outlined text-[18px]">person_off</span>
+                            Orphaned Students
+                        </button>
+                    )}
+                    <div className="flex-1 hidden sm:block"></div>
                     <button
                         onClick={() => setActiveTab('teams')}
                         className={`cursor-pointer px-1 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'teams' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-900'}`}
@@ -382,9 +416,23 @@ const SemesterDetailPage = () => {
                 </div>
 
                 {/* Content */}
-                {activeTab === 'teams' ? (
-                    <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
-                ) : (
+                {activeTab === 'teams' && (
+                    <>
+                        {canManage && !isEnded && (
+                            <div className="flex justify-end mb-4">
+                                <button
+                                    onClick={() => setIsForceCreateOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-sm font-bold hover:bg-orange-100 transition-colors border border-orange-200 shadow-sm cursor-pointer"
+                                >
+                                    <span className="material-symbols-outlined text-lg">group_add</span>
+                                    Force Create Team
+                                </button>
+                            </div>
+                        )}
+                        <SemesterTeamsTable teams={semester.teams || []} onRefresh={fetchSemesterDetail} />
+                    </>
+                )}
+                {(activeTab === 'whitelists' || activeTab === 'lecturers' || activeTab === 'students') && (
                     <SemesterWhitelistsTable
                         key="whitelist-table"
                         whitelists={
@@ -441,6 +489,18 @@ const SemesterDetailPage = () => {
                         onUpdate={refreshActiveTab}
                         onEdit={activeTab === 'students' ? (student) => { setSelectedStudent(student); setIsStudentModalOpen(true); } : undefined}
                         showStudentCode={activeTab === 'students'}
+                        isEnded={isEnded}
+                    />
+                )}
+                {activeTab === 'orphaned' && (
+                    <SemesterWhitelistsTable
+                        whitelists={orphanedData}
+                        isLoading={isOrphanedLoading}
+                        totalCount={orphanedData.length}
+                        page={0}
+                        onPageChange={() => {}}
+                        onUpdate={() => fetchOrphanedStudents()}
+                        showStudentCode={true}
                         isEnded={isEnded}
                     />
                 )}
@@ -503,6 +563,15 @@ const SemesterDetailPage = () => {
                     onSuccess={() => { setIsStudentModalOpen(false); refreshActiveTab(); }}
                     semesterId={semester.semesterId}
                     studentData={selectedStudent}
+                />
+            )}
+
+            {semester && (
+                <ForceCreateTeamModal
+                    isOpen={isForceCreateOpen}
+                    onClose={() => setIsForceCreateOpen(false)}
+                    onSuccess={() => { fetchOrphanedStudents(); refreshActiveTab(); }}
+                    semesterId={semester.semesterId}
                 />
             )}
         </div>

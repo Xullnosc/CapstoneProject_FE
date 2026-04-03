@@ -16,6 +16,7 @@ import MentorTeamsPage from "../pages/Mentor/MentorTeamsPage";
 import LecturerManagementPage from "../pages/Lecturer/LecturerManagementPage";
 import HodAccountsPage from "../pages/Admin/HodAccountsPage";
 import AccessLogsPage from "../pages/Admin/AccessLogsPage";
+import ErrorLogsPage from "../pages/Admin/ErrorLogsPage";
 import AIStudioLayout from "../pages/Admin/AI/AIStudioLayout";
 import AISettingsPage from "../pages/Admin/AI/AISettingsPage";
 import AIApiKeysManagerPage from "../pages/Admin/AI/AIApiKeysManagerPage";
@@ -23,6 +24,7 @@ import SystemSettingsPage from "../pages/Admin/SystemSettingsPage";
 import SystemParametersPage from "../pages/Admin/SystemParametersPage";
 import PublishedThesisPage from "../pages/Thesis/PublishedThesisPage";
 import ProfilePage from "../pages/Profile/ProfilePage";
+import OtherProfilePage from "../pages/Profile/OtherProfilePage";
 import MyApplicationsPage from "../pages/Application/MyApplicationsPage";
 import ApplicationReviewPage from "../pages/Application/ApplicationReviewPage";
 
@@ -51,6 +53,7 @@ const AppRouter = () => {
         <Route element={<MainLayout />}>
           <Route path="/admin/hod" element={<HodAccountsPage />} />
           <Route path="/admin/access-logs" element={<AccessLogsPage />} />
+          <Route path="/admin/error-logs" element={<ErrorLogsPage />} />
           <Route
             path="/admin/system-parameters"
             element={<SystemParametersPage />}
@@ -135,6 +138,7 @@ const AppRouter = () => {
             element={<ApplicationReviewPage />}
           />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:userId" element={<OtherProfilePage />} />
           <Route path="/ai-settings" element={<AIStudioLayout />}>
             <Route index element={<AISettingsPage />} />
             <Route path="api-keys" element={<AIApiKeysManagerPage />} />

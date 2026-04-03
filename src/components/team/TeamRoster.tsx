@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
 import InviteMemberModal from './InviteMemberModal';
@@ -32,6 +33,13 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
 }) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isInviteMentorModalOpen, setIsInviteMentorModalOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const canViewProfile = (id?: number) => typeof id === 'number' && id > 0;
+    const goToProfile = (id?: number) => {
+        if (!canViewProfile(id)) return;
+        navigate(`/profile/${id}`);
+    };
 
     const handleOpenInvite = () => {
         if (onInvite) onInvite();
@@ -97,7 +105,22 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end w-full">
+                                    <div className="flex justify-end w-full gap-2">
+                                        <button
+                                            type="button"
+                                            disabled={!canViewProfile(member.studentId)}
+                                            onClick={() => goToProfile(member.studentId)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
+                                                ${canViewProfile(member.studentId)
+                                                    ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-orange-600'
+                                                    : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                                                }`}
+                                            title="View Profile"
+                                        >
+                                            <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
+                                            View
+                                        </button>
+
                                         {member.studentId === currentUserId ? (
                                             <button
                                                 onClick={onLeave}
@@ -161,7 +184,20 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                    <button
+                                        type="button"
+                                        disabled={!canViewProfile(mentorId)}
+                                        onClick={() => goToProfile(mentorId)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
+                                            ${canViewProfile(mentorId)
+                                                ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-blue-700'
+                                                : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                                            }`}
+                                        title="View Profile"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
+                                        View
+                                    </button>
                                 </td>
                             </tr>
                         )}
@@ -192,7 +228,20 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <span className="material-symbols-outlined text-gray-300 text-xl cursor-not-allowed">lock</span>
+                                    <button
+                                        type="button"
+                                        disabled={!canViewProfile(mentorId2)}
+                                        onClick={() => goToProfile(mentorId2)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer
+                                            ${canViewProfile(mentorId2)
+                                                ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-blue-700'
+                                                : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                                            }`}
+                                        title="View Profile"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
+                                        View
+                                    </button>
                                 </td>
                             </tr>
                         )}

@@ -101,10 +101,10 @@ export const thesisService = {
 
   evaluateThesis: async (
     id: string,
-    data: { 
-      status: "OK" | "Consider"; 
-      comment?: string; 
-      checkedChecklistIds?: number[] 
+    data: {
+      status: "OK" | "Consider";
+      comment?: string;
+      checkedChecklistIds?: number[]
     },
   ): Promise<void> => {
     const formData = new FormData();
@@ -138,10 +138,10 @@ export const thesisService = {
 
   submitHodDecision: async (
     id: string,
-    data: { 
-      decision: "OK" | "Consider"; 
-      comment?: string; 
-      checkedChecklistIds?: number[] 
+    data: {
+      decision: "OK" | "Consider";
+      comment?: string;
+      checkedChecklistIds?: number[]
     },
   ): Promise<void> => {
     // Map FE 'OK'/'Consider' to BE 'Pass'/'Fail'
@@ -202,4 +202,11 @@ export const thesisService = {
     const response = await api.get<Checklist[]>("/checklist");
     return response.data;
   },
+
+  /** POST /thesis/:id/force-assign - HOD: force-assign thesis to a team */
+  forceAssignThesis: async (id: string, teamId: number) => {
+    const response = await api.post(`/thesis/${id}/force-assign`, { teamId });
+    return response.data;
+  },
 };
+
