@@ -8,12 +8,8 @@ import type { UserAISettingsView } from "../../../types/ai";
 import { PROVIDER_META } from "../../../types/ai";
 
 const SETTINGS_NAV = [
-  { label: "General", icon: "pi pi-sliders-h" },
   { label: "AI Models", icon: "pi pi-sparkles", path: "/ai-settings" },
   { label: "API Keys", icon: "pi pi-key", path: "/ai-settings/api-keys" },
-  { label: "Usage", icon: "pi pi-chart-line" },
-  { label: "Billing", icon: "pi pi-wallet" },
-  { label: "Team", icon: "pi pi-users" },
 ];
 
 const PROVIDER_ICON_MAP: Record<string, string> = {

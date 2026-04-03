@@ -53,6 +53,13 @@ export const semesterService = {
         return response.data;
     },
 
+    getAllSemestersPaginated: async (page: number = 1, pageSize: number = 6): Promise<PagedResult<Semester>> => {
+        const response = await api.get<PagedResult<Semester>>('/semester/paginated', {
+            params: { page, pageSize }
+        });
+        return response.data;
+    },
+
     getSemesterById: async (id: number): Promise<Semester> => {
         const response = await api.get<Semester>(`/semester/${id}`);
         return response.data;

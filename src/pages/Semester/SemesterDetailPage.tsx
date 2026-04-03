@@ -215,6 +215,7 @@ const SemesterDetailPage = () => {
 
     const semesterStatus = calculateSemesterStatus(semester.status);
     const isEnded = semester.status === 'Ended';
+    const isOngoing = semester.status === 'Active';
     const semesterSeason = getSemesterSeason(semester.semesterName) as SemesterSeasonName;
     const headerTheme = SEASON_HEADER_THEME[semesterSeason] || SEASON_HEADER_THEME.Fall;
     const headerSeasonIcon = SEASON_HEADER_ICON[semesterSeason] || SEASON_HEADER_ICON.Fall;
@@ -250,7 +251,7 @@ const SemesterDetailPage = () => {
                         <div className={`inline-flex items-center justify-center rounded-xl border p-2 shadow-sm ${headerSeasonIcon.className}`}>
                             <span className="material-symbols-outlined text-[20px]">{headerSeasonIcon.icon}</span>
                         </div>
-                        {canManage && !isEnded && (
+                        {canManage && !isEnded && !isOngoing && (
                             <button
                                 onClick={() => setIsEditModalOpen(true)}
                                 className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white/90 p-2 text-gray-700 shadow-sm transition-all hover:bg-white hover:border-gray-300"
