@@ -27,6 +27,7 @@ export interface ImportWhitelistRow {
     rowNumber?: number;
     email: string;
     semesterCode?: string;
+    semesterName?: string;
     semesterId?: number;
     fullName: string;
     roleId?: number;
@@ -47,6 +48,7 @@ const normalizeImportRow = (row: Record<string, unknown>): ImportWhitelistRow =>
     rowNumber: (row.rowNumber as number | undefined) ?? (row.RowNumber as number | undefined),
     email: ((row.email as string | undefined) ?? (row.Email as string | undefined) ?? '').trim(),
     semesterCode: (row.semesterCode as string | undefined) ?? (row.SemesterCode as string | undefined),
+    semesterName: (row.semesterName as string | undefined) ?? (row.SemesterName as string | undefined),
     semesterId: (row.semesterId as number | undefined) ?? (row.SemesterId as number | undefined),
     fullName: ((row.fullName as string | undefined) ?? (row.FullName as string | undefined) ?? '').trim(),
     roleId: (row.roleId as number | undefined) ?? (row.RoleId as number | undefined),
