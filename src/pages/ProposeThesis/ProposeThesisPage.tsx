@@ -10,6 +10,7 @@ import { thesisService } from '../../services/thesisService';
 import { teamService } from '../../services/teamService';
 import { thesisFormService } from '../../services/thesisFormService';
 import { semesterService } from '../../services/semesterService';
+import { systemService } from '../../services/systemService';
 import { userService, type UserInfo } from '../../services/userService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
@@ -42,6 +43,7 @@ const ProposeThesisPage = () => {
     const [isApplied, setIsApplied] = useState(false);
     const [isAppUsed, setIsAppUsed] = useState(false);
     const [filteredEnterprises, setFilteredEnterprises] = useState<string[]>([]);
+    const [fileSizeLimit, setFileSizeLimit] = useState(10);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +92,14 @@ const ProposeThesisPage = () => {
                     setHasAccess(true);
                 } else if (currentUser.roleName === 'Student') {
                     try {
+                        const config = await systemService.getPublicConfig();
+                        setFileSizeLimit(config.fileSizeLimit);
+                        if (!config.isOpen) {
+                            setHasAccess(false);
+                            setAccessMessage('Thesis registration is currently closed by administrator.');
+                            return;
+                        }
+
                         const myTeam = await teamService.getMyTeam();
                         if (!myTeam) {
                             setHasAccess(false);
@@ -136,7 +146,8 @@ const ProposeThesisPage = () => {
 
         checkAccess();
         fetchLatestForm();
-    }, [navigate, user]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [navigate]);
 
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -645,7 +656,7 @@ const ProposeThesisPage = () => {
                                         </div>
                                         <div>
                                             <p className="font-bold text-gray-800 text-lg">Click to upload or drag and drop</p>
-                                            <p className="text-sm text-gray-500 mt-1">Word Documents (.doc, .docx) up to 10MB</p>
+                                            <p className="text-sm text-gray-500 mt-1">Word Documents (.doc, .docx) up to {fileSizeLimit}MB</p>
                                         </div>
                                     </>
                                 )}

@@ -9,6 +9,8 @@ import fptLogo from "../../assets/images/LogoFPT.jpg";
 import styles from "./Login.module.css";
 import { useGoogleLogin } from '@react-oauth/google';
 import { authService } from '../../services/authService';
+import { systemService } from '../../services/systemService';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 type LoginTab = 'google' | 'hod-admin';
 
@@ -18,7 +20,15 @@ const Login = () => {
   const [campus, setCampus] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaSiteKey, setCaptchaSiteKey] = useState<string>('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    systemService.getPublicConfig().then(config => {
+      if (config.captchaSiteKey) setCaptchaSiteKey(config.captchaSiteKey);
+    }).catch(err => console.error("Could not fetch public config", err));
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -71,9 +81,13 @@ const Login = () => {
         showAlert('warning', 'Choose Campus', 'Please select a campus first!');
         return;
       }
+      if (!captchaToken) {
+        showAlert('warning', 'CAPTCHA Required', 'Please complete the CAPTCHA verification.');
+        return;
+      }
       try {
         setIsLoading(true);
-        const response = await authService.login(tokenResponse.access_token, campus);
+        const response = await authService.login(tokenResponse.access_token, campus, captchaToken);
         saveAuthAndRedirect(response);
       } catch (error) {
         console.error("Backend login failed:", error);
@@ -95,6 +109,10 @@ const Login = () => {
       showAlert('warning', 'Choose Campus', 'Please select a campus first!');
       return;
     }
+    if (!captchaToken) {
+      showAlert('warning', 'CAPTCHA Required', 'Please complete the CAPTCHA verification.');
+      return;
+    }
     loginGoogle();
   };
 
@@ -103,9 +121,13 @@ const Login = () => {
       showAlert('warning', 'Required', 'Please enter username and password.');
       return;
     }
+    if (!captchaToken) {
+      showAlert('warning', 'CAPTCHA Required', 'Please complete the CAPTCHA verification.');
+      return;
+    }
     try {
       setIsLoading(true);
-      const response = await authService.loginWithCredentials(username.trim(), password);
+      const response = await authService.loginWithCredentials(username.trim(), password, captchaToken);
       saveAuthAndRedirect(response);
     } catch (error) {
       console.error("Credential login failed:", error);
@@ -248,6 +270,16 @@ const Login = () => {
             </button>
           </form>
         )}
+
+        {/* reCAPTCHA Widget container across both tabs */}
+        <div className="mt-6 flex justify-center">
+            {captchaSiteKey && (
+                <ReCAPTCHA
+                    sitekey={captchaSiteKey}
+                    onChange={(token) => setCaptchaToken(token)}
+                />
+            )}
+        </div>
 
         <div className="text-center mt-5">
           <p className="text-gray-600 text-sm">Powered by FPT University ©</p>
