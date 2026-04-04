@@ -21,6 +21,8 @@ export interface Whitelist {
     roleName?: string;
     roleId?: number;
     semesterId?: number;
+    semesterCode?: string;
+    semesterName?: string;
     isReviewer?: boolean;
     avatar?: string;
     campus?: string;
@@ -33,7 +35,7 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
-    status: 'Upcoming' | 'Active' | 'Ended';
+    status: 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester' | 'Closed';
     teamCount: number; // Optimized field
     activeTeamCount: number; // Added field
     whitelistCount: number; // Added field
@@ -68,6 +70,11 @@ export const semesterService = {
         const response = await api.get<Semester>(`/semester/${id}`);
         return response.data;
     },
+    
+    getCurrentSemester: async (): Promise<Semester> => {
+        const response = await api.get<Semester>('/semester/current');
+        return response.data;
+    },
 
     getWhitelistsPaginated: async (semesterId: number, params: {
         page: number;
@@ -89,16 +96,6 @@ export const semesterService = {
         return response.data;
     },
 
-    endSemester: async (id: number) => {
-        await api.post(`/semester/${id}/end`);
-        // Note: Delete functionality is disabled in backend
-    },
-
-    getCurrentSemester: async (): Promise<Semester | undefined> => {
-        const response = await api.get<Semester[]>('/semester');
-        return response.data.find(s => s.status === 'Active');
-    },
-
     getOrphanedStudents: async (semesterId: number, page: number = 1, pageSize: number = 10): Promise<PagedResult<Whitelist>> => {
         const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/orphaned-students`, {
             params: { page, pageSize }
@@ -108,5 +105,22 @@ export const semesterService = {
 
     startSemester: async (id: number) => {
         await api.post(`/semester/${id}/start`);
+    },
+
+    lockSubmission: async (id: number) => {
+        await api.post(`/semester/${id}/lock-submission`);
+    },
+
+    lockAllUpdates: async (id: number) => {
+        await api.post(`/semester/${id}/lock-updates`);
+    },
+
+    closeSemester: async (id: number) => {
+        await api.post(`/semester/${id}/close`);
+    },
+
+    // Alias for compatibility
+    endSemester: async (id: number) => {
+        await api.post(`/semester/${id}/close`);
     }
 };
