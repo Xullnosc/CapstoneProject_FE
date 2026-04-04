@@ -7,6 +7,8 @@ export const SEMESTER_STATUS = {
     ONGOING: 'Ongoing',
     UPCOMING: 'Upcoming',
     ENDED: 'Ended',
+    THESIS_REVIEW: 'Thesis Review',
+    FINAL_REVIEW: 'Final Review',
 } as const;
 
 export type SemesterStatus = typeof SEMESTER_STATUS[keyof typeof SEMESTER_STATUS];
@@ -56,10 +58,23 @@ export const SEMESTER_STATUS_COLORS = {
         dot: 'bg-green-600',
         border: 'border-green-100',
     },
+    [SEMESTER_STATUS.THESIS_REVIEW]: {
+        bg: 'bg-blue-50',
+        text: 'text-blue-700',
+        dot: 'bg-blue-600',
+        border: 'border-blue-100',
+    },
+    [SEMESTER_STATUS.FINAL_REVIEW]: {
+        bg: 'bg-purple-50',
+        text: 'text-purple-700',
+        dot: 'bg-purple-600',
+        border: 'border-purple-100',
+    },
     [SEMESTER_STATUS.ENDED]: {
-        bg: 'bg-gray-100', // Changed to 100 for better visibility
+        bg: 'bg-gray-100',
         text: 'text-gray-600',
         dot: 'bg-gray-400',
         border: 'border-gray-200',
     },
 } as const;
+

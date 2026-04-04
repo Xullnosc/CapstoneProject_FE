@@ -37,9 +37,11 @@ export const isUpcomingDate = (dateStr: string): boolean => {
 /**
  * Calculates semester status based on isActive flag and start date
  */
-export const calculateSemesterStatus = (status: 'Upcoming' | 'Active' | 'Ended'): SemesterStatus => {
+export const calculateSemesterStatus = (status: 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester' | 'Closed'): SemesterStatus => {
     if (status === 'Active') return SEMESTER_STATUS.ONGOING;
-    if (status === 'Ended') return SEMESTER_STATUS.ENDED;
+    if (status === 'Review Thesis') return SEMESTER_STATUS.THESIS_REVIEW;
+    if (status === 'Review Middle Semester') return SEMESTER_STATUS.FINAL_REVIEW;
+    if (status === 'Closed') return SEMESTER_STATUS.ENDED;
     return SEMESTER_STATUS.UPCOMING;
 };
 

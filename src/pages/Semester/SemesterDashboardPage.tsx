@@ -8,6 +8,7 @@ import { semesterService } from '../../services/semesterService';
 import type { Semester } from '../../services/semesterService';
 
 import { authService } from '../../services/authService';
+import { SEMESTER_STATUS, type SemesterStatus } from '../../constants/semesterConstants';
 import { getSemesterSeason, getSeasonColor, calculateSemesterStatus, formatSemesterDate } from '../../utils/semesterHelpers';
 
 const FILTER_OPTIONS = ['All', 'Ongoing', 'Upcoming', 'Ended'] as const;
@@ -18,7 +19,7 @@ type SemesterCardViewModel = {
     name: string;
     startDate: string;
     endDate: string;
-    status: 'Ongoing' | 'Upcoming' | 'Ended';
+    status: SemesterStatus;
     totalTeams: number;
     activeTeams: number;
     totalWhitelists: number;
@@ -36,7 +37,7 @@ const SemesterDashboardPage = () => {
     const [allSemesters, setAllSemesters] = useState<Semester[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [filterStatus, setFilterStatus] = useState<'All' | 'Ongoing' | 'Upcoming' | 'Ended'>('All');
+    const [filterStatus, setFilterStatus] = useState<typeof FILTER_OPTIONS[number]>('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalSemesterCount, setTotalSemesterCount] = useState(0);
@@ -81,7 +82,7 @@ const SemesterDashboardPage = () => {
             totalTeams: sem.teamCount, // Use optimized count from backend
             activeTeams: sem.activeTeamCount,
             totalWhitelists: sem.whitelistCount,
-            isArchived: sem.status === 'Ended',
+            isArchived: sem.status === 'Closed',
             season: season,
             seasonColor: getSeasonColor(season)
         };
@@ -98,7 +99,20 @@ const SemesterDashboardPage = () => {
         const keyword = searchTerm.trim().toLowerCase();
 
         return semesterCards.filter((semesterCard) => {
-            const matchesStatus = filterStatus === 'All' || semesterCard.status === filterStatus;
+            let matchesStatus = false;
+            if (filterStatus === 'All') {
+                matchesStatus = true;
+            } else if (filterStatus === 'Ongoing') {
+                matchesStatus =
+                    semesterCard.status === SEMESTER_STATUS.ONGOING ||
+                    semesterCard.status === SEMESTER_STATUS.THESIS_REVIEW ||
+                    semesterCard.status === SEMESTER_STATUS.FINAL_REVIEW;
+            } else if (filterStatus === 'Upcoming') {
+                matchesStatus = semesterCard.status === SEMESTER_STATUS.UPCOMING;
+            } else if (filterStatus === 'Ended') {
+                matchesStatus = semesterCard.status === SEMESTER_STATUS.ENDED;
+            }
+
             const matchesSearch =
                 keyword.length === 0 ||
                 semesterCard.name.toLowerCase().includes(keyword) ||
