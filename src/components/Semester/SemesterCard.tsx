@@ -1,7 +1,7 @@
 import { useState, type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSeasonGradient } from '../../utils/semesterHelpers';
-import { SEMESTER_SEASON_SOFT_GRADIENTS, SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
+import { SEMESTER_STATUS, SEMESTER_SEASON_SOFT_GRADIENTS, SEMESTER_STATUS_COLORS, type SemesterStatus } from '../../constants/semesterConstants';
 import { semesterService } from '../../services/semesterService';
 import Swal from 'sweetalert2';
 
@@ -83,7 +83,7 @@ interface SemesterCardProps {
         name: string;
         startDate: string;
         endDate: string;
-        status: 'Ongoing' | 'Upcoming' | 'Ended';
+        status: SemesterStatus;
         isArchived: boolean;
         totalTeams: number;
         activeTeams: number;
@@ -99,8 +99,12 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
     const [isLoading, setIsLoading] = useState(false);
 
     const statusColors = SEMESTER_STATUS_COLORS[semester.status] || SEMESTER_STATUS_COLORS.Ended;
-    const isActiveSemester = semester.status === 'Ongoing';
-    const isEndedSemester = semester.status === 'Ended';
+    const isOngoing = semester.status === SEMESTER_STATUS.ONGOING;
+    const isReviewThesis = semester.status === SEMESTER_STATUS.THESIS_REVIEW;
+    const isReviewMiddle = semester.status === SEMESTER_STATUS.FINAL_REVIEW;
+    const isActiveSemester = isOngoing || isReviewThesis || isReviewMiddle;
+    const isEndedSemester = semester.status === SEMESTER_STATUS.ENDED;
+    const isUpcomingSemester = semester.status === SEMESTER_STATUS.UPCOMING;
     const season = semester.season as Season;
     const cardGradient = isActiveSemester
         ? getSeasonGradient(season)
@@ -155,46 +159,6 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
         }
     };
 
-    const handleEndSemester = async () => {
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: "Ending the semester is irreversible. Ensure all grades are finalized.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#f26e21',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, End Semester!'
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-            setIsLoading(true);
-            await semesterService.endSemester(semester.id);
-
-            await Swal.fire({
-                title: 'Ended!',
-                text: 'The semester has been ended.',
-                icon: 'success',
-                confirmButtonColor: '#f97316'
-            });
-
-            if (onRefresh) {
-                onRefresh();
-            }
-        } catch (error: unknown) {
-            console.error('Failed to end semester:', error);
-
-            Swal.fire({
-                title: 'Error!',
-                text: extractApiErrorMessage(error, 'Failed to end semester'),
-                icon: 'error',
-                confirmButtonColor: '#d33'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     return (
         <div className="group relative rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[320px] flex flex-col bg-white">
@@ -219,7 +183,7 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${statusColors.bg} ${statusColors.text} ${statusColors.border} text-xs font-bold shadow-sm border`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${statusColors.dot} ${semester.status === 'Ongoing' ? 'animate-pulse' : ''}`}></span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${statusColors.dot} ${isActiveSemester ? 'animate-pulse' : ''}`}></span>
                                 {semester.status}
                             </span>
                         </div>
@@ -257,13 +221,13 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
                         <span className="material-symbols-outlined text-[18px]">visibility</span> View
                     </button>
-                    {semester.status !== 'Ended' && (
+                    {semester.status !== SEMESTER_STATUS.ENDED && (
                         <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
                             <span className="material-symbols-outlined text-[18px]">edit</span> Edit
                         </button>
                     )}
 
-                    {semester.status === 'Upcoming' && (
+                    {isUpcomingSemester && (
                         <button
                             onClick={handleStartSemester}
                             disabled={isLoading}
@@ -273,17 +237,7 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                         </button>
                     )}
 
-                    {semester.status === 'Ongoing' && (
-                        <button
-                            onClick={handleEndSemester}
-                            disabled={isLoading}
-                            className={`cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 text-orange-600 text-xs font-bold transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <span className="material-symbols-outlined text-[18px]">stop_circle</span> End
-                        </button>
-                    )}
-
-                    {semester.status === 'Ended' && (
+                    {isEndedSemester && (
                         <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-400 text-xs font-bold cursor-default">
                             <span className="material-symbols-outlined text-[18px]">lock</span> Closed
                         </div>

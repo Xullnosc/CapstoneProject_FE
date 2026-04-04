@@ -528,13 +528,17 @@ const ThesisDetailPage = () => {
     thesis.userId === user?.userId,
   );
   const canCancel = Boolean(
-    thesis && isStudent && isLeader &&
-    (thesis.status === "Reviewing" || thesis.status === "Registered" || thesis.status === "On Mentor Inviting" || thesis.status === "Need Update")
+    thesis && 
+    isOwner &&
+    (
+      (isStudent && isLeader && ["Reviewing", "Registered", "On Mentor Inviting", "Need Update"].includes(thesis.status || "")) ||
+      (isLecturer && ["Reviewing", "Published", "On Mentor Inviting", "Need Update"].includes(thesis.status || ""))
+    )
   );
   const canUploadRevision = Boolean(
-    isStudent && 
     isOwner && 
-    thesis?.status === "Need Update"
+    (isStudent || isLecturer) && 
+    (thesis?.status === "Need Update" || (isLecturer && thesis?.status === "Published"))
   );
 
   if (loading) {

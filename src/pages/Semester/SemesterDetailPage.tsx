@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { AxiosError } from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import { semesterService, type Semester, type PagedResult, type Whitelist } from '../../services/semesterService';
 import { thesisFormService } from '../../services/thesisFormService';
@@ -196,25 +197,100 @@ const SemesterDetailPage = () => {
     }, [activeTab, fetchWhitelists, fetchOrphanedStudents]);
 
 
-    const handleEndSemester = async () => {
+    const handleStartSemester = async () => {
         if (!semester) return;
         const result = await Swal.fire({
-            title: 'End Semester?',
-            text: "Ending the semester is irreversible. Ensure all grades are finalized.",
-            icon: 'warning',
+            title: 'Start Semester?',
+            text: "This will allow students and lecturers to propose theses.",
+            icon: 'question',
             showCancelButton: true,
-            confirmButtonColor: '#f97316',
-            confirmButtonText: 'Yes, End Semester'
+            confirmButtonColor: '#10b981',
+            confirmButtonText: 'Yes, Start'
         });
 
         if (result.isConfirmed) {
             try {
-                await semesterService.endSemester(semester.semesterId);
-                Swal.fire({ icon: 'success', title: 'Ended!', text: 'Semester has been ended.' });
+                await semesterService.startSemester(semester.semesterId);
+                Swal.fire({ icon: 'success', title: 'Started!', text: 'Semester is now Active.' });
                 fetchSemesterDetail();
             } catch (error) {
-                console.error('Failed to end semester', error);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to end semester' });
+                console.error('Failed to start semester', error);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to start semester' });
+            }
+        }
+    };
+
+    const handleLockSubmission = async () => {
+        if (!semester) return;
+        const result = await Swal.fire({
+            title: 'Lock Submissions?',
+            text: "Students will no longer be able to propose new theses. Ongoing proposals can still be updated.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3b82f6',
+            confirmButtonText: 'Yes, Lock Submissions'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await semesterService.lockSubmission(semester.semesterId);
+                Swal.fire({ icon: 'success', title: 'Locked!', text: 'Thesis submissions are now locked.' });
+                fetchSemesterDetail();
+            } catch (err: unknown) {
+                const error = err as AxiosError<{ message?: string }>;
+                console.error('Failed to lock submissions', error);
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to lock submissions';
+                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
+            }
+        }
+    };
+
+    const handleLockUpdates = async () => {
+        if (!semester) return;
+        const result = await Swal.fire({
+            title: 'Lock All Updates?',
+            text: "This will prevent ALL updates to teams and theses. This is a hard lock before closing the semester.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#8b5cf6',
+            confirmButtonText: 'Yes, Lock All'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await semesterService.lockAllUpdates(semester.semesterId);
+                Swal.fire({ icon: 'success', title: 'Locked!', text: 'All updates are now locked.' });
+                fetchSemesterDetail();
+            } catch (err: unknown) {
+                const error = err as AxiosError<{ message?: string }>;
+                console.error('Failed to lock updates', error);
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to lock updates';
+                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
+            }
+        }
+    };
+
+    const handleCloseSemester = async () => {
+        if (!semester) return;
+        const result = await Swal.fire({
+            title: 'Close Semester?',
+            text: "Closing the semester is irreversible. The semester will be moved to history/read-only mode.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Yes, Close Semester'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await semesterService.closeSemester(semester.semesterId);
+                Swal.fire({ icon: 'success', title: 'Closed!', text: 'Semester has been closed.' });
+                fetchSemesterDetail();
+            } catch (err: unknown) {
+                const error = err as AxiosError<{ message?: string }>;
+                console.error('Failed to close semester', error);
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to close semester';
+                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
             }
         }
     };
@@ -239,8 +315,15 @@ const SemesterDetailPage = () => {
     }
 
     const semesterStatus = calculateSemesterStatus(semester.status);
-    const isEnded = semester.status === 'Ended';
-    const isOngoing = semester.status === 'Active';
+    const isClosed = semester.status === 'Closed';
+    const isUpcoming = semester.status === 'Upcoming';
+    const isActive = semester.status === 'Active';
+    const isReviewThesis = semester.status === 'Review Thesis';
+    const isReviewMiddle = semester.status === 'Review Middle Semester';
+
+    // UI flags
+    const isEnded = isClosed;
+    const isOngoing = isActive || isReviewThesis || isReviewMiddle;
     const semesterSeason = getSemesterSeason(semester.semesterName) as SemesterSeasonName;
     const headerTheme = SEASON_HEADER_THEME[semesterSeason] || SEASON_HEADER_THEME.Fall;
     const headerSeasonIcon = SEASON_HEADER_ICON[semesterSeason] || SEASON_HEADER_ICON.Fall;
@@ -356,10 +439,28 @@ const SemesterDetailPage = () => {
 
                             {canManage && (
                                 <div className="flex flex-row sm:flex-col gap-3 justify-center w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 sm:border-l border-gray-100 sm:pl-6">
-                                    {semester.status === 'Active' && (
-                                        <button onClick={handleEndSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all">
+                                    {isUpcoming && (
+                                        <button onClick={handleStartSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-500/20 transition-all">
+                                            <span className="material-symbols-outlined text-lg">play_arrow</span>
+                                            Start Semester
+                                        </button>
+                                    )}
+                                    {isActive && (
+                                        <button onClick={handleLockSubmission} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">
+                                            <span className="material-symbols-outlined text-lg">lock</span>
+                                            Lock Submission
+                                        </button>
+                                    )}
+                                    {isReviewThesis && (
+                                        <button onClick={handleLockUpdates} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-500/20 transition-all">
+                                            <span className="material-symbols-outlined text-lg">gavel</span>
+                                            Lock All Updates
+                                        </button>
+                                    )}
+                                    {isReviewMiddle && (
+                                        <button onClick={handleCloseSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all">
                                             <span className="material-symbols-outlined text-lg">event_busy</span>
-                                            End Semester
+                                            Close Semester
                                         </button>
                                     )}
                                 </div>
@@ -512,8 +613,11 @@ const SemesterDetailPage = () => {
                             <span className="material-symbols-outlined text-xl">info</span>
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-sm font-bold text-gray-900">Note regarding End Semester</h3>
-                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">Ending the semester will automatically freeze all team updates and finalize the whitelists. This action is <span className="font-semibold text-orange-700">irreversible</span> and should only be done after final grades are submitted.</p>
+                            <h3 className="text-sm font-bold text-gray-900">Semester Lifecycle Management</h3>
+                            <p className="text-sm text-gray-600 mt-1 leading-relaxed">Transitions are irreversible. 
+                                <br />• <b>Lock Submission:</b> Stops receiving new thesis proposals.
+                                <br />• <b>Lock All Updates:</b> Prevents all edits to teams and theses.
+                                <br />• <b>Close Semester:</b> Finalizes everything and moves to history.</p>
                         </div>
                         <button
                             onClick={() => setShowWarning(false)}
@@ -546,13 +650,15 @@ const SemesterDetailPage = () => {
                 semesterId={semester?.semesterId || 0}
                 onSuccess={refreshActiveTab}
             />
-            <ThesisFormModal
-                isOpen={isThesisFormModalOpen}
-                onClose={() => setIsThesisFormModalOpen(false)}
-                onSuccess={() => { fetchLatestForm(); setIsThesisFormModalOpen(false); }}
-                semesterId={semester.semesterId}
-                isSemesterEnded={isEnded}
-            />
+            {semester && (
+                <ThesisFormModal
+                    isOpen={isThesisFormModalOpen}
+                    onClose={() => setIsThesisFormModalOpen(false)}
+                    onSuccess={() => { fetchLatestForm(); setIsThesisFormModalOpen(false); }}
+                    semesterId={semester.semesterId}
+                    isSemesterEnded={isEnded}
+                />
+            )}
             <ThesisFormVersionsModal
                 isOpen={isVersionsModalOpen}
                 onClose={() => setIsVersionsModalOpen(false)}
