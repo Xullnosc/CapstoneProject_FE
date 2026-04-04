@@ -99,13 +99,14 @@ const SemesterDetailPage = () => {
     const [isWhitelistsLoading, setIsWhitelistsLoading] = useState(false);
 
     // Orphaned students state
-    const [orphanedData, setOrphanedData] = useState<Whitelist[]>([]);
+    const [orphanedData, setOrphanedData] = useState<PagedResult<Whitelist> | null>(null);
     const [isForceCreateOpen, setIsForceCreateOpen] = useState(false);
     const [isOrphanedLoading, setIsOrphanedLoading] = useState(false);
 
     const [whitelistPage, setWhitelistPage] = useState(1);
     const [lecturerPage, setLecturerPage] = useState(1);
     const [studentPage, setStudentPage] = useState(1);
+    const [orphanedPage, setOrphanedPage] = useState(1);
     const pageSize = 10;
 
     // Modal states
@@ -174,14 +175,14 @@ const SemesterDetailPage = () => {
         if (!semesterId) return;
         try {
             setIsOrphanedLoading(true);
-            const data = await semesterService.getOrphanedStudents(semesterId);
+            const data = await semesterService.getOrphanedStudents(semesterId, orphanedPage, pageSize);
             setOrphanedData(data);
         } catch (error) {
             console.error('Failed to fetch orphaned students', error);
         } finally {
             setIsOrphanedLoading(false);
         }
-    }, [semesterId]);
+    }, [semesterId, orphanedPage]);
 
     useEffect(() => {
         if (activeTab === 'orphaned') {
@@ -494,11 +495,11 @@ const SemesterDetailPage = () => {
                 )}
                 {activeTab === 'orphaned' && (
                     <SemesterWhitelistsTable
-                        whitelists={orphanedData}
+                        whitelists={orphanedData?.items || []}
                         isLoading={isOrphanedLoading}
-                        totalCount={orphanedData.length}
-                        page={0}
-                        onPageChange={() => {}}
+                        totalCount={orphanedData?.totalCount ?? 0}
+                        page={orphanedPage - 1}
+                        onPageChange={(p: number) => setOrphanedPage(p + 1)}
                         onUpdate={() => fetchOrphanedStudents()}
                         showStudentCode={true}
                         isEnded={isEnded}

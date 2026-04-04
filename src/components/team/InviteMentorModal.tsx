@@ -196,15 +196,21 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                                 const canViewProfile = user.userId > 0;
                             return (
                                 <div key={user.userId} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 border border-transparent hover:border-gray-100 transition-all group">
-                                    <div className="flex items-center gap-3">
+                                    <div 
+                                        className={`flex items-center gap-3 ${canViewProfile ? 'cursor-pointer group/name' : ''}`}
+                                        onClick={() => {
+                                            if (!canViewProfile) return;
+                                            navigate(`/profile/${user.userId}`);
+                                        }}
+                                    >
                                         <MemberAvatar
                                             fullName={user.fullName}
                                             email={user.email}
                                             avatarUrl={user.avatar}
-                                            className="size-10 rounded-full object-cover border border-gray-100"
+                                            className="size-10 rounded-full object-cover border border-gray-100 transition-transform group-hover/name:scale-105"
                                         />
                                         <div>
-                                            <h4 className="font-bold text-gray-900 text-sm">{user.fullName}</h4>
+                                            <h4 className={`font-bold text-gray-900 text-sm transition-colors ${canViewProfile ? 'group-hover/name:text-orange-600' : ''}`}>{user.fullName}</h4>
                                             <p className="text-xs text-gray-500">{user.email}</p>
                                         </div>
                                     </div>
@@ -235,24 +241,6 @@ const InviteMentorModal: React.FC<InviteMentorModalProps> = ({ isOpen, onClose, 
                                                         Invite
                                                     </>
                                                 )}
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                disabled={!canViewProfile}
-                                                onClick={() => {
-                                                    if (!canViewProfile) return;
-                                                    navigate(`/profile/${user.userId}`);
-                                                }}
-                                                className={`px-3 py-2 rounded-lg text-sm font-bold border transition-colors cursor-pointer
-                                                    ${canViewProfile
-                                                        ? 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:text-orange-600'
-                                                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
-                                                    }`}
-                                                title={canViewProfile ? 'View Profile' : 'Profile not available'}
-                                            >
-                                                <span className="material-symbols-outlined text-[16px] align-middle mr-1">visibility</span>
-                                                View
                                             </button>
                                         </div>
                                 </div>

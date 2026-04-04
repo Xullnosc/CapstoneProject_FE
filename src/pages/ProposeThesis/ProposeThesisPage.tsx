@@ -136,7 +136,7 @@ const ProposeThesisPage = () => {
 
         checkAccess();
         fetchLatestForm();
-    }, [navigate, user?.userId]);
+    }, [navigate, user]);
 
     const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
