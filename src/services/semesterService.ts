@@ -17,6 +17,8 @@ export interface Whitelist {
     roleName?: string;
     roleId?: number;
     semesterId?: number;
+    semesterCode?: string;
+    semesterName?: string;
     isReviewer?: boolean;
     avatar?: string;
     campus?: string;

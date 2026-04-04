@@ -14,6 +14,7 @@ interface SemesterWhitelistsTableProps {
     canEdit?: (user: Whitelist) => boolean;
     onDelete?: (user: Whitelist) => Promise<void> | void;
     showStudentCode?: boolean;
+    showSemester?: boolean;
     isEnded?: boolean;
     // Server-side pagination props
     totalCount?: number;
@@ -31,6 +32,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     canEdit,
     onDelete,
     showStudentCode = false,
+    showSemester = false,
     isEnded = false,
     totalCount,
     page = 0,
@@ -141,6 +143,9 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                             {showStudentCode && (
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
                             )}
+                            {showSemester && (
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Semester</th>
+                            )}
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Campus</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -154,6 +159,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                     <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
                                     <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-32"></div></td>
                                     {showStudentCode && <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-16"></div></td>}
+                                    {showSemester && <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded w-24"></div></td>}
                                     <td className="px-6 py-4"></td>
                                     <td className="px-4 py-4"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
                                     <td className="px-6 py-4"></td>
@@ -161,7 +167,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                             ))
                         ) : displayWhitelists.length === 0 ? (
                             <tr>
-                                <td colSpan={showStudentCode ? 7 : 6} className="px-6 py-12 text-center">
+                                <td colSpan={6 + (showStudentCode ? 1 : 0) + (showSemester ? 1 : 0)} className="px-6 py-12 text-center">
                                     <div className="flex flex-col items-center justify-center text-gray-400 gap-3">
                                         <span className="material-symbols-outlined text-4xl opacity-50">person_off</span>
                                         <span className="text-sm font-medium">No whitelisted users found</span>
@@ -195,6 +201,18 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                                 <span className="material-symbols-outlined text-[12px]">badge</span>
                                                 {user.studentCode || '-'}
                                             </span>
+                                        </td>
+                                    )}
+                                    {showSemester && (
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md border border-violet-200 font-mono w-fit tracking-wide">
+                                                    {user.semesterCode || '-'}
+                                                </span>
+                                                {user.semesterName && (
+                                                    <span className="text-xs text-gray-600 font-medium">{user.semesterName}</span>
+                                                )}
+                                            </div>
                                         </td>
                                     )}
                                     <td className="px-6 py-4">

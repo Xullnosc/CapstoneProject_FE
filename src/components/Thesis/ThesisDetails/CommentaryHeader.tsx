@@ -30,7 +30,6 @@ const CommentaryHeader: React.FC<CommentaryHeaderProps> = ({
 
         <div className="flex flex-wrap items-center gap-5">
           <ThesisStatusBadge status={thesis.status} />
-          
           <div className="flex items-center gap-4 text-xs font-semibold text-slate-400">
             <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-xl border border-slate-100/50 hover:bg-white transition-colors group cursor-default">
               <MemberAvatar

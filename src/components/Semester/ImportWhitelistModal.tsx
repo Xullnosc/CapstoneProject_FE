@@ -317,12 +317,15 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                                 roleName: row.role,
                                 studentCode: row.studentCode,
                                 campus: row.campus || '',
+                                semesterCode: row.semesterCode,
+                                semesterName: row.semesterName,
                                 isReviewer: false,
                                 addedDate: new Date().toISOString(),
                                 semesterId: semesterId,
                                 avatar: ''
                             }))}
                             showStudentCode={true}
+                            showSemester={true}
                             canEdit={(user) => {
                                 const sourceRow = previewData.find((row) => row.email === user.email && row.studentCode === user.studentCode)
                                     ?? previewData.find((row) => row.email === user.email)
