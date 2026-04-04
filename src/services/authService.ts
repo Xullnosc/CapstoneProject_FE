@@ -24,15 +24,21 @@ export interface RefreshResponse {
 }
 
 export const authService = {
-    login: async (idToken: string, campus: string) => {
-        const response = await api.post<LoginResponse>('/Auth/login', { idToken, campus }, { withCredentials: true });
+    login: async (idToken: string, campus: string, captchaToken: string) => {
+        const response = await api.post<LoginResponse>('/Auth/login', { idToken, campus }, { 
+            withCredentials: true,
+            headers: { 'X-Captcha-Token': captchaToken }
+        });
         const data = response.data;
         const accessToken = data.accessToken ?? data.token;
         return { ...data, accessToken, token: accessToken };
     },
 
-    loginWithCredentials: async (username: string, password: string) => {
-        const response = await api.post<LoginResponse>('/Auth/login/credentials', { username, password }, { withCredentials: true });
+    loginWithCredentials: async (username: string, password: string, captchaToken: string) => {
+        const response = await api.post<LoginResponse>('/Auth/login/credentials', { username, password }, { 
+            withCredentials: true,
+            headers: { 'X-Captcha-Token': captchaToken }
+        });
         const data = response.data;
         const accessToken = data.accessToken ?? data.token;
         return { ...data, accessToken, token: accessToken };

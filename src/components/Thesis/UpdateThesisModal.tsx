@@ -4,8 +4,10 @@ import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
 import type { Thesis } from '../../types/thesis';
 import { thesisService } from '../../services/thesisService';
+import { systemService } from '../../services/systemService';
 import Swal from '../../utils/swal';
 import { AxiosError } from 'axios';
+import { useEffect } from 'react';
 
 interface Props {
     visible: boolean;
@@ -19,7 +21,22 @@ const UpdateThesisModal = ({ visible, thesis, onHide, onSuccess }: Props) => {
     const [note, setNote] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [fileSizeLimit, setFileSizeLimit] = useState(10);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (visible) {
+            const fetchConfig = async () => {
+                try {
+                    const config = await systemService.getPublicConfig();
+                    setFileSizeLimit(config.fileSizeLimit);
+                } catch (error) {
+                    console.error('Failed to fetch public config', error);
+                }
+            };
+            fetchConfig();
+        }
+    }, [visible]);
 
     const handleClose = () => {
         if (isUploading) return;
@@ -49,7 +66,7 @@ const UpdateThesisModal = ({ visible, thesis, onHide, onSuccess }: Props) => {
             return;
         }
 
-        const maxMB = 50;
+        const maxMB = fileSizeLimit;
         if (selected.size > maxMB * 1024 * 1024) {
             Swal.fire({
                 icon: 'error',
@@ -191,7 +208,7 @@ const UpdateThesisModal = ({ visible, thesis, onHide, onSuccess }: Props) => {
                             </div>
                             <div>
                                 <p className="font-black text-slate-800">Drop revision file here</p>
-                                <p className="text-xs text-slate-400 font-medium">PDF or Word documents (max 50MB)</p>
+                                <p className="text-xs text-slate-400 font-medium">PDF or Word documents (max {fileSizeLimit}MB)</p>
                             </div>
                         </>
                     )}

@@ -227,12 +227,23 @@ const SystemParametersPage = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Value <span className="text-red-500">*</span></label>
-                            <input 
-                                value={editValue} 
-                                onChange={(e) => setEditValue(e.target.value)} 
-                                className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50/50 outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm font-medium transition-all"
-                                placeholder="Enter configuration value"
-                            />
+                            {editingParam.key === 'THESIS_REGISTRATION_OPEN' ? (
+                                <select
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50/50 outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm font-medium transition-all"
+                                >
+                                    <option value="true">true — Registration is open</option>
+                                    <option value="false">false — Registration is closed</option>
+                                </select>
+                            ) : (
+                                <input
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50/50 outline-none focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 text-sm font-medium transition-all"
+                                    placeholder="Enter configuration value"
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
