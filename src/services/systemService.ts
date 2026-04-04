@@ -16,5 +16,10 @@ export const systemService = {
 
   updateParameter: async (key: string, data: Partial<SystemParameter>): Promise<void> => {
     await api.put(`/system/params/${key}`, { ...data, key });
+  },
+
+  getPublicConfig: async (): Promise<{ isOpen: boolean; fileSizeLimit: number, captchaSiteKey: string }> => {
+    const response = await api.get('/system/public/config');
+    return response.data;
   }
 };
