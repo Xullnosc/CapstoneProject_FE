@@ -168,10 +168,14 @@ export const thesisService = {
   },
 
   getReviewTimeline: async (id: string): Promise<ReviewTimelineEvent[]> => {
-    const response = await api.get<ReviewTimelineEvent[]>(
-      `/thesis/${id}/review-timeline`,
-    );
-    return response.data;
+    const response = await api.get<
+      { items: ReviewTimelineEvent[] } | ReviewTimelineEvent[]
+    >(`/thesis/${id}/review-timeline`);
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray((data as { items: ReviewTimelineEvent[] }).items))
+      return (data as { items: ReviewTimelineEvent[] }).items;
+    return [];
   },
 
   addReviewComment: async (

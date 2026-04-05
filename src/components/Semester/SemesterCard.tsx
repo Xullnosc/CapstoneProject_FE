@@ -167,7 +167,6 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester }) => {
                             <span className="material-symbols-outlined text-[18px]">edit</span> Edit
                         </button>
                     )}
-
                     {isClosed && (
                         <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-400 text-xs font-bold cursor-default">
                             <span className="material-symbols-outlined text-[18px]">lock</span> Closed
