@@ -112,6 +112,7 @@ const SemesterDetailPage = () => {
 
     // Modal states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
@@ -318,6 +319,27 @@ const SemesterDetailPage = () => {
                                 title="Edit semester"
                             >
                                 <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                        )}
+                        {canManage && (
+                            <button
+                                onClick={async () => {
+                                    if (isExporting) return;
+                                    setIsExporting(true);
+                                    try {
+                                        await semesterService.exportEvaluation(semesterId);
+                                    } catch {
+                                        Swal.fire({ icon: 'error', title: 'Export failed', text: 'Could not generate the evaluation export. Please try again.', timer: 3000, showConfirmButton: false });
+                                    } finally {
+                                        setIsExporting(false);
+                                    }
+                                }}
+                                disabled={isExporting}
+                                className="cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white/90 px-3 py-2 text-gray-700 text-xs font-bold shadow-sm transition-all hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Export evaluation"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">{isExporting ? 'hourglass_empty' : 'ios_share'}</span>
+                                {isExporting ? 'Exporting...' : 'Export'}
                             </button>
                         )}
                     </div>

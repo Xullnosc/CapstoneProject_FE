@@ -13,6 +13,7 @@ interface ActiveSemesterBannerProps {
 
 const ActiveSemesterBanner: React.FC<ActiveSemesterBannerProps> = ({ semester }) => {
     const navigate = useNavigate();
+
     if (!semester) return null; // Or show a default "No Active Semester" state
 
     const normalizedSeason =

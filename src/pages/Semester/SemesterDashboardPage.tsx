@@ -159,10 +159,6 @@ const SemesterDashboardPage = () => {
                     <div className="flex flex-wrap items-center gap-3">
                         {canManage && (
                             <>
-                                <button className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">
-                                    <span className="material-symbols-outlined text-xl">ios_share</span>
-                                    Export
-                                </button>
                                 <Link
                                     to="/lecturers"
                                     className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors shadow-sm"
@@ -227,7 +223,11 @@ const SemesterDashboardPage = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {visibleSemesterCards.map(sem => (
-                                <SemesterCard key={sem.id} semester={sem} onRefresh={fetchSemesters} />
+                                <SemesterCard
+                                    key={sem.id}
+                                    semester={sem}
+                                    onRefresh={fetchSemesters}
+                                />
                             ))}
                         </div>
                     )}

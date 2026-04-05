@@ -29,9 +29,11 @@ const createFingerprint = (
   const statusStamp =
     reviewStatus?.overallStatus ?? reviewStatus?.thesisStatus ?? "none";
   const hodStamp = reviewStatus?.hodDecision?.decidedAt ?? "none";
-  const timelineStamp = timeline
-    .map((item) => `${item.eventId}:${item.createdAt}:${item.comments.length}`)
-    .join("|");
+  const timelineStamp = Array.isArray(timeline)
+    ? timeline
+        .map((item) => `${item.eventId}:${item.createdAt}:${item.comments.length}`)
+        .join("|")
+    : "";
 
   return [
     thesis.status,
@@ -112,7 +114,7 @@ export const useThesisCommentary = (
           fingerprintRef.current = nextFingerprint;
           setThesis(thesisData);
           setReviewStatus(reviewStatusData);
-          setReviewTimeline(timelineData);
+          setReviewTimeline(Array.isArray(timelineData) ? timelineData : []);
         }
         backoffRef.current = DEFAULT_INTERVAL_MS;
       } catch (err) {
