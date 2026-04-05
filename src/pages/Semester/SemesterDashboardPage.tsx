@@ -11,7 +11,7 @@ import { authService } from '../../services/authService';
 import { SEMESTER_STATUS, type SemesterStatus } from '../../constants/semesterConstants';
 import { getSemesterSeason, getSeasonColor, calculateSemesterStatus, formatSemesterDate } from '../../utils/semesterHelpers';
 
-const FILTER_OPTIONS = ['All', 'Ongoing', 'Upcoming', 'Ended'] as const;
+const FILTER_OPTIONS = ['All', 'Open', 'In Progress', 'Closed'] as const;
 
 type SemesterCardViewModel = {
     id: number;
@@ -91,7 +91,7 @@ const SemesterDashboardPage = () => {
     const semesterCards = useMemo(() => allSemesters.map(mapToCardProps), [allSemesters, mapToCardProps]);
 
     const activeSemesterCard = useMemo(
-        () => semesterCards.find(s => s.status === 'Ongoing') || null,
+        () => semesterCards.find(s => s.status === SEMESTER_STATUS.OPEN) || semesterCards.find(s => s.status === SEMESTER_STATUS.IN_PROGRESS) || null,
         [semesterCards]
     );
 
@@ -102,15 +102,12 @@ const SemesterDashboardPage = () => {
             let matchesStatus = false;
             if (filterStatus === 'All') {
                 matchesStatus = true;
-            } else if (filterStatus === 'Ongoing') {
-                matchesStatus =
-                    semesterCard.status === SEMESTER_STATUS.ONGOING ||
-                    semesterCard.status === SEMESTER_STATUS.THESIS_REVIEW ||
-                    semesterCard.status === SEMESTER_STATUS.FINAL_REVIEW;
-            } else if (filterStatus === 'Upcoming') {
-                matchesStatus = semesterCard.status === SEMESTER_STATUS.UPCOMING;
-            } else if (filterStatus === 'Ended') {
-                matchesStatus = semesterCard.status === SEMESTER_STATUS.ENDED;
+            } else if (filterStatus === 'Open') {
+                matchesStatus = semesterCard.status === SEMESTER_STATUS.OPEN;
+            } else if (filterStatus === 'In Progress') {
+                matchesStatus = semesterCard.status === SEMESTER_STATUS.IN_PROGRESS;
+            } else if (filterStatus === 'Closed') {
+                matchesStatus = semesterCard.status === SEMESTER_STATUS.CLOSED;
             }
 
             const matchesSearch =
@@ -130,10 +127,10 @@ const SemesterDashboardPage = () => {
     const canShowMore = visibleSemesterCards.length > 0 && allSemesters.length < totalSemesterCount;
 
     const emptySemesterMessage = useMemo(() => {
-        if (filterStatus === 'Ongoing') return 'There is no on-going semester';
-        if (filterStatus === 'Upcoming') return 'There is no upcoming semester';
-        if (filterStatus === 'Ended') return 'There is no ended semester';
-        return 'There is no semester';
+        if (filterStatus === 'Open') return 'Không có học kỳ nào đang mở (Open)';
+        if (filterStatus === 'In Progress') return 'Không có học kỳ nào đang thực hiện (In Progress)';
+        if (filterStatus === 'Closed') return 'Không có học kỳ nào đã đóng (Closed)';
+        return 'Không có học kỳ nào';
     }, [filterStatus]);
 
     const handleShowMore = async () => {
