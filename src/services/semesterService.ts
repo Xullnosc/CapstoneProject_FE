@@ -31,7 +31,7 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
-    status: 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester' | 'Closed';
+    status: 'Open' | 'In Progress' | 'Closed' | 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester';
     teamCount: number; // Optimized field
     activeTeamCount: number; // Added field
     whitelistCount: number; // Added field
