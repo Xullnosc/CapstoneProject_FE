@@ -1,8 +1,8 @@
-import { useState, type ChangeEvent, type FC } from 'react';
+import { useState, useEffect, type ChangeEvent, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 import { whitelistService } from '../../services/whitelistService';
-import type { ImportWhitelistRow, ImportError, ImportResult, WhitelistRowOverride } from '../../services/whitelistService';
+import type { ImportWhitelistRow, ImportError, ImportResult, WhitelistRowOverride, ImportBatch } from '../../services/whitelistService';
 import SemesterWhitelistsTable from './SemesterWhitelistsTable';
 
 interface ImportWhitelistModalProps {
@@ -23,10 +23,42 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
     const [rowOverrides, setRowOverrides] = useState<WhitelistRowOverride[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    
+    // History state
+    const [importBatches, setImportBatches] = useState<ImportBatch[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     // Edit-row state: which conflict row is being corrected
     const [editingConflictRow, setEditingConflictRow] = useState<ImportWhitelistRow | null>(null);
     const [editForm, setEditForm] = useState({ email: '', fullName: '', studentCode: '' });
+
+    const fetchHistory = async () => {
+        if (!semesterId || !isOpen) return;
+        setIsLoadingHistory(true);
+        try {
+            const batches = await whitelistService.getWhitelistBatches(semesterId);
+            setImportBatches(batches);
+        } catch (error) {
+            console.error('Failed to load import history', error);
+        } finally {
+            setIsLoadingHistory(false);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchHistory();
+        } else {
+            // Reset when closing
+            setFile(null);
+            setPreviewData([]);
+            setPreviewErrors([]);
+            setExcludedRowNumbers([]);
+            setRowOverrides([]);
+            setEditingConflictRow(null);
+            setImportBatches([]);
+        }
+    }, [isOpen, semesterId]);
 
     const conflictRows = previewData.filter((row) => row.isMarked);
     const hasBlockingConflicts = conflictRows.length > 0;
@@ -78,6 +110,27 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
         setRowOverrides([]);
         setEditingConflictRow(null);
         await loadPreview(selectedFile, [], []);
+    };
+
+    // Reupload: Dùng fetch để lấy file từ version URL (trên Cloudinary/S3),
+    // sau đó convert Blob thành object File và nhét vào state như là user vừa drag & drop.
+    const handleReupload = async (batch: ImportBatch) => {
+        setIsLoadingHistory(true);
+        try {
+            const response = await fetch(batch.fileUrl);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const blob = await response.blob();
+            // Khởi tạo File API object từ blob để component hiểu
+            const fetchedFile = new File([blob], batch.originalFileName || `import_batch_${batch.importBatchId}.xlsx`, {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+            await processFile(fetchedFile);
+        } catch (error) {
+            console.error('Failed to restore previous file', error);
+            Swal.fire('Error', 'Unable to fetch the previous file.', 'error');
+        } finally {
+            setIsLoadingHistory(false);
+        }
     };
 
     const handleRemovePreviewRow = async (row: ImportWhitelistRow) => {
@@ -198,6 +251,14 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                 console.warn('import errors', result.errors);
             }
             if (onSuccess) onSuccess();
+            fetchHistory(); // Refresh history
+            
+            // Note: We deliberately do not close the modal or reset the file here
+            // because the user might want to check the history that just updated.
+            // But originally the code did:
+            // onClose();
+            // setFile(null); ...
+            // We will keep the original behaviour but it's often nicer to just show success and reset.
             onClose();
             setFile(null);
             setPreviewData([]);
@@ -291,6 +352,73 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                         </div>
                     )}
                 </div>
+
+                {/* Import History */}
+                {!file && importBatches.length > 0 && (
+                    <div className="flex-1 flex flex-col border border-gray-200 rounded-xl bg-gray-50/50 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="material-symbols-outlined text-gray-500">history</span>
+                            <h4 className="text-sm font-bold text-gray-700">Import History</h4>
+                        </div>
+                        {isLoadingHistory ? (
+                            <div className="flex justify-center py-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm text-gray-600">
+                                    <thead className="text-xs text-gray-500 uppercase bg-gray-100/50">
+                                        <tr>
+                                            <th className="px-4 py-2 font-bold rounded-tl-lg">File Name</th>
+                                            <th className="px-4 py-2 font-bold">Uploaded At</th>
+                                            <th className="px-4 py-2 font-bold">Uploaded By</th>
+                                            <th className="px-4 py-2 font-bold">Notes</th>
+                                            <th className="px-4 py-2 font-bold rounded-tr-lg text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {importBatches.map((batch) => (
+                                            <tr key={batch.importBatchId} className="border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
+                                                <td className="px-4 py-2 font-medium text-gray-800 break-all w-1/3">
+                                                    {batch.originalFileName || `Version ${batch.version}`}
+                                                </td>
+                                                <td className="px-4 py-2 whitespace-nowrap">
+                                                    {new Date(batch.uploadedAt).toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    {batch.uploadedBy || 'Unknown'}
+                                                </td>
+                                                <td className="px-4 py-2 text-xs text-gray-500">
+                                                    {batch.notes}
+                                                </td>
+                                                <td className="px-4 py-2 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <a
+                                                            href={batch.fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-500 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-lg transition-colors inline-block"
+                                                            title="Download File"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">download</span>
+                                                        </a>
+                                                        <button
+                                                            onClick={() => handleReupload(batch)}
+                                                            className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                                            title="Re-upload to Modal"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">replay</span>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Preview Table */}
                 {isUploading ? (

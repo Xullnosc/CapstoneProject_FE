@@ -23,6 +23,17 @@ export interface WhitelistRowOverride {
     studentCode?: string;
 }
 
+export interface ImportBatch {
+    importBatchId: number;
+    fileUrl: string;
+    originalFileName?: string;
+    uploadedBy?: string;
+    uploadedAt: string;
+    affectedSemesterId?: number;
+    version: number;
+    notes?: string;
+}
+
 export interface ImportWhitelistRow {
     rowNumber?: number;
     email: string;
@@ -151,6 +162,11 @@ export const whitelistService = {
     /** Alias for getWhitelistsPaginated as requested */
     getAllWhitelists: async (semesterId: number, params: { page: number; pageSize: number; role?: string; search?: string }): Promise<PagedResult<Whitelist>> => {
         const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/whitelists`, { params });
+        return response.data;
+    },
+
+    getWhitelistBatches: async (semesterId: number): Promise<ImportBatch[]> => {
+        const response = await api.get<ImportBatch[]>(`/semester/${semesterId}/whitelist-batches`);
         return response.data;
     }
 };
