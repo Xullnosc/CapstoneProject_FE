@@ -57,6 +57,27 @@ const LecturerManagementPage = () => {
         }
     };
 
+    const handleToggleReviewer = async (lecturer: Lecturer) => {
+        try {
+            const newStatus = !lecturer.isReviewer;
+            await lecturerService.toggleReviewerStatus(lecturer.lecturerId, newStatus);
+            setLecturers(prev => prev.map(l =>
+                l.lecturerId === lecturer.lecturerId ? { ...l, isReviewer: newStatus } : l
+            ));
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Reviewer Set',
+                text: `${lecturer.fullName || lecturer.email} is now ${newStatus ? 'a Reviewer' : 'not a Reviewer'}`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'Failed to update reviewer status', 'error');
+        }
+    };
+
     const handleDelete = async (id: number) => {
         const result = await Swal.fire({
             title: 'Are you sure?',
@@ -142,6 +163,7 @@ const LecturerManagementPage = () => {
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Contact Info</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Campus</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Active</th>
+                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Reviewer</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -193,29 +215,54 @@ const LecturerManagementPage = () => {
                                             </td>
                                             <td className="px-8 py-5 text-center">
                                                 <div className="flex justify-center">
-                                                    <InputSwitch
-                                                        checked={l.isActive}
-                                                        onChange={() => handleToggleStatus(l)}
-                                                        className={l.isActive ? 'orange-switch' : ''}
-                                                    />
+                                                    {!l.isHod ? (
+                                                        <InputSwitch
+                                                            checked={l.isActive}
+                                                            onChange={() => handleToggleStatus(l)}
+                                                            className={l.isActive ? 'orange-switch' : ''}
+                                                        />
+                                                    ) : (
+                                                        <span className="px-3 py-1.5 bg-green-50 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-wider">
+                                                            HOD Permanent
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-5 text-center">
+                                                <div className="flex justify-center">
+                                                    {!l.isHod ? (
+                                                        <InputSwitch
+                                                            checked={l.isReviewer}
+                                                            onChange={() => handleToggleReviewer(l)}
+                                                            className={l.isReviewer ? 'blue-switch' : ''}
+                                                        />
+                                                    ) : (
+                                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-wider">
+                                                            HOD Access
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={() => { setSelectedLecturer(l); setIsModalOpen(true); }}
-                                                        className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
-                                                        title="Edit Details"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xl">edit</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(l.lecturerId)}
-                                                        className="p-2.5 text-red-400 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                                                        title="Delete Lecturer"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xl">delete</span>
-                                                    </button>
+                                                    {!l.isHod && (
+                                                        <>
+                                                            <button
+                                                                onClick={() => { setSelectedLecturer(l); setIsModalOpen(true); }}
+                                                                className="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Edit Details"
+                                                            >
+                                                                <span className="material-symbols-outlined text-xl">edit</span>
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDelete(l.lecturerId)}
+                                                                className="p-2.5 text-red-400 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                                                                title="Delete Lecturer"
+                                                            >
+                                                                <span className="material-symbols-outlined text-xl">delete</span>
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

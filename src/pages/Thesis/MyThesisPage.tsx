@@ -10,7 +10,7 @@ import { Dropdown } from 'primereact/dropdown';
 import Swal from '../../utils/swal';
 import styles from './Thesis.module.css';
 
-const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
+const RAW_THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'All Statuses', value: '' },
     { label: 'On Mentor Inviting', value: 'On Mentor Inviting' },
     { label: 'Registered', value: 'Registered' },
@@ -18,7 +18,6 @@ const THESIS_STATUSES: { label: string; value: ThesisStatus | '' }[] = [
     { label: 'Need Update', value: 'Need Update' },
     { label: 'Updated', value: 'Updated' },
     { label: 'Published', value: 'Published' },
-    { label: 'Rejected', value: 'Rejected' },
     { label: 'Cancelled', value: 'Cancelled' },
 ];
 
@@ -28,9 +27,18 @@ const MyThesisPage = () => {
     const isStudent = user?.roleName === 'Student';
     const isLecturer = user?.roleName === 'Lecturer';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
-    const canProposeNew = isLecturer || isHOD; // Both lecturers and HODs can submit new theses
+
+    // Filter status options: Only HOD sees 'On Mentor Inviting'
+    const statusOptions = RAW_THESIS_STATUSES.filter(opt => {
+        if (opt.value === 'On Mentor Inviting' && !isHOD) return false;
+        return true;
+    });
 
     const [theses, setTheses] = useState<Thesis[]>([]);
+
+    const hasRegisteredThesis = theses.some(t => t.status === 'Registered');
+    const canProposeNew = (isLecturer || isHOD) || (isStudent && !hasRegisteredThesis);
+
     const [loading, setLoading] = useState(true);
     const [searchTitle, setSearchTitle] = useState('');
     const [statusFilter, setStatusFilter] = useState<ThesisStatus | ''>('');
@@ -162,7 +170,7 @@ const MyThesisPage = () => {
                             {/* Status dropdown */}
                             <Dropdown
                                 value={statusFilter}
-                                options={THESIS_STATUSES}
+                                options={statusOptions}
                                 onChange={(e) => setStatusFilter(e.value as ThesisStatus | '')}
                                 placeholder="Filter Status"
                                 appendTo="self"
@@ -209,7 +217,7 @@ const MyThesisPage = () => {
                         <ThesisCard
                             key={thesis.thesisId}
                             thesis={thesis}
-                            canUpload={isStudent && thesis.userId === user?.userId && thesis.status === 'Need Update'}
+                            canUpload={(isStudent || isLecturer || isHOD) && thesis.userId === user?.userId && thesis.status === 'Need Update'}
                             onUploadClick={handleUploadClick}
                             canLock={(isLecturer || isHOD) && thesis.userId === user?.userId && thesis.status === 'Published'}
                             showLockStatus={true}

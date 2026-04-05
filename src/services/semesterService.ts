@@ -92,9 +92,9 @@ export const semesterService = {
         return response.data;
     },
 
-    getOrphanedStudents: async (semesterId: number, page: number = 1, pageSize: number = 10): Promise<PagedResult<Whitelist>> => {
+    getOrphanedStudents: async (semesterId: number, page: number = 1, pageSize: number = 10, search?: string): Promise<PagedResult<Whitelist>> => {
         const response = await api.get<PagedResult<Whitelist>>(`/semester/${semesterId}/orphaned-students`, {
-            params: { page, pageSize }
+            params: { page, pageSize, search }
         });
         return response.data;
     },

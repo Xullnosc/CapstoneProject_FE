@@ -110,6 +110,9 @@ const SemesterDetailPage = () => {
     const [orphanedPage, setOrphanedPage] = useState(1);
     const pageSize = 10;
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
     // Modal states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
@@ -154,7 +157,8 @@ const SemesterDetailPage = () => {
             const data = await semesterService.getWhitelistsPaginated(semesterId, {
                 page,
                 pageSize,
-                role: role || undefined
+                role: role || undefined,
+                search: debouncedSearch || undefined
             });
 
             if (role === 'Lecturer') setLecturerData(data);
@@ -165,7 +169,7 @@ const SemesterDetailPage = () => {
         } finally {
             setIsWhitelistsLoading(false);
         }
-    }, [semesterId, whitelistPage, lecturerPage, studentPage]);
+    }, [semesterId, whitelistPage, lecturerPage, studentPage, debouncedSearch]);
 
     useEffect(() => {
         fetchSemesterDetail();
@@ -176,14 +180,14 @@ const SemesterDetailPage = () => {
         if (!semesterId) return;
         try {
             setIsOrphanedLoading(true);
-            const data = await semesterService.getOrphanedStudents(semesterId, orphanedPage, pageSize);
+            const data = await semesterService.getOrphanedStudents(semesterId, orphanedPage, pageSize, debouncedSearch || undefined);
             setOrphanedData(data);
         } catch (error) {
             console.error('Failed to fetch orphaned students', error);
         } finally {
             setIsOrphanedLoading(false);
         }
-    }, [semesterId, orphanedPage]);
+    }, [semesterId, orphanedPage, debouncedSearch]);
 
     useEffect(() => {
         if (activeTab === 'orphaned') {
@@ -195,6 +199,20 @@ const SemesterDetailPage = () => {
             fetchWhitelists(role);
         }
     }, [activeTab, fetchWhitelists, fetchOrphanedStudents]);
+
+    // Handle debounced search
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+            // Reset pages to 1 when search term changes
+            setWhitelistPage(1);
+            setLecturerPage(1);
+            setStudentPage(1);
+            setOrphanedPage(1);
+        }, 500);
+
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
 
     const handleStartSemester = async () => {
@@ -592,6 +610,8 @@ const SemesterDetailPage = () => {
                         onEdit={activeTab === 'students' ? (student) => { setSelectedStudent(student); setIsStudentModalOpen(true); } : undefined}
                         showStudentCode={activeTab === 'students'}
                         isEnded={isEnded}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
                     />
                 )}
                 {activeTab === 'orphaned' && (
@@ -604,6 +624,8 @@ const SemesterDetailPage = () => {
                         onUpdate={() => fetchOrphanedStudents()}
                         showStudentCode={true}
                         isEnded={isEnded}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
                     />
                 )}
 

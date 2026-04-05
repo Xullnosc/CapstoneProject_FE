@@ -44,31 +44,31 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
             </div>
 
             {hasTopic ? (
-                <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col md:flex-row">
-                    {/* Left: Cover Image */}
-                    <div className="md:w-1/3 min-h-[200px] md:min-h-full bg-cover bg-center relative" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=800&q=80")' }}>
-                        <div className="absolute inset-0 bg-black/10"></div>
-                    </div>
-
-                    {/* Right: Content */}
+                <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+                    {/* Content */}
                     <div className="flex-1 p-6 md:p-8 flex flex-col justify-between">
                         <div>
                             {/* Header: Badge & Date */}
                             <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
-                                <span className="bg-green-100 text-green-600 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">
-                                    Thesis Approved
+                                <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                                    team.topicStatus === 'Registered' ? 'bg-green-100 text-green-600' :
+                                    team.topicStatus === 'Reviewing' ? 'bg-blue-100 text-blue-600' :
+                                    team.topicStatus === 'On Mentor Inviting' ? 'bg-orange-100 text-orange-600' :
+                                    team.topicStatus === 'Need Update' ? 'bg-red-100 text-red-600' :
+                                    'bg-gray-100 text-gray-600'
+                                }`}>
+                                    {team.topicStatus || 'Thesis Assigned'}
                                 </span>
                                 <span className="text-gray-400 text-xs font-medium">
-                                    Updated 2 days ago
+                                    Status: {team.topicStatus}
                                 </span>
                             </div>
 
-                            {/* Title & Description */}
                             <h3 className="text-gray-900 text-2xl md:text-3xl font-extrabold mb-3 leading-tight tracking-tight">
                                 {team.topicName || "Thesis Topic Assigned"}
                             </h3>
-                            <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6">
-                                {team.description || "No description provided for this thesis topic."}
+                            <p className="text-gray-500 text-sm md:text-base leading-relaxed mb-6 italic">
+                                {team.topicDescription || team.description || "No description provided for this thesis topic."}
                             </p>
                         </div>
 
@@ -106,14 +106,13 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
                             </div>
 
                             {/* Actions */}
-                            <div className="flex bg-orange-500 rounded-xl overflow-hidden shadow-sm shadow-orange-500/20 w-full md:w-auto">
-                                <button className="flex-1 md:flex-none px-6 py-3 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors">
-                                    <span className="material-symbols-outlined text-[18px]">visibility</span>
-                                    View Details
-                                </button>
-                                <div className="w-px bg-white/20"></div>
-                                <button className="px-4 py-3 text-white hover:bg-orange-600 transition-colors flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-[18px]">download</span>
+                            <div className="flex w-full md:w-auto">
+                                <button 
+                                    onClick={() => navigate(`/thesis/${team.topicId}`)}
+                                    className="flex-1 md:flex-none px-8 py-3 bg-orange-500 text-white font-bold text-sm flex items-center justify-center gap-2 rounded-xl shadow-sm shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                    View Project Details
                                 </button>
                             </div>
                         </div>

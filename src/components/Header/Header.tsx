@@ -21,7 +21,7 @@ const Header = () => {
     // Based on previous Context: "HOD" or "Admin".
     // In Header, it used IDs. Let's use roleName if available, or IDs for safety if roleName is unreliable.
     // However, I previously added roleName to authService.
-    const canManageSemesters = user?.roleName === 'Admin';
+    const canManageSemesters = user?.roleName === 'Admin' || user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const canManageHodAccounts = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
@@ -167,13 +167,13 @@ const Header = () => {
                                 </div>
                             </>
                         )}
-                        {user?.roleName !== 'Admin' && (isStudent || isLecturer) && (
-                            <div onClick={() => navigate(isLecturer ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                        {user?.roleName !== 'Admin' && (isStudent || isLecturer || isHOD) && (
+                            <div onClick={() => navigate(isLecturer || isHOD ? '/teams/my-teams' : '/teams/team')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/teams/team') || location.pathname.startsWith('/teams/my-teams') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-users text-xl"></i>
-                                <span>My Team{isLecturer ? 's' : ''}</span>
+                                <span>My Team{isLecturer || isHOD ? 's' : ''}</span>
                             </div>
                         )}
-                        {user?.roleName !== 'Admin' && isLecturer && (
+                        {user?.roleName !== 'Admin' && (isLecturer || isHOD) && (
                             <>
                                 <div onClick={() => navigate('/mentor-invitations')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/mentor-invitations' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-envelope text-xl"></i>
@@ -204,7 +204,7 @@ const Header = () => {
                             </div>
                         )}
 
-                        {user?.roleName !== 'Admin' && (
+                        {user?.roleName !== 'Admin' && (isReviewer || isHOD) && (
                             <div onClick={() => navigate('/ai-settings')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/ai-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-bolt text-xl"></i>
                                 <span>AI Studio</span>
@@ -232,7 +232,7 @@ const Header = () => {
 
                     </div>
 
-                    {user?.roleName !== 'Admin' && (isStudent || isLecturer) && (
+                    {user?.roleName !== 'Admin' && (isStudent || isLecturer || isHOD) && (
                         <div className="mt-auto">
                             <button onClick={() => navigate('/propose-thesis')} className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-200/50 hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
                                 <i className="pi pi-plus text-lg"></i>
@@ -244,7 +244,7 @@ const Header = () => {
             </Sidebar>
 
             {/* Center Section: Dynamic Navigation & Action Button (Tablet/Desktop) */}
-            {user?.roleName !== 'Admin' && !isHOD && (
+            {user?.roleName !== 'Admin' && (
                 <div className="hidden sm:flex items-center gap-2 lg:gap-4 xl:gap-6 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                     {(() => {
                         interface NavItem {
@@ -262,12 +262,12 @@ const Header = () => {
                             { id: 'list-thesis', label: 'List Thesis', icon: 'pi pi-list', path: '/published-thesis', show: isStudent },
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
-                            { id: 'teams', label: `My Team${isLecturer ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer },
+                            { id: 'teams', label: `My Team${isLecturer || isHOD ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer || isHOD ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer || isHOD },
                             { id: 'my-applications', label: 'Assignments', icon: 'pi pi-send', path: '/my-applications', show: isStudent },
-                            { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer },
-                            { id: 'application-review', label: 'Assign Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer },
+                            { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer || isHOD },
+                            { id: 'application-review', label: 'Assign Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer || isHOD },
                             { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
-                            { id: 'ai-studio', label: 'AI Studio', icon: 'pi pi-bolt', path: '/ai-settings', show: true },
+                            { id: 'ai-studio', label: 'AI Studio', icon: 'pi pi-bolt', path: '/ai-settings', show: isReviewer || isHOD },
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
 
@@ -320,7 +320,7 @@ const Header = () => {
                                 </nav>
 
                                 <div className="flex items-center gap-2 lg:gap-4">
-                                    {(isStudent || isLecturer) && (
+                                    {(isStudent || isLecturer || isHOD) && (
                                         <button
                                             onClick={() => navigate('/propose-thesis')}
                                             className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 cursor-pointer rounded-full flex items-center justify-center text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-orange-200/50 shadow-lg hover:shadow-none shrink-0"
@@ -342,25 +342,15 @@ const Header = () => {
             )}
 
             {/* HOD View: Simplified navigation */}
-            {(isHOD || user?.roleName === 'Admin') && (
+            {user?.roleName === 'Admin' && (
                 <div className="hidden sm:flex items-center gap-8">
                     <nav className="flex items-center gap-4 lg:gap-6">
                         <div onClick={() => navigate('/home')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname === '/home' || location.pathname === '/' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-home text-xl"></i>
                             <span className="hidden lg:block whitespace-nowrap">Dashboard</span>
                         </div>
-                        {isHOD && (
-                            <>
-                                <div onClick={() => navigate('/semesters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
-                                    <i className="pi pi-calendar text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">Semesters</span>
-                                </div>
-                                <div onClick={() => navigate('/thesis')} className={`flex items-center gap-2 font-medium px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/thesis') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
-                                    <i className="pi pi-book text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">Thesis List</span>
-                                </div>
-                            </>
-                        )}
+                        {/* Admin specific links already handled in navItems if we wanted, 
+                            but currently simplified HOD view is only for Admin role here now */}
                         {user?.roleName === 'Admin' && (
                             <>
                                 <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
@@ -449,18 +439,20 @@ const Header = () => {
                                     </button>
                                 )}
                             </MenuItem>
-                            <MenuItem>
-                                {({ focus }) => (
-                                    <button
-                                        onClick={() => navigate('/ai-settings')}
-                                        className={`${focus ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
-                                            } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
-                                    >
-                                        <i className={`pi pi-cog ${focus ? 'text-orange-500' : 'text-gray-400'}`}></i>
-                                        AI Studio
-                                    </button>
-                                )}
-                            </MenuItem>
+                            {(isReviewer || isHOD) && (
+                                <MenuItem>
+                                    {({ focus }) => (
+                                        <button
+                                            onClick={() => navigate('/ai-settings')}
+                                            className={`${focus ? 'bg-orange-50 text-orange-600' : 'text-gray-700'
+                                                } group flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer`}
+                                        >
+                                            <i className={`pi pi-cog ${focus ? 'text-orange-500' : 'text-gray-400'}`}></i>
+                                            AI Studio
+                                        </button>
+                                    )}
+                                </MenuItem>
+                            )}
 
                             <div className="my-1 border-t border-gray-100" />
 

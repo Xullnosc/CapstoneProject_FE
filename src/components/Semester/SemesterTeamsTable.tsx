@@ -195,7 +195,7 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
-                                            {isHod && team.status === 'Insufficient' && !semesterEnded && (
+                                            {isHod && (team.memberCount ?? 0) < 4 && !semesterEnded && (
                                                 <button
                                                     onClick={(e) => handleToggleSpecial(e, team.teamId, team.isSpecial)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm border ${team.isSpecial ? 'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 hover:border-orange-300' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'}`}

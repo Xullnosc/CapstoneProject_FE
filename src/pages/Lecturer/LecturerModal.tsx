@@ -156,7 +156,6 @@ const LecturerModal: FC<LecturerModalProps> = ({ isOpen, onClose, onSuccess, lec
                         value={formData.email || ''}
                         onChange={handleChange}
                         required
-                        disabled={!!lecturerData}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none text-gray-900 disabled:opacity-60"
                         placeholder="lecturer@fpt.edu.vn"
                     />

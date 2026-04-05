@@ -91,6 +91,7 @@ export interface GetThesisFilters {
   searchTitle?: string;
   lecturerId?: number;
   userId?: number;
+  teamId?: number;
   semesterId?: number;
   isLocked?: boolean;
   lecturerOnly?: boolean;

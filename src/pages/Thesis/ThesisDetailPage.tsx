@@ -498,7 +498,7 @@ const ThesisDetailPage = () => {
     // Proposer cannot evaluate their own thesis
     if (thesis.userId === user.userId) return false;
 
-    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Published' || thesis.status === 'Need Update';
+    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
 
     // HOD can always see the button to (re)finalize/veto
     if (isHOD && isAvailableStatus) return true;
@@ -518,27 +518,22 @@ const ThesisDetailPage = () => {
     // HOD cannot finalize if they proposed the thesis
     if (thesis.userId === user.userId) return false;
 
-    // HOD can ALWAYS (re)finalize their decision
-    return true;
+    // HOD can finalize only in reviewing/need update statuses
+    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
+    return isAvailableStatus;
   }, [isHOD, reviewStatus, thesis, user]);
+
   const canToggleLock = Boolean(
     thesis &&
     thesis.status === "Published" &&
     Boolean(isLecturer || isHOD) &&
     thesis.userId === user?.userId,
   );
-  const canCancel = Boolean(
-    thesis && 
-    isOwner &&
-    (
-      (isStudent && isLeader && ["Reviewing", "Registered", "On Mentor Inviting", "Need Update"].includes(thesis.status || "")) ||
-      (isLecturer && ["Reviewing", "Published", "On Mentor Inviting", "Need Update"].includes(thesis.status || ""))
-    )
-  );
+  const canCancel = false; // Bỏ tạm thời theo yêu cầu: Boolean(thesis && isOwner && (...));
   const canUploadRevision = Boolean(
     isOwner && 
-    (isStudent || isLecturer) && 
-    (thesis?.status === "Need Update" || (isLecturer && thesis?.status === "Published"))
+    (isStudent || isLecturer || isHOD) && 
+    thesis?.status === "Need Update"
   );
 
   if (loading) {

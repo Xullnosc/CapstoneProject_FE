@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useState, useEffect } from 'react';
+import { type FC, type ReactNode, useState, useMemo, useEffect } from 'react';
 import type { Whitelist } from '../../services/semesterService';
 import { whitelistService } from '../../services/whitelistService';
 import Swal from '../../utils/swal';
@@ -21,6 +21,8 @@ interface SemesterWhitelistsTableProps {
     page?: number; // 0-indexed for PrimeReact
     onPageChange?: (page: number) => void;
     rowsPerPage?: number;
+    searchTerm?: string;
+    onSearchChange?: (term: string) => void;
 }
 
 const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
@@ -37,27 +39,30 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     totalCount,
     page = 0,
     onPageChange,
-    rowsPerPage = 10
+    rowsPerPage = 10,
+    searchTerm = '',
+    onSearchChange
 }) => {
-    const [updatingId, setUpdatingId] = useState<number | null>(null);
-
     // For client-side pagination (if totalCount/onPageChange not provided)
-    const isServerSide = totalCount !== undefined && onPageChange !== undefined;
-    const [first, setFirst] = useState(0);
-    const [rows, setRows] = useState(rowsPerPage);
+    const isServerSide = useMemo(() => totalCount !== undefined && onPageChange !== undefined, [totalCount, onPageChange]);
+    
+    const [localFirst, setLocalFirst] = useState(0);
+    const [localRows, setLocalRows] = useState(rowsPerPage);
 
+    // Keep localRows in sync with rowsPerPage if it changes from parent
     useEffect(() => {
-        if (isServerSide) {
-            setFirst(page * rowsPerPage);
-        }
-    }, [page, rowsPerPage, isServerSide]);
+        setLocalRows(rowsPerPage);
+    }, [rowsPerPage]);
+
+    const first = useMemo(() => isServerSide ? (page * rowsPerPage) : localFirst, [isServerSide, page, rowsPerPage, localFirst]);
+    const rows = useMemo(() => isServerSide ? rowsPerPage : localRows, [isServerSide, rowsPerPage, localRows]);
 
     const onLocalPageChange = (event: PaginatorPageChangeEvent) => {
         if (isServerSide) {
             onPageChange!(event.page);
         } else {
-            setFirst(event.first);
-            setRows(event.rows);
+            setLocalFirst(event.first);
+            setLocalRows(event.rows);
         }
     };
 
@@ -65,28 +70,6 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
         ? whitelists
         : whitelists.slice(first, first + rows);
 
-    const handleToggleReviewer = async (user: Whitelist) => {
-        try {
-            setUpdatingId(user.whitelistId);
-            const newStatus = !user.isReviewer;
-            await whitelistService.updateReviewerStatus(user.whitelistId, newStatus);
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: `Reviewer status ${newStatus ? 'assigned' : 'removed'} successfully`,
-                timer: 1500,
-                showConfirmButton: false
-            });
-
-            if (onUpdate) onUpdate();
-        } catch (error) {
-            console.error(error);
-            Swal.fire('Error', 'Failed to update reviewer status', 'error');
-        } finally {
-            setUpdatingId(null);
-        }
-    };
 
     const handleDeleteStudent = async (user: Whitelist) => {
         if (onDelete) {
@@ -117,17 +100,38 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
 
     return (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative mb-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
-                <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1">
-                    <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
-                        Whitelisted Users <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">
-                            {(isServerSide ? totalCount : whitelists.length) ?? 0}
-                        </span>
-                    </button>
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-gray-200 px-6 py-5 bg-white z-10 relative">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full lg:w-auto">
+                    <div className="bg-gray-100/80 p-1 rounded-xl flex gap-1 shrink-0">
+                        <button className="px-4 py-1.5 rounded-lg bg-white text-gray-900 text-sm font-bold shadow-sm transition-all border border-gray-200/50">
+                            Whitelisted Users <span className="ml-1 text-xs text-orange-600 bg-orange-600/10 px-1.5 py-0.5 rounded-md">
+                                {(isServerSide ? totalCount : whitelists.length) ?? 0}
+                            </span>
+                        </button>
+                    </div>
+
+                    <div className="relative w-full md:w-80 group">
+                        <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors text-xl">search</span>
+                        <input
+                            type="text"
+                            placeholder="Search by name, email or code..."
+                            value={searchTerm}
+                            onChange={(e) => onSearchChange?.(e.target.value)}
+                            className="w-full pl-11 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all outline-none"
+                        />
+                        {searchTerm && (
+                            <button
+                                onClick={() => onSearchChange?.('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {headerAction && (
-                    <div className="w-full sm:w-auto flex justify-end">
+                    <div className="w-full lg:w-auto flex justify-end">
                         {headerAction}
                     </div>
                 )}
@@ -238,23 +242,24 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                         <div className="flex items-center justify-end gap-2">
                                             {!isEnded && (
                                                 user.roleName === 'Lecturer' ? (
-                                                    <button
-                                                        onClick={() => handleToggleReviewer(user)}
-                                                        disabled={updatingId === user.whitelistId}
-                                                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${user.isReviewer
-                                                            ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                                                            : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:text-orange-600 hover:border-orange-200'
-                                                            }`}
-                                                    >
-                                                        {updatingId === user.whitelistId ? (
-                                                            <span className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full mr-1"></span>
-                                                        ) : (
-                                                            <span className="material-symbols-outlined text-[16px]">
-                                                                {user.isReviewer ? 'remove_moderator' : 'add_moderator'}
-                                                            </span>
+                                                    <div className={`flex items-center gap-1 transition-opacity ${onEdit && (canEdit ? canEdit(user) : true) ? 'opacity-100' : 'opacity-100 sm:opacity-0 group-hover:opacity-100'}`}>
+                                                        {onEdit && (canEdit ? canEdit(user) : true) && (
+                                                            <button
+                                                                onClick={() => onEdit(user)}
+                                                                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
+                                                                title="Edit Lecturer"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                            </button>
                                                         )}
-                                                        {user.isReviewer ? 'Unassign' : 'Assign Reviewer'}
-                                                    </button>
+                                                        <button
+                                                            onClick={() => handleDeleteStudent(user)}
+                                                            className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-all cursor-pointer"
+                                                            title="Delete Lecturer"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                        </button>
+                                                    </div>
                                                 ) : user.roleName === 'Student' ? (
                                                     <div className={`flex items-center gap-1 transition-opacity ${onEdit && (canEdit ? canEdit(user) : true) ? 'opacity-100' : 'opacity-100 sm:opacity-0 group-hover:opacity-100'}`}>
                                                         {onEdit && (canEdit ? canEdit(user) : true) && (

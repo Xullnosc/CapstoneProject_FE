@@ -44,6 +44,7 @@ const ProposeThesisPage = () => {
     const [isAppUsed, setIsAppUsed] = useState(false);
     const [filteredEnterprises, setFilteredEnterprises] = useState<string[]>([]);
     const [fileSizeLimit, setFileSizeLimit] = useState(10);
+    const [isProposingForOther, setIsProposingForOther] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,7 +109,7 @@ const ProposeThesisPage = () => {
                             // Fetch current semester context
                             const currentSemester = await semesterService.getCurrentSemester();
 
-                            // Check if the team leader has any ACTIVE thesis in the CURRENT semester
+                            // 1. Check if the team leader has any ACTIVE thesis in the CURRENT semester (Strict rule)
                             const leaderTheses = await thesisService.getAllTheses({
                                 userId: myTeam.leaderId,
                                 semesterId: currentSemester?.semesterId
@@ -118,8 +119,19 @@ const ProposeThesisPage = () => {
                             );
 
                             if (hasActiveThesis) {
-                                // If there's an active thesis, redirect to the list view
                                 navigate('/my-thesis', { replace: true });
+                                return;
+                            }
+
+                            // 2. Check if the TEAM is already matched/registered with ANY thesis
+                            const teamTheses = await thesisService.getAllTheses({
+                                teamId: myTeam.teamId
+                            });
+                            const isTeamRegistered = teamTheses && teamTheses.some(t => t.status === 'Registered');
+
+                            if (isTeamRegistered) {
+                                setHasAccess(false);
+                                setAccessMessage('Your team is already registered to a thesis. You cannot propose another one.');
                                 return;
                             }
 
@@ -242,7 +254,7 @@ const ProposeThesisPage = () => {
                 enterpriseName: isFromEnterprise ? enterpriseName.trim() : undefined,
                 isApplied,
                 isAppUsed,
-                authorId: selectedLecturer?.userId
+                authorId: isProposingForOther ? selectedLecturer?.userId : undefined
             });
 
             Swal.fire({
@@ -370,87 +382,116 @@ const ProposeThesisPage = () => {
                 <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-                        {/* HOD: Select Author lecturer */}
+                        {/* HOD: Target Author Management */}
                         {isHOD && (
-                            <div className="flex flex-col gap-2 p-5 bg-orange-50/30 rounded-2xl border border-orange-100">
-                                <label htmlFor="lecturer" className="font-bold text-orange-900 flex items-center gap-2">
-                                    <i className="pi pi-user-plus"></i>
-                                    Author (Lecturer)
-                                </label>
-                                <p className="text-xs text-orange-600 mb-1">Search and select the lecturer who will be the primary author of this thesis topic.</p>
+                            <div className="flex flex-col gap-4 p-5 bg-orange-50/30 rounded-2xl border border-orange-100">
+                                <div 
+                                    className="flex items-center gap-2 group cursor-pointer transition-colors"
+                                    onClick={() => {
+                                        const newVal = !isProposingForOther;
+                                        setIsProposingForOther(newVal);
+                                        if (!newVal) setSelectedLecturer(undefined);
+                                    }}
+                                >
+                                    <Checkbox
+                                        inputId="isProposingForOther"
+                                        checked={isProposingForOther}
+                                        onChange={(e: CheckboxChangeEvent) => {
+                                            e.originalEvent?.stopPropagation();
+                                            setIsProposingForOther(e.checked ?? false);
+                                            if (!e.checked) setSelectedLecturer(undefined);
+                                        }}
+                                        pt={{
+                                            box: ({ context }: { context: { checked: boolean } }) => ({
+                                                className: context.checked ? 'bg-orange-500 border-orange-500' : ''
+                                            })
+                                        }}
+                                    />
+                                    <span className="font-bold text-slate-700 group-hover:text-orange-600 transition-colors select-none">Propose for another lecturer</span>
+                                </div>
 
-                                {!selectedLecturer ? (
-                                <AutoComplete<UserInfo>
-                                    id="lecturer"
-                                    value={selectedLecturer}
-                                    suggestions={filteredLecturers}
-                                    completeMethod={searchLecturers}
-                                    field="fullName"
-                                    onChange={(e) => setSelectedLecturer(e.value)}
-                                    placeholder="Type lecturer name or email..."
-                                    className="w-full"
-                                    appendTo="self"
-                                    inputClassName="w-full p-4 rounded-xl border-2 border-orange-100 hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all duration-200 shadow-sm"
-                                    pt={{
-                                        dropdownButton: {
-                                            root: { className: 'bg-orange-500 border-orange-500 hover:bg-orange-600 hover:border-orange-600 rounded-r-xl w-12 transition-colors' }
-                                        },
-                                        loadingIcon: { className: 'text-orange-500' },
-                                        panel: { className: 'border-none shadow-2xl rounded-2xl overflow-hidden mt-2 animate-fade-in bg-white' },
-                                        list: { className: 'p-2' },
-                                        item: ({ context }: { context: { selected: boolean, focused: boolean } }) => ({
-                                            className: `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer mb-1 ${context.selected
-                                                ? 'bg-orange-500 text-white shadow-md'
-                                                : context.focused
-                                                    ? 'bg-orange-50 text-orange-900'
-                                                    : 'text-slate-700 hover:bg-orange-50/50'
-                                                }`
-                                        })
-                                    }}
-                                    itemTemplate={(item: UserInfo) => {
-                                        const isSelected = (selectedLecturer as unknown as UserInfo)?.userId === item.userId;
-                                        return (
-                                            <div className="flex items-center gap-3">
-                                                <MemberAvatar
-                                                    email={item.email}
-                                                    fullName={item.fullName}
-                                                    avatarUrl={item.avatar}
-                                                    className={`size-10 rounded-full shrink-0 border-2 ${isSelected ? 'border-white/30' : 'border-orange-100'}`}
-                                                />
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>
-                                                        {item.fullName}
-                                                    </span>
-                                                    <span className={`text-xs truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
-                                                        {item.email}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        );
-                                    }}
-                                    dropdown
-                                />
-                                ) : (
-                                    <div className="flex items-center justify-between p-3 bg-white border-2 border-orange-200 rounded-2xl shadow-sm animate-fade-in">
-                                        <div className="flex items-center gap-4">
-                                            <MemberAvatar
-                                                email={selectedLecturer?.email ?? ""}
-                                                fullName={selectedLecturer?.fullName ?? ""}
-                                                avatarUrl={selectedLecturer?.avatar}
-                                                className="size-12 rounded-2xl shrink-0"
-                                            />
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-lg text-slate-800 leading-tight">{selectedLecturer?.fullName}</span>
-                                                <span className="text-sm text-slate-500">{selectedLecturer?.email}</span>
-                                            </div>
-                                        </div>
-                                        <Button
-                                            icon="pi pi-times"
-                                            onClick={() => setSelectedLecturer(undefined)}
-                                            className="p-button-rounded p-button-text p-button-danger hover:bg-red-50"
-                                            tooltip="Change Lecturer"
-                                            tooltipOptions={{ position: 'left' }}
+                                {isProposingForOther && (
+                                    <div className="flex flex-col gap-2 animate-fade-in border-t border-orange-100 pt-4 mt-2">
+                                        <label htmlFor="lecturer" className="font-bold text-orange-900 flex items-center gap-2">
+                                            <i className="pi pi-user-plus"></i>
+                                            Author (Lecturer)
+                                        </label>
+                                        <p className="text-xs text-orange-600 mb-1">Search and select the lecturer who will be the primary author of this thesis topic.</p>
+
+                                        {!selectedLecturer ? (
+                                        <AutoComplete<UserInfo>
+                                            id="lecturer"
+                                            value={selectedLecturer}
+                                            suggestions={filteredLecturers}
+                                            completeMethod={searchLecturers}
+                                            field="fullName"
+                                            onChange={(e) => setSelectedLecturer(e.value)}
+                                            placeholder="Type lecturer name or email..."
+                                            className="w-full"
+                                            appendTo="self"
+                                            inputClassName="w-full p-4 rounded-xl border-2 border-orange-100 hover:border-orange-300 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all duration-200 shadow-sm"
+                                            pt={{
+                                                dropdownButton: {
+                                                    root: { className: 'bg-orange-500 border-orange-500 hover:bg-orange-600 hover:border-orange-600 rounded-r-xl w-12 transition-colors' }
+                                                },
+                                                loadingIcon: { className: 'text-orange-500' },
+                                                panel: { className: 'border-none shadow-2xl rounded-2xl overflow-hidden mt-2 animate-fade-in bg-white' },
+                                                list: { className: 'p-2' },
+                                                item: ({ context }: { context: { selected: boolean, focused: boolean } }) => ({
+                                                    className: `flex items-center gap-3 p-3 rounded-xl transition-all duration-200 cursor-pointer mb-1 ${context.selected
+                                                        ? 'bg-orange-500 text-white shadow-md'
+                                                        : context.focused
+                                                            ? 'bg-orange-50 text-orange-900'
+                                                            : 'text-slate-700 hover:bg-orange-50/50'
+                                                        }`
+                                                })
+                                            }}
+                                            itemTemplate={(item: UserInfo) => {
+                                                const isSelected = (selectedLecturer as unknown as UserInfo)?.userId === item.userId;
+                                                return (
+                                                    <div className="flex items-center gap-3">
+                                                        <MemberAvatar
+                                                            email={item.email}
+                                                            fullName={item.fullName}
+                                                            avatarUrl={item.avatar}
+                                                            className={`size-10 rounded-full shrink-0 border-2 ${isSelected ? 'border-white/30' : 'border-orange-100'}`}
+                                                        />
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>
+                                                                {item.fullName}
+                                                            </span>
+                                                            <span className={`text-xs truncate ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                                                                {item.email}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }}
+                                            dropdown
                                         />
+                                        ) : (
+                                            <div className="flex items-center justify-between p-3 bg-white border-2 border-orange-200 rounded-2xl shadow-sm animate-fade-in">
+                                                <div className="flex items-center gap-4">
+                                                    <MemberAvatar
+                                                        email={selectedLecturer?.email ?? ""}
+                                                        fullName={selectedLecturer?.fullName ?? ""}
+                                                        avatarUrl={selectedLecturer?.avatar}
+                                                        className="size-12 rounded-2xl shrink-0"
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-lg text-slate-800 leading-tight">{selectedLecturer?.fullName}</span>
+                                                        <span className="text-sm text-slate-500">{selectedLecturer?.email}</span>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    icon="pi pi-times"
+                                                    onClick={() => setSelectedLecturer(undefined)}
+                                                    className="p-button-rounded p-button-text p-button-danger hover:bg-red-50"
+                                                    tooltip="Change Lecturer"
+                                                    tooltipOptions={{ position: 'left' }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
