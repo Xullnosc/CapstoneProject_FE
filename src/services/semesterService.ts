@@ -8,6 +8,10 @@ export interface TeamSimple {
     status: string;
     memberCount: number;
     isSpecial?: boolean;
+    teamAvatar?: string;
+    leaderAvatar?: string;
+    leaderEmail?: string;
+    leaderName?: string;
 }
 
 export interface Whitelist {
