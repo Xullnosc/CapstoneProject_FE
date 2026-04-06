@@ -536,6 +536,14 @@ const ThesisDetailPage = () => {
       (review) => review.userId === user.userId && review.decision
     );
 
+    // Fix: Mentors cannot evaluate topics they lead
+    const userEmail = user?.email?.toLowerCase();
+    const isMentor = (userEmail && (userEmail === thesis.mentorEmail1?.toLowerCase() || userEmail === thesis.mentorEmail2?.toLowerCase())) ||
+                     (user?.userId && (user.userId === thesis.mentorId1 || user.userId === thesis.mentorId2)) ||
+                     (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
+    
+    if (isMentor) return false;
+
     return (
       isReviewer && isAvailableStatus && !hasReviewed
     );
@@ -544,8 +552,15 @@ const ThesisDetailPage = () => {
   const canMakeHodDecision = useMemo(() => {
     if (!isHOD || !reviewStatus || !thesis || !user) return false;
 
-    // HOD cannot finalize if they proposed the thesis
+    // HOD cannot finalize if they proposed the thesis or are leading the team
     if (thesis.userId === user.userId) return false;
+
+    const userEmail = user?.email?.toLowerCase();
+    const isMentor = (userEmail && (userEmail === thesis.mentorEmail1?.toLowerCase() || userEmail === thesis.mentorEmail2?.toLowerCase())) ||
+                     (user?.userId && (user.userId === thesis.mentorId1 || user.userId === thesis.mentorId2)) ||
+                     (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
+    
+    if (isMentor) return false;
 
     // HOD can finalize only in reviewing/need update statuses
     const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';

@@ -90,11 +90,14 @@ const ThesisPage = () => {
                 semesterId: selectedSemesterId || undefined
             });
 
-            // Filter out current user's theses and Cancelled ones for the repository view
-            const filteredRepoData = fullData.filter(t =>
-                t.userId !== user?.userId &&
-                t.status !== 'Cancelled'
-            );
+            // Filter out current user's theses, Cancelled ones, and ones where the user is a mentor for the repository view
+            const filteredRepoData = fullData.filter(t => {
+                const userEmail = user?.email?.toLowerCase();
+                const isMentor = (t.mentorEmail1?.toLowerCase() === userEmail) || (t.mentorEmail2?.toLowerCase() === userEmail) ||
+                                 (t.mentorId1 === user?.userId) || (t.mentorId2 === user?.userId) ||
+                                 (t.teamMentorId1 === user?.userId) || (t.teamMentorId2 === user?.userId);
+                return t.userId !== user?.userId && t.status !== 'Cancelled' && !isMentor;
+            });
 
             setAllTheses(filteredRepoData);
 
