@@ -16,16 +16,16 @@ import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
 import styles from './Thesis.module.css';
 
-const VERIFIED_STATUSES: ThesisStatus[] = ['Published', 'Rejected', 'Need Update'];
+const VERIFIED_STATUSES: ThesisStatus[] = ['Published', 'Need Update'];
 
-const STATUS_OPTIONS: { label: string; value: ThesisStatus | 'Verified' | '' }[] = [
+// Define base status options outside for reference if needed, but we'll filter inside the component
+const RAW_STATUS_OPTIONS: { label: string; value: ThesisStatus | 'Verified' | '' }[] = [
     { label: 'All Proposals', value: '' },
     { label: 'Verified Only', value: 'Verified' },
     { label: 'Published', value: 'Published' },
     { label: 'On Mentor Inviting', value: 'On Mentor Inviting' },
     { label: 'Reviewing', value: 'Reviewing' },
     { label: 'Need Update', value: 'Need Update' },
-    { label: 'Rejected', value: 'Rejected' },
     { label: 'Registered', value: 'Registered' },
 ];
 
@@ -34,6 +34,12 @@ const ThesisPage = () => {
     const user = authService.getUser();
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
+ 
+    // Filter status options based on role
+    const statusOptions = RAW_STATUS_OPTIONS.filter(opt => {
+        if (opt.value === 'On Mentor Inviting' && !isHOD) return false;
+        return true;
+    });
 
     // Redirect if not HOD or Reviewer
     useEffect(() => {
@@ -84,11 +90,14 @@ const ThesisPage = () => {
                 semesterId: selectedSemesterId || undefined
             });
 
-            // Filter out current user's theses and Cancelled ones for the repository view
-            const filteredRepoData = fullData.filter(t =>
-                t.userId !== user?.userId &&
-                t.status !== 'Cancelled'
-            );
+            // Filter out current user's theses, Cancelled ones, and ones where the user is a mentor for the repository view
+            const filteredRepoData = fullData.filter(t => {
+                const userEmail = user?.email?.toLowerCase();
+                const isMentor = (t.mentorEmail1?.toLowerCase() === userEmail) || (t.mentorEmail2?.toLowerCase() === userEmail) ||
+                                 (t.mentorId1 === user?.userId) || (t.mentorId2 === user?.userId) ||
+                                 (t.teamMentorId1 === user?.userId) || (t.teamMentorId2 === user?.userId);
+                return t.userId !== user?.userId && t.status !== 'Cancelled' && !isMentor;
+            });
 
             setAllTheses(filteredRepoData);
 
@@ -113,7 +122,7 @@ const ThesisPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTitle, statusFilter, user?.userId, selectedSemesterId]);
+    }, [searchTitle, statusFilter, user?.userId, user?.email, selectedSemesterId]);
 
     const fetchSemesters = useCallback(async () => {
         try {
@@ -341,7 +350,7 @@ const ThesisPage = () => {
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-600 px-1">Current Status</label>
                                     <div className="flex flex-col gap-1.5">
-                                        {STATUS_OPTIONS.map((opt) => (
+                                        {statusOptions.map((opt) => (
                                             <button
                                                 key={opt.value}
                                                 onClick={() => setStatusFilter(opt.value)}

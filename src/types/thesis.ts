@@ -60,7 +60,11 @@ export interface Thesis {
   updateDate: string | null; // BE: "updateDate"
   isLocked: boolean;
   mentorEmail1?: string | null;
+  mentorId1?: number | null;
   mentorEmail2?: string | null;
+  mentorId2?: number | null;
+  teamMentorId1?: number | null;
+  teamMentorId2?: number | null;
 
   thesisNameEn: string | null;
   thesisNameVi: string | null;
@@ -91,6 +95,7 @@ export interface GetThesisFilters {
   searchTitle?: string;
   lecturerId?: number;
   userId?: number;
+  teamId?: number;
   semesterId?: number;
   isLocked?: boolean;
   lecturerOnly?: boolean;

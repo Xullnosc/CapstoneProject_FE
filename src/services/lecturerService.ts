@@ -8,6 +8,13 @@ export interface Lecturer {
     campus: string | null;
     campusId: number;
     isActive: boolean;
+    isHod: boolean;
+    isReviewer: boolean;
+    campusNavigation?: {
+        campusId: number;
+        campusCode: string;
+        campusName: string;
+    };
     createdAt?: string;
     updatedAt?: string;
 }
@@ -46,6 +53,12 @@ export const lecturerService = {
 
     toggleStatus: async (id: number, isActive: boolean): Promise<void> => {
         await api.put(`/Lecturer/toggle-status/${id}`, isActive, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+    
+    toggleReviewerStatus: async (id: number, isReviewer: boolean): Promise<void> => {
+        await api.put(`/Lecturer/toggle-reviewer/${id}`, isReviewer, {
             headers: { 'Content-Type': 'application/json' }
         });
     },

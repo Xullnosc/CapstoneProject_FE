@@ -98,3 +98,12 @@ button:disabled {
   font-weight: 600 !important;
   margin-left: 1rem !important;
 }
+
+/* Custom InputSwitch Colors */
+.orange-switch.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background: #f97415 !important;
+}
+
+.blue-switch.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background: #2563eb !important;
+}

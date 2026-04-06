@@ -67,6 +67,7 @@ export const thesisService = {
     if (filters?.lecturerId) params.lecturerId = filters.lecturerId;
     if (filters?.semesterId) params.semesterId = filters.semesterId;
     if (filters?.userId) params.userId = filters.userId;
+    if (filters?.teamId) params.teamId = filters.teamId;
     if (filters?.isLocked !== undefined) params.isLocked = filters.isLocked;
     if (filters?.lecturerOnly) params.lecturerOnly = filters.lecturerOnly;
     const response = await api.get<Thesis[]>("/thesis", { params });
