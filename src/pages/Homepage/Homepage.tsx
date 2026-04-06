@@ -236,7 +236,7 @@ const Homepage = () => {
                         </div>
 
                         {/* Propose Topic */}
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+                        <div onClick={() => navigate('/propose-thesis')} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
                             <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
                                 <i className="pi pi-plus-circle text-xl"></i>
                             </div>

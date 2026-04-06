@@ -118,6 +118,7 @@ const formatRelativeTime = (dateStr: string | null | undefined) => {
 
 const timelineLabelByType: Record<string, string> = {
   REVIEWER_DECISION: "reviewed the proposal",
+  FINAL_DECISION: "made final decision",
   HOD_FINAL_DECISION: "made final decision",
   COMMENT_ADDED: "commented",
   COMMENT_EDITED: "edited a comment",
@@ -149,23 +150,40 @@ const buildConversationEvents = (
     const mainComment = event.comments.find(
       (comment) => !comment.parentCommentId,
     );
+    const isHodFinalDecision =
+      event.eventType === "FINAL_DECISION" &&
+      event.actorRole?.toUpperCase() === "HOD";
+    const isSystemFinalDecision =
+      event.eventType === "FINAL_DECISION" &&
+      event.actorRole?.toUpperCase() !== "HOD";
+
     return {
       id: `${thesis.thesisId}-event-${event.eventId}`,
       eventId: event.eventId,
-      actorName: event.actorName ?? `Participant ${index + 1}`,
+      actorName: isSystemFinalDecision
+        ? ""
+        : (event.actorName ?? `Participant ${index + 1}`),
       actorEmail: event.actorEmail ?? "",
       actorAvatar: event.actorAvatar,
-      label: timelineLabelByType[event.eventType] ?? "updated thesis review",
+      label: isHodFinalDecision
+        ? "finalized thesis decision"
+        : isSystemFinalDecision
+          ? "generated final reviewer decision"
+          : (timelineLabelByType[event.eventType] ?? "updated thesis review"),
       content:
         mainComment?.body ??
         (event.eventType === "REVIEWER_DECISION"
           ? "Reviewer decision submitted."
-          : event.eventType === "HOD_FINAL_DECISION"
+          : isHodFinalDecision
             ? "HOD final decision recorded."
+            : isSystemFinalDecision
+              ? "Final decision generated from two reviewer evaluations."
             : "No additional details."),
       timestamp: event.createdAt,
       timestampLabel: formatRelativeTime(event.createdAt),
       actorRole: event.actorRole,
+      eventType: event.eventType,
+      round: event.round ?? undefined,
       decision: event.decision ?? undefined,
       replies: event.comments.filter(
         (comment) => comment.parentCommentId || (mainComment && comment.id !== mainComment.id),
@@ -175,8 +193,19 @@ const buildConversationEvents = (
   });
 
   return [...baseEvents, ...reviewEvents].sort(
-    (left, right) =>
-      new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
+    (left, right) => {
+      const timeDiff =
+        new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime();
+      if (timeDiff !== 0) return timeDiff;
+
+      const leftPriority = left.eventType === "FINAL_DECISION" ? 1 : 0;
+      const rightPriority = right.eventType === "FINAL_DECISION" ? 1 : 0;
+      if (leftPriority !== rightPriority) return rightPriority - leftPriority;
+
+      const leftEventId = left.eventId ?? -1;
+      const rightEventId = right.eventId ?? -1;
+      return rightEventId - leftEventId;
+    },
   );
 };
 
@@ -594,9 +623,9 @@ const ThesisDetailPage = () => {
             {activeTab === "conversations" ? (
               <>
                 <ResearchDocumentCard fileUrl={thesis.fileUrl} />
+                <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
                 <ReviewProgressCard reviewedCount={reviewedCount} totalCount={2} latestReviewer={latestReviewer} />
                 <CommentaryTimeline events={conversationEvents} emptyMessage="Evaluation in progress..." canReply={canReplyToTimeline} onAddReply={handleAddReply} />
-                <ResultTimelineItem canFinalize={canMakeHodDecision} onFinalize={() => { pausePolling(); setHodDecisionVisible(true); }} decision={reviewStatus?.hodDecision?.decision} />
               </>
             ) : (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">

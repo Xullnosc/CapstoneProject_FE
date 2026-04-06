@@ -8,6 +8,10 @@ export interface TeamSimple {
     status: string;
     memberCount: number;
     isSpecial?: boolean;
+    teamAvatar?: string;
+    leaderAvatar?: string;
+    leaderEmail?: string;
+    leaderName?: string;
 }
 
 export interface Whitelist {
@@ -31,7 +35,7 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
-    status: 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester' | 'Closed';
+    status: 'Open' | 'In Progress' | 'Closed' | 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester';
     teamCount: number; // Optimized field
     activeTeamCount: number; // Added field
     whitelistCount: number; // Added field
@@ -118,5 +122,19 @@ export const semesterService = {
     // Alias for compatibility
     endSemester: async (id: number) => {
         await api.post(`/semester/${id}/close`);
+    },
+
+    exportEvaluation: async (semesterId: number): Promise<void> => {
+        const response = await api.get(`/semester/${semesterId}/export/evaluation`, {
+            responseType: 'blob',
+        });
+        const url = URL.createObjectURL(new Blob([response.data]));
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `thesis-evaluation-semester-${semesterId}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 };

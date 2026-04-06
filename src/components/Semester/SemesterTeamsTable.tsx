@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { teamService } from '../../services/teamService';
 import Swal from '../../utils/swal';
+import MemberAvatar from '../team/MemberAvatar';
 
 interface SemesterTeamsTableProps {
     teams?: TeamSimple[];
@@ -173,8 +174,13 @@ const SemesterTeamsTable: React.FC<SemesterTeamsTableProps> = ({ teams = [], isL
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="size-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase shadow-sm group-hover:scale-110 transition-transform">
-                                                {team.teamName.substring(0, 2)}
+                                            <div className="group-hover:scale-110 transition-transform">
+                                                <MemberAvatar 
+                                                    fullName={team.teamName}
+                                                    email={team.leaderEmail || ""}
+                                                    avatarUrl={team.teamAvatar || team.leaderAvatar || ""}
+                                                    className="size-8 rounded-full border border-gray-100 shadow-sm"
+                                                />
                                             </div>
                                             <span className="font-semibold text-gray-900 text-sm group-hover:text-orange-700 transition-colors">{team.teamName}</span>
                                             {team.isSpecial && (

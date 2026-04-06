@@ -5,7 +5,7 @@ import { semesterService, type Semester, type PagedResult, type Whitelist } from
 import { thesisFormService } from '../../services/thesisFormService';
 import { authService } from '../../services/authService';
 import { calculateSemesterStatus, getSemesterSeason } from '../../utils/semesterHelpers';
-import { SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
+import { SEMESTER_STATUS, SEMESTER_STATUS_COLORS } from '../../constants/semesterConstants';
 import Swal from '../../utils/swal';
 
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
@@ -115,6 +115,7 @@ const SemesterDetailPage = () => {
 
     // Modal states
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const [isReviewerModalOpen, setIsReviewerModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
@@ -215,28 +216,6 @@ const SemesterDetailPage = () => {
     }, [searchTerm]);
 
 
-    const handleStartSemester = async () => {
-        if (!semester) return;
-        const result = await Swal.fire({
-            title: 'Start Semester?',
-            text: "This will allow students and lecturers to propose theses.",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#10b981',
-            confirmButtonText: 'Yes, Start'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await semesterService.startSemester(semester.semesterId);
-                Swal.fire({ icon: 'success', title: 'Started!', text: 'Semester is now Active.' });
-                fetchSemesterDetail();
-            } catch (error) {
-                console.error('Failed to start semester', error);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to start semester' });
-            }
-        }
-    };
 
     const handleLockSubmission = async () => {
         if (!semester) return;
@@ -263,30 +242,6 @@ const SemesterDetailPage = () => {
         }
     };
 
-    const handleLockUpdates = async () => {
-        if (!semester) return;
-        const result = await Swal.fire({
-            title: 'Lock All Updates?',
-            text: "This will prevent ALL updates to teams and theses. This is a hard lock before closing the semester.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#8b5cf6',
-            confirmButtonText: 'Yes, Lock All'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await semesterService.lockAllUpdates(semester.semesterId);
-                Swal.fire({ icon: 'success', title: 'Locked!', text: 'All updates are now locked.' });
-                fetchSemesterDetail();
-            } catch (err: unknown) {
-                const error = err as AxiosError<{ message?: string }>;
-                console.error('Failed to lock updates', error);
-                const errorMessage = error.response?.data?.message || error.message || 'Failed to lock updates';
-                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
-            }
-        }
-    };
 
     const handleCloseSemester = async () => {
         if (!semester) return;
@@ -333,15 +288,12 @@ const SemesterDetailPage = () => {
     }
 
     const semesterStatus = calculateSemesterStatus(semester.status);
-    const isClosed = semester.status === 'Closed';
-    const isUpcoming = semester.status === 'Upcoming';
-    const isActive = semester.status === 'Active';
-    const isReviewThesis = semester.status === 'Review Thesis';
-    const isReviewMiddle = semester.status === 'Review Middle Semester';
+    const isOpen = semesterStatus === SEMESTER_STATUS.OPEN;
+    const isInProgress = semesterStatus === SEMESTER_STATUS.IN_PROGRESS;
+    const isClosed = semesterStatus === SEMESTER_STATUS.CLOSED;
 
     // UI flags
     const isEnded = isClosed;
-    const isOngoing = isActive || isReviewThesis || isReviewMiddle;
     const semesterSeason = getSemesterSeason(semester.semesterName) as SemesterSeasonName;
     const headerTheme = SEASON_HEADER_THEME[semesterSeason] || SEASON_HEADER_THEME.Fall;
     const headerSeasonIcon = SEASON_HEADER_ICON[semesterSeason] || SEASON_HEADER_ICON.Fall;
@@ -377,7 +329,7 @@ const SemesterDetailPage = () => {
                         <div className={`inline-flex items-center justify-center rounded-xl border p-2 shadow-sm ${headerSeasonIcon.className}`}>
                             <span className="material-symbols-outlined text-[20px]">{headerSeasonIcon.icon}</span>
                         </div>
-                        {canManage && !isEnded && !isOngoing && (
+                        {canManage && !isClosed && isOpen && (
                             <button
                                 onClick={() => setIsEditModalOpen(true)}
                                 className="cursor-pointer inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white/90 p-2 text-gray-700 shadow-sm transition-all hover:bg-white hover:border-gray-300"
@@ -385,6 +337,27 @@ const SemesterDetailPage = () => {
                                 title="Edit semester"
                             >
                                 <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                        )}
+                        {canManage && (
+                            <button
+                                onClick={async () => {
+                                    if (isExporting) return;
+                                    setIsExporting(true);
+                                    try {
+                                        await semesterService.exportEvaluation(semesterId);
+                                    } catch {
+                                        Swal.fire({ icon: 'error', title: 'Export failed', text: 'Could not generate the evaluation export. Please try again.', timer: 3000, showConfirmButton: false });
+                                    } finally {
+                                        setIsExporting(false);
+                                    }
+                                }}
+                                disabled={isExporting}
+                                className="cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white/90 px-3 py-2 text-gray-700 text-xs font-bold shadow-sm transition-all hover:bg-white hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Export evaluation"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">{isExporting ? 'hourglass_empty' : 'ios_share'}</span>
+                                {isExporting ? 'Exporting...' : 'Export'}
                             </button>
                         )}
                     </div>
@@ -457,25 +430,13 @@ const SemesterDetailPage = () => {
 
                             {canManage && (
                                 <div className="flex flex-row sm:flex-col gap-3 justify-center w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 sm:border-l border-gray-100 sm:pl-6">
-                                    {isUpcoming && (
-                                        <button onClick={handleStartSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 shadow-lg shadow-green-500/20 transition-all">
-                                            <span className="material-symbols-outlined text-lg">play_arrow</span>
-                                            Start Semester
-                                        </button>
-                                    )}
-                                    {isActive && (
+                                    {isOpen && (
                                         <button onClick={handleLockSubmission} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">
                                             <span className="material-symbols-outlined text-lg">lock</span>
-                                            Lock Submission
+                                            Lock Submissions
                                         </button>
                                     )}
-                                    {isReviewThesis && (
-                                        <button onClick={handleLockUpdates} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-purple-600 text-white rounded-xl text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-500/20 transition-all">
-                                            <span className="material-symbols-outlined text-lg">gavel</span>
-                                            Lock All Updates
-                                        </button>
-                                    )}
-                                    {isReviewMiddle && (
+                                    {isInProgress && (
                                         <button onClick={handleCloseSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all">
                                             <span className="material-symbols-outlined text-lg">event_busy</span>
                                             Close Semester

@@ -21,10 +21,7 @@ const MemberAvatar: React.FC<MemberAvatarProps> = ({
         ? `https://www.gravatar.com/avatar/${md5(email.trim().toLowerCase())}?d=404`
         : null),
   );
-  const [imageLoaded, setImageLoaded] = useState(false);
-
   React.useEffect(() => {
-    setImageLoaded(false);
     setImgSrc(
       avatarUrl ||
         (email
@@ -46,13 +43,11 @@ const MemberAvatar: React.FC<MemberAvatarProps> = ({
     if (imgSrc === avatarUrl && avatarUrl) {
       // DB avatar failed; try Gravatar once.
       const gravatarUrl = `https://www.gravatar.com/avatar/${md5((email || "").trim().toLowerCase())}?d=404`;
-      setImageLoaded(false);
       setImgSrc(gravatarUrl);
       return;
     }
 
     // No image available; keep initials fallback only.
-    setImageLoaded(false);
     setImgSrc(null);
   };
 
@@ -63,10 +58,9 @@ const MemberAvatar: React.FC<MemberAvatarProps> = ({
       <span>{initials}</span>
       {imgSrc && (
         <img
-          className={`absolute inset-0 h-full w-full object-cover ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 h-full w-full object-cover`}
           src={imgSrc}
           alt={fullName || "User avatar"}
-          onLoad={() => setImageLoaded(true)}
           onError={handleError}
           referrerPolicy="no-referrer"
         />

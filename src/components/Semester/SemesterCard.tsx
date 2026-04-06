@@ -1,9 +1,7 @@
-import { useState, type FC } from 'react';
+import { type FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSeasonGradient } from '../../utils/semesterHelpers';
 import { SEMESTER_STATUS, SEMESTER_SEASON_SOFT_GRADIENTS, SEMESTER_STATUS_COLORS, type SemesterStatus } from '../../constants/semesterConstants';
-import { semesterService } from '../../services/semesterService';
-import Swal from 'sweetalert2';
 
 type Season = 'Spring' | 'Summer' | 'Fall';
 
@@ -41,16 +39,6 @@ const FALLBACK_ICON = {
 
 const FALLBACK_GRADIENT = 'from-slate-50 via-gray-50 to-zinc-100';
 
-const extractApiErrorMessage = (error: unknown, fallback: string) => {
-    if (error && typeof error === 'object' && 'response' in error) {
-        const responseData = (error as { response: { data: { detail?: string; message?: string } } }).response?.data;
-        return responseData?.detail || responseData?.message || fallback;
-    }
-    if (error instanceof Error) {
-        return error.message;
-    }
-    return fallback;
-};
 
 const renderSeasonalDecoration = (season: Season) => {
     if (season === 'Spring') {
@@ -94,70 +82,23 @@ interface SemesterCardProps {
     onRefresh?: () => void;
 }
 
-const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
+const SemesterCard: FC<SemesterCardProps> = ({ semester }) => {
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
 
-    const statusColors = SEMESTER_STATUS_COLORS[semester.status] || SEMESTER_STATUS_COLORS.Ended;
-    const isOngoing = semester.status === SEMESTER_STATUS.ONGOING;
-    const isReviewThesis = semester.status === SEMESTER_STATUS.THESIS_REVIEW;
-    const isReviewMiddle = semester.status === SEMESTER_STATUS.FINAL_REVIEW;
-    const isActiveSemester = isOngoing || isReviewThesis || isReviewMiddle;
-    const isEndedSemester = semester.status === SEMESTER_STATUS.ENDED;
-    const isUpcomingSemester = semester.status === SEMESTER_STATUS.UPCOMING;
+    const statusColors = SEMESTER_STATUS_COLORS[semester.status] || SEMESTER_STATUS_COLORS[SEMESTER_STATUS.CLOSED];
+    const isOpen = semester.status === SEMESTER_STATUS.OPEN;
+    const isInProgress = semester.status === SEMESTER_STATUS.IN_PROGRESS;
+    const isClosed = semester.status === SEMESTER_STATUS.CLOSED;
+    
+    const isActiveSemester = isOpen || isInProgress;
+    const isEndedSemester = isClosed;
+    
     const season = semester.season as Season;
     const cardGradient = isActiveSemester
         ? getSeasonGradient(season)
         : (SEMESTER_SEASON_SOFT_GRADIENTS[season] || FALLBACK_GRADIENT);
     const seasonIcon = SEASON_ICON_BY_SEASON[season] || FALLBACK_ICON;
 
-    const handleStartSemester = async () => {
-        const result = await Swal.fire({
-            title: `Start <span class="text-orange-600">${semester.name}</span>?`,
-            html: "This will start the new semester and <b class='text-red-500'>automatically END</b> any current ongoing semester.",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#f97316', // orange-500 (Brand Color)
-            cancelButtonColor: '#6b7280', // gray-500 (Neutral)
-            confirmButtonText: 'Yes, Start Semester',
-            cancelButtonText: 'Cancel',
-            focusCancel: true,
-            customClass: {
-                popup: 'rounded-2xl',
-                confirmButton: 'rounded-xl px-4 py-2 font-bold',
-                cancelButton: 'rounded-xl px-4 py-2 font-bold'
-            }
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-            setIsLoading(true);
-            await semesterService.startSemester(semester.id);
-
-            await Swal.fire({
-                title: 'Started!',
-                text: 'The semester has been started successfully.',
-                icon: 'success',
-                confirmButtonColor: '#f97316' // orange-500
-            });
-
-            if (onRefresh) {
-                onRefresh();
-            }
-        } catch (error: unknown) {
-            console.error('Failed to start semester:', error);
-
-            Swal.fire({
-                title: 'Error!',
-                text: extractApiErrorMessage(error, 'Failed to start semester'),
-                icon: 'error',
-                confirmButtonColor: '#d33'
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
 
     return (
@@ -221,23 +162,12 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester, onRefresh }) => {
                     <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
                         <span className="material-symbols-outlined text-[18px]">visibility</span> View
                     </button>
-                    {semester.status !== SEMESTER_STATUS.ENDED && (
+                    {!isClosed && (
                         <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
                             <span className="material-symbols-outlined text-[18px]">edit</span> Edit
                         </button>
                     )}
-
-                    {isUpcomingSemester && (
-                        <button
-                            onClick={handleStartSemester}
-                            disabled={isLoading}
-                            className={`cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 text-green-600 text-xs font-bold transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            <span className="material-symbols-outlined text-[18px]">play_circle</span> Start
-                        </button>
-                    )}
-
-                    {isEndedSemester && (
+                    {isClosed && (
                         <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-400 text-xs font-bold cursor-default">
                             <span className="material-symbols-outlined text-[18px]">lock</span> Closed
                         </div>

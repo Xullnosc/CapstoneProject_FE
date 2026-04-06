@@ -151,6 +151,7 @@ export interface ReviewTimelineEvent {
   actorEmail: string | null;
   actorAvatar: string | null;
   decision: string | null;
+  round?: number | null;
   createdAt: string;
   checklistResults: string[];
   comments: ReviewTimelineComment[];
@@ -161,6 +162,8 @@ export interface CommentaryEvent {
   actorName: string;
   actorEmail: string;
   actorAvatar?: string | null;
+  eventType?: string;
+  round?: number;
   label: string;
   content: string;
   timestamp: string;

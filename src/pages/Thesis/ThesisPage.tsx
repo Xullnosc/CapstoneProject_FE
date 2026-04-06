@@ -126,9 +126,9 @@ const ThesisPage = () => {
             const data = await semesterService.getAllSemesters();
             setSemesters(data);
             
-            // Set default selected semester to the active one if not already set
+            // Set default selected semester to the active one (Open) if not already set
             if (!selectedSemesterId) {
-                const active = data.find(s => s.status === 'Active');
+                const active = data.find(s => s.status === 'Open' || s.status === 'Active');
                 if (active) {
                     setSelectedSemesterId(active.semesterId);
                 }
@@ -266,8 +266,8 @@ const ThesisPage = () => {
                                         itemTemplate={(option: Semester) => (
                                             <div className="flex items-center justify-between gap-4">
                                                 <span>{option.semesterCode}</span>
-                                                {option.status === 'Active' && (
-                                                    <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-black uppercase rounded-full">Active</span>
+                                                {(option.status === 'Open' || option.status === 'Active') && (
+                                                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 text-[10px] font-black uppercase rounded-full">Open</span>
                                                 )}
                                             </div>
                                         )}
