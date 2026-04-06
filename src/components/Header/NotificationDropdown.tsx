@@ -197,8 +197,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ unreadCount
         ref={op} 
         onShow={fetchRecentNotifications}
         appendTo={document.body}
-        autoZIndex
-        baseZIndex={1200}
+        style={{ zIndex: 1200 }}
         className="notification-overlay w-[320px] sm:w-[360px] rounded-2xl shadow-2xl border-none p-0 overflow-hidden"
       >
         <div className="p-3 bg-white">
