@@ -444,8 +444,16 @@ const ThesisDetailPage = () => {
     return buildConversationEvents(thesis, reviewTimeline);
   }, [thesis, reviewTimeline]);
 
-  const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
-  const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || (isLecturer && user?.email && (user.email === thesis?.mentorEmail1 || user.email === thesis?.mentorEmail2)));
+  const isMentor = useMemo(() => {
+    if (!thesis || !user) return false;
+    const userEmail = user?.email?.toLowerCase();
+    return (userEmail && (userEmail === thesis.mentorEmail1?.toLowerCase() || userEmail === thesis.mentorEmail2?.toLowerCase())) ||
+           (user?.userId && (user.userId === thesis.mentorId1 || user.userId === thesis.mentorId2)) ||
+           (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
+  }, [thesis, user]);
+
+  const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || isMentor);
+  const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || isMentor);
 
   const handleAddReply = useCallback(
     async (eventId: number, body: string) => {
@@ -537,35 +545,23 @@ const ThesisDetailPage = () => {
     );
 
     // Fix: Mentors cannot evaluate topics they lead
-    const userEmail = user?.email?.toLowerCase();
-    const isMentor = (userEmail && (userEmail === thesis.mentorEmail1?.toLowerCase() || userEmail === thesis.mentorEmail2?.toLowerCase())) ||
-                     (user?.userId && (user.userId === thesis.mentorId1 || user.userId === thesis.mentorId2)) ||
-                     (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
-    
     if (isMentor) return false;
 
     return (
       isReviewer && isAvailableStatus && !hasReviewed
     );
-  }, [isReviewer, isHOD, reviewStatus?.reviewers, thesis, user]);
+  }, [isReviewer, isHOD, reviewStatus?.reviewers, thesis, user, isMentor]);
 
   const canMakeHodDecision = useMemo(() => {
     if (!isHOD || !reviewStatus || !thesis || !user) return false;
 
     // HOD cannot finalize if they proposed the thesis or are leading the team
-    if (thesis.userId === user.userId) return false;
-
-    const userEmail = user?.email?.toLowerCase();
-    const isMentor = (userEmail && (userEmail === thesis.mentorEmail1?.toLowerCase() || userEmail === thesis.mentorEmail2?.toLowerCase())) ||
-                     (user?.userId && (user.userId === thesis.mentorId1 || user.userId === thesis.mentorId2)) ||
-                     (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
-    
-    if (isMentor) return false;
+    if (thesis.userId === user.userId || isMentor) return false;
 
     // HOD can finalize only in reviewing/need update statuses
     const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
     return isAvailableStatus;
-  }, [isHOD, reviewStatus, thesis, user]);
+  }, [isHOD, reviewStatus, thesis, user, isMentor]);
 
   const canToggleLock = Boolean(
     thesis &&
