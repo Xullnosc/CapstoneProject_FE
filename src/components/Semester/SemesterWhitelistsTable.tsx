@@ -151,6 +151,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Semester</th>
                             )}
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Campus</th>
+                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
                             <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                         </tr>
@@ -221,6 +222,19 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                     )}
                                     <td className="px-6 py-4">
                                         <span className="text-sm text-gray-600 font-medium">{user.campus || 'N/A'}</span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {user.status ? (
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                                user.status.toLowerCase() === 'qualified' 
+                                                    ? 'bg-green-50 text-green-700 border-green-100' 
+                                                    : 'bg-red-50 text-red-700 border-red-100'
+                                            }`}>
+                                                {user.status}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-xs italic">N/A</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">

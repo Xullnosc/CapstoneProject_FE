@@ -27,6 +27,7 @@ export interface Whitelist {
     avatar?: string;
     campus?: string;
     studentCode?: string;
+    status?: string;
 }
 
 export interface Semester {

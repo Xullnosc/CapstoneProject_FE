@@ -32,7 +32,9 @@ const ThesisCard = ({
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return "N/A";
     try {
-      const date = new Date(dateStr);
+      // Append 'Z' to ensure the browser treats the timestamp as UTC if missing
+      const utcDateStr = dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`;
+      const date = new Date(utcDateStr);
       if (Number.isNaN(date.getTime())) return dateStr;
 
       const nowDate = new Date(now);

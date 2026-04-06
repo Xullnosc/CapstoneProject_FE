@@ -90,14 +90,12 @@ const ThesisPage = () => {
                 semesterId: selectedSemesterId || undefined
             });
 
-            // Filter out current user's theses, Cancelled ones, and ones where the user is a mentor for the repository view
             const filteredRepoData = fullData.filter(t => {
-                const userEmail = user?.email?.toLowerCase();
-                const isMentor = (t.mentorEmail1?.toLowerCase() === userEmail) || (t.mentorEmail2?.toLowerCase() === userEmail) ||
-                                 (t.mentorId1 === user?.userId) || (t.mentorId2 === user?.userId) ||
-                                 (t.teamMentorId1 === user?.userId) || (t.teamMentorId2 === user?.userId);
-                return t.userId !== user?.userId && t.status !== 'Cancelled' && !isMentor;
+                // Removed !isMentor filter. We want mentors to see their theses in the global list, 
+                // but we block them from evaluating on the detail page.
+                return t.userId !== user?.userId && t.status !== 'Cancelled';
             });
+
 
             setAllTheses(filteredRepoData);
 
@@ -122,7 +120,7 @@ const ThesisPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTitle, statusFilter, user?.userId, user?.email, selectedSemesterId]);
+    }, [searchTitle, statusFilter, user?.userId, selectedSemesterId]);
 
     const fetchSemesters = useCallback(async () => {
         try {
