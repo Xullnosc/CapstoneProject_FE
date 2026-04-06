@@ -122,7 +122,7 @@ const ThesisPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [searchTitle, statusFilter, user?.userId, selectedSemesterId]);
+    }, [searchTitle, statusFilter, user?.userId, user?.email, selectedSemesterId]);
 
     const fetchSemesters = useCallback(async () => {
         try {

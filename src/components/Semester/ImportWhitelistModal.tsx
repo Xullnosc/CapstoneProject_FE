@@ -1,4 +1,4 @@
-import { useState, useEffect, type ChangeEvent, type FC } from 'react';
+import { useState, useEffect, useCallback, type ChangeEvent, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
 import Swal from '../../utils/swal';
 import { whitelistService } from '../../services/whitelistService';
@@ -32,7 +32,7 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
     const [editingConflictRow, setEditingConflictRow] = useState<ImportWhitelistRow | null>(null);
     const [editForm, setEditForm] = useState({ email: '', fullName: '', studentCode: '' });
 
-    const fetchHistory = async () => {
+    const fetchHistory = useCallback(async () => {
         if (!semesterId || !isOpen) return;
         setIsLoadingHistory(true);
         try {
@@ -43,7 +43,7 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
         } finally {
             setIsLoadingHistory(false);
         }
-    };
+    }, [semesterId, isOpen]);
 
     useEffect(() => {
         if (isOpen) {
@@ -58,7 +58,7 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
             setEditingConflictRow(null);
             setImportBatches([]);
         }
-    }, [isOpen, semesterId]);
+    }, [isOpen, semesterId, fetchHistory]);
 
     const conflictRows = previewData.filter((row) => row.isMarked);
     const hasBlockingConflicts = conflictRows.length > 0;
