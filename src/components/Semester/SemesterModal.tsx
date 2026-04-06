@@ -23,7 +23,8 @@ interface SemesterFormInputs {
 
 const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, semesterData }) => {
     const isEditMode = !!semesterData;
-    const isLockedForEdit = isEditMode && !!semesterData && semesterData.status !== 'Upcoming';
+    const currentStatus = semesterData?.status?.trim() || '';
+    const isLockedForEdit = isEditMode && currentStatus !== 'Upcoming' && currentStatus !== 'Open';
     const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = useForm<SemesterFormInputs>();
     const startDate = watch('startDate');
     const endDate = watch('endDate');
@@ -180,14 +181,14 @@ const SemesterModal: FC<SemesterModalProps> = ({ isOpen, onClose, onSuccess, sem
             draggable={false}
         >
             <form id="semester-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6 pt-2">
-                {isEditMode && semesterData && semesterData.status !== 'Upcoming' && semesterData.status !== 'Closed' && (
+                {isLockedForEdit && currentStatus !== 'Closed' && (
                     <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
                         <span className="material-symbols-outlined">lock</span>
                         This semester is currently in progress and cannot be modified.
                     </div>
                 )}
 
-                {isEditMode && semesterData && semesterData.status === 'Closed' && (
+                {isEditMode && semesterData && (currentStatus === 'Closed') && (
                     <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
                         <span className="material-symbols-outlined">lock</span>
                         This semester has closed and cannot be modified.
