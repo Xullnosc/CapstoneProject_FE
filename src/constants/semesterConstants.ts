@@ -80,26 +80,26 @@ export const SEMESTER_STATUS_COLORS = {
         dot: 'bg-gray-400',
         border: 'border-gray-200',
     },
-    // ── Backward compat (legacy values from DB) ───────────────
-    'Active': {
+    // ── Backward compat (Sử dụng cho các giá trị cũ trong DB nếu chưa migration) ──
+    ['Active']: {
         bg: 'bg-emerald-50',
         text: 'text-emerald-700',
         dot: 'bg-emerald-500',
         border: 'border-emerald-100',
     },
-    'Upcoming': {
+    ['Upcoming']: {
         bg: 'bg-yellow-50',
         text: 'text-yellow-700',
         dot: 'bg-yellow-500',
         border: 'border-yellow-100',
     },
-    'Review Thesis': {
+    ['Review Thesis']: {
         bg: 'bg-blue-50',
         text: 'text-blue-700',
         dot: 'bg-blue-500',
         border: 'border-blue-100',
     },
-    'Review Middle Semester': {
+    ['Review Middle Semester']: {
         bg: 'bg-purple-50',
         text: 'text-purple-700',
         dot: 'bg-purple-500',
