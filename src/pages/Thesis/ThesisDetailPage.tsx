@@ -315,8 +315,8 @@ const ThesisDetailPage = () => {
       showSuccess("Thesis proposal has been cancelled.");
       await resumePolling();
     } catch (err) {
-      const axiosError = err as { response?: { data?: { Message?: string } } };
-      const message = axiosError.response?.data?.Message || "Failed to cancel thesis.";
+      const axiosError = err as { response?: { data?: { Message?: string; message?: string } } };
+      const message = axiosError.response?.data?.Message || axiosError.response?.data?.message || "Failed to cancel thesis.";
       showError(message);
     } finally {
       setCancelling(false);
@@ -569,7 +569,7 @@ const ThesisDetailPage = () => {
     Boolean(isLecturer || isHOD) &&
     thesis.userId === user?.userId,
   );
-  const canCancel = false; // Bỏ tạm thời theo yêu cầu: Boolean(thesis && isOwner && (...));
+  const canCancel = false;
   const canUploadRevision = Boolean(
     isOwner && 
     (isStudent || isLecturer || isHOD) && 
@@ -671,12 +671,12 @@ const ThesisDetailPage = () => {
                   <h3 className="text-[10px] font-black uppercase text-slate-400 mb-5">Registration</h3>
                   {existingAppStatus ? (
                     <PrimeButton
-                      label={existingAppStatus === 'Pending' ? (applyingForThesis ? 'Cancelling...' : 'Cancel Assign') : `Application ${existingAppStatus}`}
-                      icon={existingAppStatus === 'Approved' ? 'pi pi-check' : 'pi pi-times'}
-                      onClick={existingAppStatus === 'Pending' ? handleCancelRequest : undefined}
-                      loading={applyingForThesis} disabled={existingAppStatus !== 'Pending'}
+                      label={existingAppStatus.toLowerCase() === 'pending' ? (applyingForThesis ? 'Cancelling...' : 'Cancel Assign') : `Application ${existingAppStatus}`}
+                      icon={existingAppStatus.toLowerCase() === 'approved' ? 'pi pi-check' : 'pi pi-times'}
+                      onClick={existingAppStatus.toLowerCase() === 'pending' ? handleCancelRequest : undefined}
+                      loading={applyingForThesis} disabled={existingAppStatus.toLowerCase() !== 'pending'}
                       className="p-button-sm w-full font-bold uppercase py-3"
-                      style={{ backgroundColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444', borderColor: existingAppStatus === 'Approved' ? '#10b981' : '#ef4444' }}
+                      style={{ backgroundColor: existingAppStatus.toLowerCase() === 'approved' ? '#10b981' : '#ef4444', borderColor: existingAppStatus.toLowerCase() === 'approved' ? '#10b981' : '#ef4444' }}
                     />
                   ) : (
                     <div className="space-y-3">
