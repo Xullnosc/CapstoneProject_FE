@@ -24,6 +24,8 @@ interface ProposeThesisRequest {
   isApplied: boolean;
   isAppUsed: boolean;
   authorId?: number;
+  memberIds?: number[];
+  leaderId?: number;
 }
 
 // ─── Update (upload new version) ────────────────────────────────────────────
@@ -52,6 +54,14 @@ export const thesisService = {
     formData.append("IsAppUsed", data.isAppUsed.toString());
     if (data.authorId) {
       formData.append("AuthorId", data.authorId.toString());
+    }
+    if (data.memberIds && data.memberIds.length > 0) {
+      data.memberIds.forEach((id) => {
+        formData.append("MemberIds", id.toString());
+      });
+    }
+    if (data.leaderId) {
+      formData.append("LeaderId", data.leaderId.toString());
     }
     const response = await api.post("/thesis/propose", formData, {
       headers: { "Content-Type": "multipart/form-data" },
