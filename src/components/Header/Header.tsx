@@ -7,6 +7,7 @@ import 'primeicons/primeicons.css';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 import notificationService from '../../services/notificationService';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -87,7 +88,7 @@ const Header = () => {
     }, [location.pathname]);
 
     return (
-        <header className="h-16 bg-white shadow-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 relative z-50">
+        <header className="h-16 bg-white shadow-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-50">
             {/* Left Section: Logo & Mobile Menu */}
             <div className="flex items-center gap-4">
                 {/* Hamburger Menu (Mobile Only) */}
@@ -382,12 +383,16 @@ const Header = () => {
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                 {user && (
-                    <div onClick={() => navigate('/notifications')} className={`mr-1 relative cursor-pointer flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${isNotificationsPath ? 'bg-orange-50 text-orange-600' : 'hover:bg-orange-50 text-gray-500 hover:text-orange-600'}`}>
-                        <i className="pi pi-bell text-xl"></i>
-                        {hasUnread && (
-                            <span className="absolute top-0 right-0 translate-x-[35%] -translate-y-[35%] w-2 h-2 rounded-full bg-red-500 border border-white pointer-events-none"></span>
-                        )}
-                    </div>
+                    <NotificationDropdown 
+                        unreadCount={unreadCount} 
+                        onRefreshCount={() => {
+                            // Using the internal fetchUnreadCount defined in the effect scope might be tricky,
+                            // but Header has it defined inside a useEffect. I should lift it or just trigger a refresh.
+                            // Actually, I'll pass a simpler refresh trigger or rely on the polling.
+                            // Better: call the service directly or trigger the polling early.
+                            notificationService.getUnreadCount(true).then(setUnreadCount);
+                        }} 
+                    />
                 )}
                 <Menu as="div" className="relative">
                     <MenuButton className="flex items-center gap-3 rounded-full hover:bg-gray-50 transition-colors p-1 pr-2 outline-none cursor-pointer">

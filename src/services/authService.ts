@@ -55,7 +55,16 @@ export const authService = {
             const accessToken = response.data?.accessToken ?? null;
             if (accessToken) localStorage.setItem('token', accessToken);
             return accessToken;
-        } catch {
+        } catch (err) {
+            // Helps verify whether refresh fails due to missing cookie / revoked refresh token / network / CORS.
+            if (axios.isAxiosError(err)) {
+                console.error('[AUTH] refreshAccessToken failed', {
+                    status: err.response?.status,
+                    data: err.response?.data,
+                });
+            } else {
+                console.error('[AUTH] refreshAccessToken failed', err);
+            }
             return null;
         }
     },

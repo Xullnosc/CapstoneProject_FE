@@ -1,5 +1,6 @@
 import { useState, useEffect, type FC } from 'react';
 import { Dialog } from 'primereact/dialog';
+import { InputSwitch } from 'primereact/inputswitch';
 import { whitelistService } from '../../services/whitelistService';
 import type { Whitelist } from '../../services/semesterService';
 import Swal from '../../utils/swal';
@@ -23,7 +24,8 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
         email: '',
         fullName: '',
         semesterId: semesterId,
-        roleId: 3 // Assuming Student role ID is 3
+        roleId: 3, // Assuming Student role ID is 3
+        status: 'Qualified'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,7 +40,8 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                 email: '',
                 fullName: '',
                 semesterId: semesterId,
-                roleId: 3
+                roleId: 3,
+                status: 'Qualified'
             });
         }
     }, [studentData, isOpen, semesterId]);
@@ -68,7 +71,8 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                 roleId: formData.roleId,
                 studentCode: formData.studentCode,
                 avatar: formData.avatar,
-                isReviewer: formData.isReviewer
+                isReviewer: formData.isReviewer,
+                status: formData.status
             };
 
             if (studentData?.whitelistId) {
@@ -162,6 +166,22 @@ const WhitelistStudentModal: FC<WhitelistStudentModalProps> = ({
                         className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
                         placeholder="e.g. SE123456"
                     />
+                </div>
+
+                <div className="flex items-center justify-between bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="flex flex-col gap-0.5">
+                        <label className="text-sm font-bold text-gray-700">Qualified Status</label>
+                        <p className="text-[10px] text-gray-500 font-medium leading-tight">Mark student as eligible to participate in this semester</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5 ">
+                        <InputSwitch
+                            checked={formData.status === 'Qualified'}
+                            onChange={(e) => setFormData(prev => ({ ...prev, status: e.value ? 'Qualified' : 'Unqualified' }))}
+                        />
+                        <span className={`text-[10px] font-black uppercase tracking-widest ${formData.status === 'Qualified' ? 'text-green-600' : 'text-orange-500'}`}>
+                            {formData.status === 'Qualified' ? 'Qualified' : 'Unqualified'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6">

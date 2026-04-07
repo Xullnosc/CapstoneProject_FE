@@ -12,8 +12,10 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
     const navigate = useNavigate();
     const user = authService.getUser();
     const isStudent = user?.roleName === 'Student';
+    const isHOD = user?.roleName === 'HOD';
+    const isLecturer = user?.roleName === 'Lecturer';
 
-    if (!team || !isStudent) return null;
+    if (!team || (!isStudent && !isHOD && !isLecturer)) return null;
     const hasTopic = !!team.topicId;
 
     const handleActionClick = (actionName: string) => {
@@ -118,8 +120,8 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
                         </div>
                     </div>
                 </div>
-            ) : (
-                // No Topic - Show Action Buttons
+            ) : isStudent ? (
+                // No Topic - Show Action Buttons only for Students
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-4 md:mt-6">
                     <button
                         onClick={() => handleActionClick('register a thesis')}
@@ -145,6 +147,12 @@ const ProjectStatusSection: React.FC<ProjectStatusSectionProps> = ({ team, isLea
                             <p className="text-gray-500 text-xs md:text-sm mt-1">Submit a new idea for approval</p>
                         </div>
                     </button>
+                </div>
+            ) : (
+                // HOD/Lecturer view when no topic is assigned
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-10 text-center">
+                    <span className="material-symbols-outlined text-gray-300 text-5xl mb-4">description_off</span>
+                    <p className="text-gray-500 font-medium">No thesis topic assigned to this team yet.</p>
                 </div>
             )}
         </section>
