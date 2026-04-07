@@ -315,7 +315,7 @@ const SemesterDetailPage = () => {
                 </div>
 
                 {/* Header Section */}
-                <div className={`group relative overflow-hidden rounded-3xl border p-8 mb-8 shadow-lg ${isEnded ? 'bg-gradient-to-br from-slate-100 via-gray-100 to-zinc-100 border-gray-300' : headerTheme.container}`}>
+                <div className={`group relative overflow-hidden rounded-3xl border p-8 mb-8 shadow-lg ${isEnded ? 'bg-linear-to-br from-slate-100 via-gray-100 to-zinc-100 border-gray-300' : headerTheme.container}`}>
                     {isEnded && (
                         <div className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${headerTheme.container}`}></div>
                     )}
@@ -346,8 +346,33 @@ const SemesterDetailPage = () => {
                                     setIsExporting(true);
                                     try {
                                         await semesterService.exportEvaluation(semesterId);
-                                    } catch {
-                                        Swal.fire({ icon: 'error', title: 'Export failed', text: 'Could not generate the evaluation export. Please try again.', timer: 3000, showConfirmButton: false });
+                                    } catch (err: unknown) {
+                                        let errorMessage = 'Could not generate the evaluation export. Please try again.';
+                                        const axiosLikeError = err as { response?: { data?: Blob | { message?: string } } };
+                                        if (axiosLikeError.response?.data instanceof Blob) {
+                                            try {
+                                                const text = await axiosLikeError.response.data.text();
+                                                const errorData = JSON.parse(text);
+                                                errorMessage = errorData.message || errorMessage;
+                                            } catch (e) {
+                                                console.error('Failed to parse error blob', e);
+                                            }
+                                        } else if (
+                                            axiosLikeError.response?.data &&
+                                            typeof axiosLikeError.response.data === 'object' &&
+                                            'message' in axiosLikeError.response.data &&
+                                            typeof axiosLikeError.response.data.message === 'string'
+                                        ) {
+                                            errorMessage = axiosLikeError.response.data.message;
+                                        }
+
+                                        Swal.fire({ 
+                                            icon: 'error', 
+                                            title: 'Export failed', 
+                                            text: errorMessage,
+                                            confirmButtonColor: '#f26e21',
+                                            confirmButtonText: 'Understood'
+                                        });
                                     } finally {
                                         setIsExporting(false);
                                     }
@@ -404,7 +429,7 @@ const SemesterDetailPage = () => {
 
                             {canManage && (
                                 <div
-                                    className={`flex-1 min-w-[200px] max-w-full sm:max-w-[240px] rounded-2xl p-4 flex flex-col items-center justify-center transition-all group shadow-sm ${isEnded ? 'bg-gray-100 border border-gray-300 cursor-not-allowed opacity-75' : 'bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 hover:border-indigo-300 hover:shadow-indigo-500/10 cursor-pointer hover:shadow'}`}
+                                    className={`flex-1 min-w-[200px] max-w-full sm:max-w-[240px] rounded-2xl p-4 flex flex-col items-center justify-center transition-all group shadow-sm ${isEnded ? 'bg-gray-100 border border-gray-300 cursor-not-allowed opacity-75' : 'bg-linear-to-br from-indigo-50 to-white border border-indigo-100 hover:border-indigo-300 hover:shadow-indigo-500/10 cursor-pointer hover:shadow'}`}
                                     onClick={() => {
                                         if (isEnded) return;
                                         setIsThesisFormModalOpen(true);

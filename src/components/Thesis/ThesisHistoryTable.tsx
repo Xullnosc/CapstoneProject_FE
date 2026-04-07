@@ -37,7 +37,7 @@ const ThesisHistoryTable = ({ histories }: Props) => {
                         <th className="px-6 py-3">Version</th>
                         <th className="px-6 py-3">Upload Date</th>
                         <th className="px-6 py-3">Uploaded By</th>
-                        <th className="px-6 py-3">Note</th>
+                        <th className="px-6 py-3">Description</th>
                         <th className="px-6 py-3 text-right">Action</th>
                     </tr>
                 </thead>
@@ -75,8 +75,8 @@ const ThesisHistoryTable = ({ histories }: Props) => {
                                         <span>{h.uploaderName ?? '—'}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-slate-600 italic">
-                                    {h.note ? `"${h.note}"` : '—'}
+                                <td className="px-6 py-4 text-sm text-slate-600">
+                                    {h.description?.trim() ? h.description : '—'}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     {h.fileUrl ? (

@@ -29,7 +29,7 @@ interface ProposeThesisRequest {
 // ─── Update (upload new version) ────────────────────────────────────────────
 interface UpdateThesisFileRequest {
   file: File;
-  note?: string;
+  description?: string;
 }
 
 export const thesisService = {
@@ -93,7 +93,7 @@ export const thesisService = {
   updateThesisFile: async (id: string, data: UpdateThesisFileRequest) => {
     const formData = new FormData();
     formData.append("File", data.file);
-    if (data.note) formData.append("Note", data.note);
+    if (data.description) formData.append("Description", data.description);
     const response = await api.put(`/thesis/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
