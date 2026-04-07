@@ -45,6 +45,11 @@ const ProposeThesisPage = () => {
     const [filteredEnterprises, setFilteredEnterprises] = useState<string[]>([]);
     const [fileSizeLimit, setFileSizeLimit] = useState(10);
     const [isProposingForOther, setIsProposingForOther] = useState(false);
+    const [isAssigningStudents, setIsAssigningStudents] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState<UserInfo[]>([]);
+    const [leaderUserId, setLeaderUserId] = useState<number | null>(null);
+    const [filteredStudents, setFilteredStudents] = useState<UserInfo[]>([]);
+    const studentAutoCompleteRef = useRef<AutoComplete>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +67,15 @@ const ProposeThesisPage = () => {
             setFilteredLecturers(results);
         } catch (error) {
             console.error("Failed to search lecturers", error);
+        }
+    };
+
+    const searchStudents = async (event: AutoCompleteCompleteEvent) => {
+        try {
+            const results = await userService.searchStudents(event.query);
+            setFilteredStudents(results);
+        } catch (error) {
+            console.error("Failed to search students", error);
         }
     };
 
@@ -209,6 +223,29 @@ const ProposeThesisPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // [NEW] Direct Student Assignment Validation
+        if (isAssigningStudents && user?.roleName === 'Lecturer') {
+            if (selectedStudents.length < 4 || selectedStudents.length > 5) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Team Size',
+                    text: 'A team must have exactly 4 or 5 members.',
+                    confirmButtonColor: '#f97415'
+                });
+                return;
+            }
+            if (!leaderUserId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Leader Required',
+                    text: 'Please select a Leader for the team (click the crown icon next to a student).',
+                    confirmButtonColor: '#f97415'
+                });
+                return;
+            }
+        }
+
+
         if (!title.trim() || !description.trim() || !file || !thesisNameEn.trim() || !thesisNameVi.trim() || !abbreviation.trim()) {
             Swal.fire({
                 icon: 'warning',
@@ -254,7 +291,9 @@ const ProposeThesisPage = () => {
                 enterpriseName: isFromEnterprise ? enterpriseName.trim() : undefined,
                 isApplied,
                 isAppUsed,
-                authorId: isProposingForOther ? selectedLecturer?.userId : undefined
+                authorId: isProposingForOther ? selectedLecturer?.userId : undefined,
+                memberIds: (isAssigningStudents && user?.roleName === 'Lecturer') ? selectedStudents.map(s => s.userId) : undefined,
+                leaderId: (isAssigningStudents && user?.roleName === 'Lecturer') ? (leaderUserId ?? undefined) : undefined
             });
 
             Swal.fire({
@@ -496,6 +535,206 @@ const ProposeThesisPage = () => {
                                 )}
                             </div>
                         )}
+
+                        {/* Direct Student Assignment Section (Lecturer Only) */}
+                        {user?.roleName === 'Lecturer' && (
+                            <div className="flex flex-col gap-4 p-6 bg-slate-50/50 rounded-2xl border border-slate-200 mb-6 shadow-sm">
+                                <div 
+                                    className="flex items-start gap-3 group cursor-pointer transition-all"
+                                    onClick={() => setIsAssigningStudents(!isAssigningStudents)}
+                                >
+                                    <div className="pt-0.5">
+                                        <Checkbox
+                                            inputId="isAssigningStudents"
+                                            checked={isAssigningStudents}
+                                            onChange={(e: CheckboxChangeEvent) => {
+                                                e.originalEvent?.stopPropagation();
+                                                setIsAssigningStudents(e.checked ?? false);
+                                                if (!e.checked) {
+                                                    setSelectedStudents([]);
+                                                    setLeaderUserId(null);
+                                                }
+                                            }}
+                                            pt={{
+                                                box: ({ context }: { context: { checked: boolean } }) => ({
+                                                    className: context.checked ? 'bg-[#00a699] border-[#00a699]' : 'border-slate-300'
+                                                })
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-slate-700 group-hover:text-[#00a699] transition-colors select-none text-base">Direct Student Assignment</span>
+                                        <span className="text-sm text-slate-500">Automatically create a Team for these students when the proposal is submitted.</span>
+                                    </div>
+                                </div>
+
+                                {isAssigningStudents && (
+                                    <div className="flex flex-col gap-6 animate-fade-in border-t border-slate-100 pt-5 mt-2">
+                                        {/* Search Student */}
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[11px] font-black uppercase tracking-[0.15em] text-[#f97415] flex items-center gap-2 mb-1">
+                                                SEARCH STUDENTS (4 - 5 MEMBERS)
+                                            </label>
+                                            <AutoComplete
+                                                ref={studentAutoCompleteRef}
+                                                multiple
+                                                value={selectedStudents}
+                                                suggestions={filteredStudents}
+                                                completeMethod={searchStudents}
+                                                field="fullName"
+                                                onChange={(e) => {
+                                                    const val = e.value as UserInfo[];
+                                                    const valid = val.filter(s => !s.hasTeam);
+                                                    if (valid.length > 5) {
+                                                        Swal.fire({ icon: 'info', title: 'Limit Reached', text: 'Maximum 5 students allowed.', confirmButtonColor: '#f97415' });
+                                                        setSelectedStudents(valid.slice(0, 5));
+                                                    } else {
+                                                        setSelectedStudents(valid);
+                                                    }
+                                                }}
+                                                onSelect={() => {
+                                                    setTimeout(() => {
+                                                        studentAutoCompleteRef.current?.show();
+                                                    }, 0);
+                                                }}
+                                                placeholder="Type name, email or Student ID to add members..."
+                                                className="w-full"
+                                                appendTo="self"
+                                                inputClassName="w-full p-4 rounded-xl border-2 border-slate-100 hover:border-[#f97415] focus:border-[#f97415] outline-none transition-all shadow-sm bg-white"
+                                                panelClassName="premium-autocomplete-panel"
+                                                pt={{
+                                                    root: { className: 'w-full' },
+                                                    container: { className: 'w-full !border-none !p-0 !bg-transparent' },
+                                                    token: { style: { display: 'none' } },
+                                                    inputToken: { className: 'w-full !m-0 !p-0' },
+                                                    panel: { className: 'bg-white shadow-2xl border border-slate-100 rounded-2xl mt-2 overflow-hidden' },
+                                                    list: { className: 'p-2' },
+                                                    item: { className: 'rounded-xl mb-1 last:mb-0 transition-colors' }
+                                                }}
+                                                itemTemplate={(item: UserInfo) => (
+                                                    <div className={`flex items-center justify-between gap-3 p-3 rounded-xl ${
+                                                        item.hasTeam 
+                                                        ? 'opacity-40 grayscale cursor-not-allowed bg-slate-50' 
+                                                        : 'hover:bg-slate-50 cursor-pointer'
+                                                    }`}>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="relative">
+                                                                <MemberAvatar email={item.email} fullName={item.fullName} avatarUrl={item.avatar} className="size-11 rounded-xl border border-slate-100 shadow-sm" />
+                                                                {selectedStudents.some(s => s.userId === item.userId) && (
+                                                                    <div className="absolute -top-1.5 -right-1.5 bg-green-500 text-white size-5 rounded-full flex items-center justify-center border-2 border-white shadow-md z-10 animate-in zoom-in duration-300">
+                                                                        <i className="pi pi-check text-[9px] font-bold"></i>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-slate-800 text-sm">{item.fullName}</span>
+                                                                    <span className="font-mono text-[10px] text-slate-400 font-medium tracking-tight">#{item.studentCode}</span>
+                                                                </div>
+                                                                <span className="text-xs text-slate-500 mt-0.5">{item.email}</span>
+                                                            </div>
+                                                        </div>
+                                                        {item.hasTeam ? (
+                                                            <span className="text-[9px] bg-red-50 text-red-500 px-2 py-1 rounded-full font-black uppercase tracking-tighter shadow-sm border border-red-100">In a Team</span>
+                                                        ) : (
+                                                            selectedStudents.some(s => s.userId === item.userId) && (
+                                                                <span className="text-[9px] text-white font-bold bg-green-500 px-2.5 py-1 rounded-full shadow-sm">Selected</span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                )}
+                                            />
+                                        </div>
+
+                                        {/* Selected Students List */}
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <h4 className="text-[11px] font-black text-[#f97415] uppercase tracking-[0.15em]">Selected Members ({selectedStudents.length})</h4>
+                                                {selectedStudents.length > 0 && !leaderUserId && (
+                                                    <span className="text-[10px] text-orange-500 font-bold animate-pulse flex items-center gap-1">
+                                                        <i className="pi pi-info-circle"></i>
+                                                        Please appoint a lead member
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {selectedStudents.map((stu) => (
+                                                    <div 
+                                                        key={stu.userId} 
+                                                        className={`group relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl ${
+                                                            leaderUserId === stu.userId 
+                                                            ? 'border-orange-500 bg-orange-50/55 shadow-sm' 
+                                                            : 'border-slate-100 bg-white hover:border-orange-200'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-4 min-w-0">
+                                                            <div className="relative">
+                                                                <MemberAvatar 
+                                                                    email={stu.email} 
+                                                                    fullName={stu.fullName} 
+                                                                    avatarUrl={stu.avatar} 
+                                                                    className={`size-14 rounded-2xl shadow-sm transition-transform group-hover:scale-105 border-2 ${leaderUserId === stu.userId ? 'border-orange-200' : 'border-white'}`} 
+                                                                />
+                                                                {leaderUserId === stu.userId && (
+                                                                    <div className="absolute -top-2 -right-2 bg-gradient-to-br from-orange-400 to-orange-600 text-white size-7 rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce-subtle">
+                                                                        <i className="pi pi-crown text-xs"></i>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="font-bold text-slate-800 text-base truncate">{stu.fullName}</span>
+                                                                    {leaderUserId === stu.userId && (
+                                                                        <span className="text-[8px] font-black bg-orange-500 text-white px-1.5 py-0.5 rounded-sm uppercase tracking-tighter">Leader</span>
+                                                                    )}
+                                                                </div>
+                                                                <span className="font-mono text-xs text-slate-400 tracking-wider">#{stu.studentCode}</span>
+                                                                <span className="text-xs text-slate-500 truncate mt-0.5">{stu.email}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button 
+                                                                icon="pi pi-crown" 
+                                                                className={`p-button-rounded p-button-sm transition-all ${
+                                                                    leaderUserId === stu.userId 
+                                                                    ? 'bg-orange-500 text-white border-orange-500 shadow-md ring-4 ring-orange-500/10' 
+                                                                    : 'p-button-text text-slate-300 hover:text-orange-500 hover:bg-orange-50'
+                                                                }`}
+                                                                onClick={() => setLeaderUserId(stu.userId)}
+                                                                tooltip="Set as Team Leader"
+                                                                tooltipOptions={{ position: 'top' }}
+                                                                type="button"
+                                                            />
+                                                            <Button 
+                                                                icon="pi pi-trash" 
+                                                                className="p-button-rounded p-button-text p-button-secondary p-button-sm hover:text-red-500 hover:bg-red-50"
+                                                                onClick={() => {
+                                                                    setSelectedStudents(selectedStudents.filter(s => s.userId !== stu.userId));
+                                                                    if (leaderUserId === stu.userId) setLeaderUserId(null);
+                                                                }}
+                                                                type="button"
+                                                                tooltip="Remove Member"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {selectedStudents.length === 0 && (
+                                                    <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/30 text-slate-400 transition-colors hover:bg-slate-50 hover:border-orange-200">
+                                                        <div className="bg-white size-14 rounded-2xl flex items-center justify-center shadow-sm border border-slate-100 mb-3 text-orange-300">
+                                                            <i className="pi pi-user-plus text-2xl"></i>
+                                                        </div>
+                                                        <p className="text-sm font-medium italic">No students selected yet</p>
+                                                        <p className="text-[10px] uppercase tracking-widest mt-1 opacity-60">Use the search bar above to add members</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
 
                         {/* Title Input */}
                         <div className="flex flex-col gap-2">
