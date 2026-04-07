@@ -537,15 +537,15 @@ const ThesisDetailPage = () => {
 
     const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
 
+    // Fix: Mentors cannot evaluate topics they mentor
+    if (isMentor) return false;
+
     // HOD can always see the button to (re)finalize/veto
     if (isHOD && isAvailableStatus) return true;
 
     const hasReviewed = (reviewStatus?.reviewers ?? []).some(
       (review) => review.userId === user.userId && review.decision
     );
-
-    // Fix: Mentors cannot evaluate topics they lead
-    if (isMentor) return false;
 
     return (
       isReviewer && isAvailableStatus && !hasReviewed

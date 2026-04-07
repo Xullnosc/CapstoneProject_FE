@@ -6,7 +6,11 @@ import { Tag } from 'primereact/tag';
 import { useNavigate } from 'react-router-dom';
 import { teamService } from '../../services/teamService';
 import { authService } from '../../services/authService';
+import { thesisService } from '../../services/thesisService';
+import notificationService from '../../services/notificationService';
 import type { Team, TeamMember } from '../../types/team';
+import type { Thesis } from '../../types/thesis';
+import type { NotificationDTO } from '../../types/notification';
 import InviteMemberModal from '../../components/team/InviteMemberModal';
 import AdminDashboard from './AdminDashboard';
 import LecturerDashboard from './LecturerDashboard';
@@ -16,28 +20,70 @@ const Homepage = () => {
     const [team, setTeam] = useState<Team | null>(null);
     const [loading, setLoading] = useState(true);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const currentUser = authService.getUser();
+    const [myThesis, setMyThesis] = useState<Thesis | null>(null);
+    const [recentNotifs, setRecentNotifs] = useState<NotificationDTO[]>([]);
+    const [showCoachCard, setShowCoachCard] = useState(true);
+    const [currentUser, setCurrentUser] = useState(() => authService.getUser());
     const isHODOrAdmin = currentUser?.roleName === 'HOD' || currentUser?.roleName === 'Head of Department' || currentUser?.roleName === 'Admin';
     const isLecturer = currentUser?.roleName === 'Lecturer';
+    const getThesisProgress = (status?: string) => {
+        if (!status) return 0;
+        switch (status) {
+            case 'Registered':
+                return 100;
+            case 'HOD Reviewing':
+                return 80;
+            case 'Reviewing':
+                return 60;
+            case 'On Mentor Inviting':
+                return 40;
+            case 'Need Update':
+                return 30;
+            default:
+                return 20;
+        }
+    };
+
+    useEffect(() => {
+        const syncUser = () => setCurrentUser(authService.getUser());
+        // Keep in sync when auth changes in another tab/window.
+        window.addEventListener('storage', syncUser);
+        // Also sync on focus (some browsers don't fire storage in same tab).
+        window.addEventListener('focus', syncUser);
+        return () => {
+            window.removeEventListener('storage', syncUser);
+            window.removeEventListener('focus', syncUser);
+        };
+    }, []);
 
     useEffect(() => {
         if (isHODOrAdmin || isLecturer) {
             setLoading(false);
             return;
         }
-        const fetchTeam = async () => {
+        const fetchData = async () => {
             try {
-                const myTeam = await teamService.getMyTeam();
-                setTeam(myTeam);
+                const [myTeamResult, thesesResult, notifsResult] = await Promise.allSettled([
+                    teamService.getMyTeam(),
+                    thesisService.getMyTheses(),
+                    notificationService.getNotifications(1, 5),
+                ]);
+                if (myTeamResult.status === 'fulfilled') setTeam(myTeamResult.value);
+                if (thesesResult.status === 'fulfilled' && thesesResult.value.length > 0) {
+                    setMyThesis(thesesResult.value[0]);
+                }
+                if (notifsResult.status === 'fulfilled') {
+                    setRecentNotifs(notifsResult.value.items ?? []);
+                }
             } catch (error) {
-                console.error("Failed to fetch team", error);
+                console.error('Failed to fetch homepage data', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        void fetchTeam();
-    }, [isHODOrAdmin, isLecturer]);
+        void fetchData();
+    }, [isHODOrAdmin, isLecturer, currentUser?.email]);
 
     // Generate Team Display Data
     const getTeamDisplay = () => {
@@ -60,14 +106,42 @@ const Homepage = () => {
     };
 
     const displayMembers = getTeamDisplay();
-
-    // Mock Data for Recent Activity
-    const activities = [
-        { id: 1, title: 'Mentor Invitation Received', desc: "Dr. Sarah Smith invited you to 'AI in Healthcare'", time: '2 HOURS AGO', color: 'bg-orange-500' },
-        { id: 2, title: 'System Update', desc: 'Phase 1 registration is now officially open for all students.', time: '5 HOURS AGO', color: 'bg-gray-400' },
-        { id: 3, title: 'Topic Approved', desc: "The topic 'Blockchain for Supply Chain' was just added.", time: 'YESTERDAY', color: 'bg-gray-400' },
-        { id: 4, title: 'Welcome', desc: 'You have successfully logged into the Capstone Portal.', time: '2 DAYS AGO', color: 'bg-gray-400' },
+    const thesisProgress = getThesisProgress(myThesis?.status);
+    const unreadNotifCount = recentNotifs.filter((x) => !x.isRead).length;
+    const hasFullTeam = Boolean(team && team.memberCount >= 5);
+    const hasMentor = Boolean(team && (team.mentorId || team.mentorEmail || team.mentorId2 || team.mentor2Email));
+    const hasTeamThesis = Boolean(myThesis || team?.topicId);
+    const isThesisRegistered = myThesis?.status === 'Registered';
+    const journeyMilestones = [
+        {
+            id: 'login',
+            title: 'Login to system',
+            desc: 'Account access is active and ready.',
+            done: Boolean(currentUser),
+        },
+        {
+            id: 'team',
+            title: 'Team has enough members',
+            desc: 'Your team reached 5/5 members.',
+            done: hasFullTeam,
+        },
+        {
+            id: 'mentor-thesis',
+            title: 'Team has mentor and thesis',
+            desc: 'Mentor assignment and thesis proposal are available.',
+            done: hasMentor && hasTeamThesis,
+        },
+        {
+            id: 'registered',
+            title: 'Thesis registered',
+            desc: 'Proposal is fully registered in workflow.',
+            done: isThesisRegistered,
+        },
     ];
+    const doneMilestones = journeyMilestones.filter((m) => m.done).length;
+    const allJourneyDone = doneMilestones === journeyMilestones.length;
+    const nextMilestone = journeyMilestones.find((m) => !m.done);
+
 
     if (isHODOrAdmin) {
         return <AdminDashboard />;
@@ -78,67 +152,102 @@ const Homepage = () => {
     }
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 fadein animation-duration-500">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-8 px-2 pb-8 pt-6 lg:grid-cols-12 fadein animation-duration-500">
             {/* Main Content Column */}
-            <div className="lg:col-span-3 space-y-8 pt-10">
-                {/* Dashboard Stats Section */}
-                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center gap-8 animate-fadein">
-                    <div className="relative w-40 h-40 flex-shrink-0">
-                        {/* Circular Graph Implementation */}
+            <div className="space-y-8 lg:col-span-8 xl:col-span-9">
+                {/* Thesis Progress - real API data */}
+                <div className="animate-fadein rounded-3xl border border-gray-100 bg-white p-6 shadow-[0_12px_28px_rgba(15,23,42,0.06)] md:p-7">
+                    <div className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
+                    <div className="relative mx-auto h-36 w-36 shrink-0 md:mx-0 md:h-40 md:w-40">
                         <svg viewBox="0 0 36 36" className="w-full h-full transform -rotate-90">
-                            {/* Background Circle */}
-                            <path className="text-gray-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.8" />
-                            {/* Progress Circle (75%) */}
-                            <path className="text-orange-500 drop-shadow-md" strokeDasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" />
+                            <path className="text-gray-100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.6" />
+                            {(() => {
+                                return <path className="text-orange-500" strokeDasharray={`${thesisProgress}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3.6" strokeLinecap="round" />;
+                            })()}
                         </svg>
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                            <span className="text-3xl font-bold text-gray-800">75%</span>
-                            <span className="block text-[10px] text-gray-400 font-bold tracking-wider uppercase">Complete</span>
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                            {myThesis ? (
+                                <>
+                                    <span className="text-3xl font-bold text-gray-800">
+                                        {`${thesisProgress}%`}
+                                    </span>
+                                    <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">Complete</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-2xl font-bold text-gray-400">—</span>
+                                    <span className="block text-[10px] font-bold uppercase tracking-wider text-gray-400">No Thesis</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    <div className="flex-1 w-full ">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">Thesis Progress</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-semibold text-gray-600">Research Phase</span>
-                                    <span className="font-bold text-gray-800">100%</span>
-                                </div>
-                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-500 w-full rounded-full"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-semibold text-gray-600">Documentation</span>
-                                    <span className="font-bold text-gray-800">60%</span>
-                                </div>
-                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-400 w-[60%] rounded-full"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-semibold text-gray-600">Implementation</span>
-                                    <span className="font-bold text-gray-800">40%</span>
-                                </div>
-                                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-300 w-[40%] rounded-full"></div>
-                                </div>
-                            </div>
+                    <div className="w-full">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <h2 className="text-xl font-bold text-gray-900">Thesis Progress</h2>
+                            {myThesis && (
+                                <Tag
+                                    value={myThesis.status}
+                                    severity="warning"
+                                    className="rounded-full px-3 py-1 text-[10px] tracking-wide shadow-sm"
+                                />
+                            )}
                         </div>
+                        {myThesis ? (
+                            <>
+                                <p className="mb-4 max-w-2xl truncate text-sm text-gray-600" title={myThesis.title}>{myThesis.title}</p>
+                                <div className="space-y-3 rounded-2xl border border-gray-100 bg-gray-50/70 p-4">
+                                    <div>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-semibold text-gray-600">Status</span>
+                                            <span className="font-bold text-orange-600">{`${thesisProgress}%`}</span>
+                                        </div>
+                                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200/80">
+                                            <div className="h-full rounded-full bg-linear-to-r from-orange-400 via-orange-500 to-amber-500 transition-all duration-500" style={{ width: `${thesisProgress}%` }} />
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2 text-sm md:grid-cols-2">
+                                        <span className="font-semibold text-gray-600">Mentor 1</span>
+                                        <span className="font-bold text-gray-700 md:text-right">{myThesis.mentorEmail1 ?? 'Not assigned'}</span>
+                                    </div>
+                                    <div className="grid gap-2 text-sm md:grid-cols-2">
+                                        <span className="font-semibold text-gray-600">Mentor 2</span>
+                                        <span className="font-bold text-gray-700 md:text-right">{myThesis.mentorEmail2 ?? 'Not assigned'}</span>
+                                    </div>
+                                </div>
+                                <Button label="View Thesis" icon="pi pi-arrow-right" iconPos="right" size="small" severity="warning" className="mt-5 rounded-xl px-5 font-semibold shadow-sm" onClick={() => navigate('/my-thesis')} />
+                            </>
+                        ) : (
+                            <div className="mt-2 rounded-2xl border border-dashed border-gray-200 bg-gray-50/80 p-4">
+                                <p className="text-sm text-gray-500">You do not have a thesis yet.</p>
+                                <Button label="Propose a Thesis" icon="pi pi-plus" size="small" severity="warning" className="mt-3 w-fit rounded-xl px-4 font-semibold shadow-sm" onClick={() => navigate('/propose-thesis')} />
+                            </div>
+                        )}
                     </div>
+                </div>
                 </div>
 
                 {/* My Team Section */}
-                <div>
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <i className="pi pi-users text-orange-500"></i> My Team {team && <span className="text-gray-400 font-normal text-sm">({team.teamName})</span>}
-                    </h3>
-                    <span className="text-sm text-gray-500 font-medium">{team ? team.memberCount : 0} / 5 Members</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-gray-800">
+                                <i className="pi pi-users text-orange-500"></i> My Team {team && <span className="text-sm font-normal text-gray-400">({team.teamName})</span>}
+                            </h3>
+                            <span className="text-sm font-medium text-gray-500">{team ? team.memberCount : 0} / 5 Members</span>
+                        </div>
+                        <Button
+                            label="Open Team Space"
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            size="small"
+                            outlined
+                            severity="warning"
+                            className="rounded-xl"
+                            onClick={() => navigate('/teams/team')}
+                        />
+                    </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {loading ? (
                         // Loading Skeletons
                         Array(5).fill(0).map((_, i) => (
@@ -166,7 +275,7 @@ const Homepage = () => {
                             // Check if it's a real member or empty slot
                             if ('isEmpty' in member) {
                                 return (
-                                    <div key={`empty-${index}`} className="bg-white p-4 rounded-2xl border border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50 flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer"
+                                    <div key={`empty-${index}`} className="bg-white/95 p-4 rounded-2xl border border-dashed border-gray-300 hover:border-orange-300 hover:bg-orange-50/50 flex flex-col items-center justify-center text-center h-48 transition-all duration-300 group cursor-pointer shadow-sm hover:shadow-md"
                                         onClick={() => setIsInviteModalOpen(true)}>
                                         <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3 text-gray-400 group-hover:bg-orange-100 group-hover:text-orange-500 transition-colors">
                                             <i className="pi pi-plus text-xl"></i>
@@ -189,7 +298,7 @@ const Homepage = () => {
                                 // Render Real Member
                                 const isMe = member.email === currentUser?.email;
                                 return (
-                                    <div key={member.studentId} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center h-48 transition-all duration-300 hover:shadow-md cursor-pointer"
+                                    <div key={member.studentId} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center h-48 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
                                         onClick={() => navigate('/teams/team')}>
                                         <Avatar
                                             image={member.avatar || "https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png"}
@@ -207,75 +316,130 @@ const Homepage = () => {
                         })
                     )}
                 </div>
+                </section>
 
                 {/* Project Topics Section */}
-                <div>
+                <section className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i className="pi pi-briefcase text-orange-500"></i> Project Topics
+                        <i className="pi pi-briefcase text-orange-500"></i> Workspace
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Browse Topics */}
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        {/* Team Topic / Thesis List */}
+                        <div onClick={() => navigate(hasTeamThesis ? '/my-thesis' : '/thesis')} className="group flex min-h-[220px] flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
                             <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
-                                <i className="pi pi-search text-xl"></i>
+                                <i className={`pi ${hasTeamThesis ? 'pi-bookmark' : 'pi-search'} text-xl`}></i>
                             </div>
-                            <h4 className="font-bold text-gray-800 mb-2">Browse Topics</h4>
-                            <p className="text-sm text-gray-500 leading-relaxed">Explore 150+ pre-approved university projects.</p>
+                            <h4 className="font-bold text-gray-800 mb-2">{hasTeamThesis ? 'View Team Topic' : 'Browse Thesis List'}</h4>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                                {hasTeamThesis
+                                    ? 'Open your current team thesis and review the latest progress.'
+                                    : 'Explore available thesis topics and choose one that fits your team.'}
+                            </p>
+                            <Tag
+                                value={hasTeamThesis ? 'ACTIVE TOPIC' : 'DISCOVER'}
+                                severity={hasTeamThesis ? 'success' : 'info'}
+                                className="mt-auto text-[10px] px-2 py-0.5 rounded-full"
+                            />
                         </div>
 
-                        {/* Mentor Invites */}
-                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group relative">
+                        {/* Team Workspace */}
+                        <div onClick={() => navigate(team ? '/teams/team' : '/teams')} className="group relative flex min-h-[220px] flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
+                            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
+                                <i className="pi pi-users text-xl"></i>
+                            </div>
+                            <h4 className="font-bold text-gray-800 mb-2">{team ? 'Team Workspace' : 'Create or Join Team'}</h4>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                                {team
+                                    ? 'Manage members, invitations, and collaboration inside your team space.'
+                                    : 'Create a new team or join an existing one to start your project journey.'}
+                            </p>
+                            <Tag
+                                value={team ? `${team.memberCount}/5 MEMBERS` : 'TEAM REQUIRED'}
+                                severity={team ? 'warning' : 'secondary'}
+                                className="mt-auto text-[10px] px-2 py-0.5 rounded-full"
+                            />
+                        </div>
+
+                        {/* Notifications Center */}
+                        <div onClick={() => navigate('/notifications')} className="group relative flex min-h-[220px] flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer">
                             <div className="absolute top-6 right-6">
-                                <Badge value="3" severity="danger" className="text-xs"></Badge>
+                                <Badge value={String(unreadNotifCount)} severity={unreadNotifCount > 0 ? 'danger' : 'info'} className="text-xs" />
                             </div>
                             <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
-                                <i className="pi pi-envelope text-xl"></i>
+                                <i className="pi pi-bell text-xl"></i>
                             </div>
-                            <h4 className="font-bold text-gray-800 mb-2">Mentor Invites</h4>
-                            <p className="text-sm text-gray-500 leading-relaxed">View invitations from potential faculty mentors.</p>
-                        </div>
-
-                        {/* Propose Topic */}
-                        <div onClick={() => navigate('/propose-thesis')} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-                            <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 text-gray-600 group-hover:bg-orange-50 group-hover:text-orange-500 transition-colors">
-                                <i className="pi pi-plus-circle text-xl"></i>
-                            </div>
-                            <h4 className="font-bold text-gray-800 mb-2">Propose Topic</h4>
-                            <p className="text-sm text-gray-500 leading-relaxed mb-3">Submit your own project idea for approval.</p>
-                            <Tag value="PENDING" severity="warning" className="text-[10px] px-2 py-0.5 rounded-full"></Tag>
+                            <h4 className="font-bold text-gray-800 mb-2">Notification Center</h4>
+                            <p className="text-sm text-gray-500 leading-relaxed mb-3">
+                                Track approvals, team updates, and mentor responses in one place.
+                            </p>
+                            <Tag value={unreadNotifCount > 0 ? 'NEW UPDATES' : 'UP TO DATE'} severity={unreadNotifCount > 0 ? 'danger' : 'success'} className="mt-auto text-[10px] px-2 py-0.5 rounded-full" />
                         </div>
                     </div>
-                </div>
+                </section>
             </div>
 
             {/* Sidebar Column */}
-            <div className="col-span-1 space-y-8">
-                {/* Recent Activity */}
-                <div className="bg-gray-50/50 p-6 rounded-3xl">
-                    <h3 className="text-lg font-bold text-gray-800 mb-6">Recent Activity</h3>
-                    <div className="relative border-l-2 border-gray-200 ml-3 space-y-8 pl-6 pb-2">
-                        {activities.map((activity) => (
-                            <div key={activity.id} className="relative">
-                                <span className={`absolute -left-[31px] top-1 w-3 h-3 rounded-full border-2 border-white ${activity.color} shadow-sm`}></span>
-                                <h5 className="font-bold text-sm text-gray-800 mb-1">{activity.title}</h5>
-                                <p className="text-xs text-gray-500 mb-2 leading-relaxed">{activity.desc}</p>
-                                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">{activity.time}</span>
+            <div className="space-y-8 lg:col-span-4 xl:col-span-3 lg:sticky lg:top-20 lg:self-start">
+                {/* Progress Journey */}
+                <div className="rounded-3xl border border-gray-100 bg-linear-to-b from-slate-50 to-white p-6 shadow-sm">
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-gray-800">Progress Journey</h3>
+                        <Tag
+                            value={allJourneyDone ? 'All Done' : `${doneMilestones}/4 Done`}
+                            severity={allJourneyDone ? 'success' : 'warning'}
+                            className="rounded-full px-3 py-1 text-[10px]"
+                        />
+                    </div>
+                    <div className="relative space-y-4">
+                        <span className="absolute bottom-5 left-[11px] top-3 block w-px bg-gray-200" />
+                        {journeyMilestones.map((milestone) => (
+                            <div key={milestone.id} className="flex items-start gap-3">
+                                <div className="relative z-10 mt-0.5 bg-slate-50">
+                                    <div className={`flex h-6 w-6 items-center justify-center rounded-full border text-[11px] ${milestone.done ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-gray-300 bg-white text-gray-400'}`}>
+                                        <i className={`pi ${milestone.done ? 'pi-check' : 'pi-circle'}`} />
+                                    </div>
+                                </div>
+                                <div className="flex-1 pb-3">
+                                    <p className={`text-sm font-semibold ${milestone.done ? 'text-gray-800' : 'text-gray-600'}`}>{milestone.title}</p>
+                                    <p className="mt-0.5 text-xs text-gray-500">{milestone.desc}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
-                    <Button label="View All Activity" className="w-full mt-6 bg-gray-200 text-gray-700 border-none hover:bg-gray-300 font-bold text-sm py-3 rounded-xl transition-colors" />
+                    <Button
+                        label={allJourneyDone ? 'View Thesis Detail' : 'Continue Journey'}
+                        className="mt-4 w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50"
+                        onClick={() => navigate(allJourneyDone ? '/my-thesis' : '/teams')}
+                    />
                 </div>
 
-                {/* Pro Tip Card */}
-                <div className="bg-orange-50 border border-orange-100 p-6 rounded-3xl">
-                    <div className="flex items-center gap-2 mb-3 text-orange-600 font-bold">
-                        <i className="pi pi-lightbulb text-xl"></i>
-                        <span>Pro Tip</span>
+                {/* Focus Card */}
+                {showCoachCard && (
+                    <div className="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-sm">
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 font-bold text-blue-700">
+                                <i className="pi pi-compass text-lg"></i>
+                                <span>Focus Recommendation</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowCoachCard(false)}
+                                className="rounded-lg px-2 py-1 text-xs font-semibold text-gray-500 hover:bg-white hover:text-gray-700"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                        {allJourneyDone ? (
+                            <p className="text-sm leading-relaxed text-gray-600">
+                                Great job. All milestone gates are complete. Keep monitoring notifications for reviewer feedback and final updates.
+                            </p>
+                        ) : (
+                            <p className="text-sm leading-relaxed text-gray-600">
+                                Next best action: <span className="font-semibold text-gray-800">{nextMilestone?.title}</span>. Complete this step to unlock the next stage faster.
+                            </p>
+                        )}
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                        Teams with a clear project proposal are <span className="font-bold text-orange-600">40% more likely</span> to get their first-choice mentor. Draft your proposal early!
-                    </p>
-                </div>
+                )}
             </div>
             {team && (
                 <InviteMemberModal

@@ -6,7 +6,9 @@ import { NotificationType, notificationTypeConfig } from '../../types/notificati
 const formatNotificationTimestamp = (createdAt?: string): string => {
   if (!createdAt) return '';
 
-  const date = new Date(createdAt);
+  // Append 'Z' to ensure the browser treats the timestamp as UTC if missing
+  const dateString = createdAt.endsWith('Z') ? createdAt : `${createdAt}Z`;
+  const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return '';
 
   const diffMs = Date.now() - date.getTime();
@@ -77,7 +79,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       case NotificationType.MentorChange:
         return {
           label: 'View Details',
-          onClick: () => navigate('/home'),
+          onClick: () => navigate('/mentor-invitations'),
         };
       case NotificationType.ChecklistUpdate:
         return {

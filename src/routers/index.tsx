@@ -78,6 +78,13 @@ const AppRouter = () => {
         </Route>
       </Route>
 
+      {/* Student-only Routes */}
+      <Route element={<ProtectedRoute allowedRoles={["Student"]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/teams" element={<TeamCreate />} />
+        </Route>
+      </Route>
+
       {/* General Routes - Restrict Admin from accessing these */}
       <Route
         element={
@@ -85,7 +92,6 @@ const AppRouter = () => {
         }
       >
         <Route element={<MainLayout />}>
-          <Route path="/teams" element={<TeamCreate />} />
           <Route path="/teams/team" element={<TeamDetail />} />
           <Route path="/teams/:teamId" element={<TeamDetail />} />
           <Route path="/thesis" element={<ThesisPage />} />
@@ -109,11 +115,6 @@ const AppRouter = () => {
             }
           />
           <Route path="/propose-thesis" element={<ProposeThesisPage />} />
-          <Route
-            path="/mentor-invitations"
-            element={<MentorInvitationsPage />}
-          />
-          <Route path="/teams/my-teams" element={<MentorTeamsPage />} />
           <Route
             path="/notifications"
             element={
@@ -143,6 +144,14 @@ const AppRouter = () => {
             <Route index element={<AISettingsPage />} />
             <Route path="api-keys" element={<AIApiKeysManagerPage />} />
           </Route>
+        </Route>
+      </Route>
+
+      {/* Mentor Routes - Lecturer and HOD only */}
+      <Route element={<ProtectedRoute allowedRoles={["Lecturer", "HOD"]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/mentor-invitations" element={<MentorInvitationsPage />} />
+          <Route path="/teams/my-teams" element={<MentorTeamsPage />} />
         </Route>
       </Route>
     </Routes>
