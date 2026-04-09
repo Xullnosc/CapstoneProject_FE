@@ -246,7 +246,7 @@ const Header = () => {
 
             {/* Center Section: Dynamic Navigation & Action Button (Tablet/Desktop) */}
             {user?.roleName !== 'Admin' && (
-                <div className="hidden sm:flex items-center gap-2 lg:gap-4 xl:gap-6 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="hidden sm:flex items-center gap-1.5 lg:gap-2 xl:gap-2.5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                     {(() => {
                         interface NavItem {
                             id: string;
@@ -301,7 +301,7 @@ const Header = () => {
                                 }`}
                             >
                                 {item.id === 'fpt-logo' ? (
-                                    <img src={item.icon} alt="FPT" className="h-6 lg:h-8 w-auto min-w-[80px] lg:min-w-[100px] object-contain" />
+                                    <img src={item.icon} alt="FPT" className="h-6 lg:h-7 w-auto min-w-[60px] lg:min-w-[80px] object-contain" />
                                 ) : (
                                     <div className="relative">
                                         <i className={`${item.icon} text-xl`}></i>
@@ -310,7 +310,7 @@ const Header = () => {
                                         )}
                                     </div>
                                 )}
-                                {item.id !== 'fpt-logo' && <span className="hidden xl:block">{item.label}</span>}
+                                {item.id !== 'fpt-logo' && <span className="hidden xl:block text-xs font-semibold">{item.label}</span>}
                             </div>
                         );
 
@@ -348,7 +348,7 @@ const Header = () => {
                     <nav className="flex items-center gap-4 lg:gap-6">
                         <div onClick={() => navigate('/home')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname === '/home' || location.pathname === '/' ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                             <i className="pi pi-home text-xl"></i>
-                            <span className="hidden lg:block whitespace-nowrap">Dashboard</span>
+                            <span className="hidden 2xl:block whitespace-nowrap">Dashboard</span>
                         </div>
                         {/* Admin specific links already handled in navItems if we wanted, 
                             but currently simplified HOD view is only for Admin role here now */}
@@ -356,23 +356,23 @@ const Header = () => {
                             <>
                                 <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                                     <i className="pi pi-id-card text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">HOD Accounts</span>
+                                    <span className="hidden 2xl:block whitespace-nowrap">HOD Accounts</span>
                                 </div>
                                 <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-history text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">Access Logs</span>
+                                    <span className="hidden 2xl:block whitespace-nowrap">Access Logs</span>
                                 </div>
                                 <div onClick={() => navigate('/admin/error-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/error-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-exclamation-triangle text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">Error Logs</span>
+                                    <span className="hidden 2xl:block whitespace-nowrap">Error Logs</span>
                                 </div>
                                 <div onClick={() => navigate('/admin/system-settings')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-cog text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">System Settings</span>
+                                    <span className="hidden 2xl:block whitespace-nowrap">System Settings</span>
                             </div>
                                 <div onClick={() => navigate('/admin/system-parameters')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/system-parameters') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                                     <i className="pi pi-server text-xl"></i>
-                                    <span className="hidden lg:block whitespace-nowrap">System Config</span>
+                                    <span className="hidden 2xl:block whitespace-nowrap">System Config</span>
                                 </div>
                             </>
                         )}
@@ -381,7 +381,7 @@ const Header = () => {
             )}
 
             {/* Right Section: User Profile */}
-            <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
                 {user && (
                     <NotificationDropdown 
                         unreadCount={unreadCount} 
@@ -397,7 +397,7 @@ const Header = () => {
                 <Menu as="div" className="relative">
                     <MenuButton className="flex items-center gap-3 rounded-full hover:bg-gray-50 transition-colors p-1 pr-2 outline-none cursor-pointer">
                         <div className="text-right hidden sm:block">
-                            <div className="text-sm font-bold text-gray-800">
+                            <div className="text-sm font-bold text-gray-800 line-clamp-1">
                                 {(() => {
                                     const name = authService.getUser()?.fullName || 'User';
                                     const words = name.trim().split(/\s+/);
@@ -405,7 +405,7 @@ const Header = () => {
                                     return `${words[words.length - 2]} ${words[words.length - 1]}`;
                                 })()}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 hidden 2xl:block">
                                 {authService.getUser()?.roleName || 'Student'}
                             </div>
                         </div>

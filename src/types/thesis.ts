@@ -37,7 +37,7 @@ export interface ThesisHistory {
   thesisId: string;
   fileUrl: string | null;
   versionNumber: number;
-  note: string | null;
+  description: string | null;
   uploadedBy: number;
   uploaderName: string | null;
   uploaderAvatar: string | null;

@@ -120,7 +120,7 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
               </button>
             )}
             {(canToggleLock || canCancel || canUploadRevision) && (
-              <div className="space-y-2">
+              <div className="mt-3 space-y-2.5 border-t border-slate-200/70 pt-3">
                 {canToggleLock && (
                   <PrimeButton
                     label={
@@ -134,15 +134,6 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
                     className={`p-button-sm w-full font-bold uppercase tracking-wider py-3 text-xs ${thesis.isLocked ? "p-button-success" : "p-button-warning"}`}
                   />
                 )}
-                {canCancel && (
-                  <PrimeButton
-                    label={cancelling ? "Cancelling..." : "Revoke Proposal"}
-                    icon="pi pi-trash"
-                    onClick={onCancel}
-                    loading={cancelling}
-                    className="p-button-sm p-button-danger p-button-text w-full font-bold uppercase tracking-wider text-xs"
-                  />
-                )}
                 {canUploadRevision && (
                   <PrimeButton
                     label="Submit Revision"
@@ -154,6 +145,17 @@ const CommentarySidebar: React.FC<CommentarySidebarProps> = ({
                       borderColor: "#f26f21",
                     }}
                   />
+                )}
+                {canCancel && (
+                  <div className="pt-1.5">
+                    <PrimeButton
+                      label={cancelling ? "Cancelling..." : "Revoke Proposal"}
+                      icon="pi pi-exclamation-triangle"
+                      onClick={onCancel}
+                      loading={cancelling}
+                      className="p-button-sm p-button-warning p-button-outlined w-full font-bold uppercase tracking-wider text-xs"
+                    />
+                  </div>
                 )}
               </div>
             )}

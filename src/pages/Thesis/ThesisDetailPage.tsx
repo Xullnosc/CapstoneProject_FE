@@ -543,12 +543,22 @@ const ThesisDetailPage = () => {
     // HOD can always see the button to (re)finalize/veto
     if (isHOD && isAvailableStatus) return true;
 
-    const hasReviewed = (reviewStatus?.reviewers ?? []).some(
-      (review) => review.userId === user.userId && review.decision
+    // Allow reviewers to submit again after author uploads a new revision.
+    // Backend returns the latest reviewer decision per user, so we must only block
+    // when the reviewer has already decided in the *current* revision iteration.
+    const lastIterationAt = thesis.upDate ?? thesis.updateDate;
+    const lastIterationMs = lastIterationAt ? new Date(lastIterationAt).getTime() : 0;
+
+    const hasReviewedInCurrentIteration = (reviewStatus?.reviewers ?? []).some(
+      (review) =>
+        review.userId === user.userId &&
+        !!review.decision &&
+        !!review.reviewedAt &&
+        new Date(review.reviewedAt).getTime() >= lastIterationMs
     );
 
     return (
-      isReviewer && isAvailableStatus && !hasReviewed
+      isReviewer && isAvailableStatus && !hasReviewedInCurrentIteration
     );
   }, [isReviewer, isHOD, reviewStatus?.reviewers, thesis, user, isMentor]);
 
@@ -569,7 +579,16 @@ const ThesisDetailPage = () => {
     Boolean(isLecturer || isHOD) &&
     thesis.userId === user?.userId,
   );
-  const canCancel = false;
+  const canCancel = Boolean(
+    thesis &&
+    isOwner &&
+    (
+      thesis.status === "Reviewing" ||
+      thesis.status === "Registered" ||
+      thesis.status === "On Mentor Inviting" ||
+      thesis.status === "Need Update"
+    ),
+  );
   const canUploadRevision = Boolean(
     isOwner && 
     (isStudent || isLecturer || isHOD) && 

@@ -92,7 +92,10 @@ const UpdateThesisModal = ({ visible, thesis, onHide, onSuccess }: Props) => {
         setIsUploading(true);
         try {
             // Endpoint: PUT /api/thesis/{thesisId}
-            await thesisService.updateThesisFile(thesis.thesisId, { file, note: note.trim() || undefined });
+            await thesisService.updateThesisFile(thesis.thesisId, {
+                file,
+                description: note.trim() || undefined
+            });
             Swal.fire({
                 icon: 'success',
                 title: 'Upload Successful',
@@ -222,7 +225,7 @@ const UpdateThesisModal = ({ visible, thesis, onHide, onSuccess }: Props) => {
                         onChange={(e) => setNote(e.target.value)}
                         rows={3}
                         placeholder="What changes did you make in this version?"
-                        className="w-full !rounded-2xl !border-slate-100 !bg-white focus:!ring-2 focus:!ring-orange-500/10 focus:!border-orange-500 transition-all text-sm resize-none shadow-sm shadow-slate-100"
+                        className="w-full rounded-2xl! border-slate-100! bg-white! focus:ring-2! focus:ring-orange-500/10! focus:border-orange-500! transition-all text-sm resize-none shadow-sm shadow-slate-100"
                         disabled={isUploading}
                     />
                 </div>
