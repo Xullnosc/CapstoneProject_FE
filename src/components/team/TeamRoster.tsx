@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
@@ -34,6 +34,15 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isInviteMentorModalOpen, setIsInviteMentorModalOpen] = useState(false);
     const navigate = useNavigate();
+    
+    // Logic: Leader always at top, then sort others by name
+    const sortedMembers = useMemo(() => {
+        return [...members].sort((a, b) => {
+            if (a.studentId === leaderId) return -1;
+            if (b.studentId === leaderId) return 1;
+            return a.fullName.localeCompare(b.fullName);
+        });
+    }, [members, leaderId]);
 
     const canViewProfile = (id?: number) => typeof id === 'number' && id > 0;
     const goToProfile = (id?: number) => {
@@ -74,7 +83,7 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {members.map(member => (
+                        {sortedMembers.map(member => (
                             <tr key={member.studentId} className="group hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div 

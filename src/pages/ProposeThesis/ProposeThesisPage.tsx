@@ -648,6 +648,16 @@ const ProposeThesisPage = () => {
 
                                         {/* Selected Students List */}
                                         <div className="flex flex-col gap-3">
+                                            {/* Logic: Leader always at top, then sort others by name */}
+                                            {(() => {
+                                                const sortedSelectedStudents = [...selectedStudents].sort((a, b) => {
+                                                    if (a.userId === leaderUserId) return -1;
+                                                    if (b.userId === leaderUserId) return 1;
+                                                    return a.fullName.localeCompare(b.fullName);
+                                                });
+
+                                                return (
+                                                    <>
                                             <div className="flex items-center justify-between mb-1">
                                                 <h4 className="text-[11px] font-black text-[#f97415] uppercase tracking-[0.15em]">Selected Members ({selectedStudents.length})</h4>
                                                 {selectedStudents.length > 0 && !leaderUserId && (
@@ -659,7 +669,7 @@ const ProposeThesisPage = () => {
                                             </div>
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {selectedStudents.map((stu) => (
+                                                {sortedSelectedStudents.map((stu) => (
                                                     <div 
                                                         key={stu.userId} 
                                                         className={`group relative flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl ${
@@ -729,6 +739,9 @@ const ProposeThesisPage = () => {
                                                     </div>
                                                 )}
                                             </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 )}
@@ -739,12 +752,14 @@ const ProposeThesisPage = () => {
                         {/* Title Input */}
                         <div className="flex flex-col gap-2">
                             <label htmlFor="title" className="font-semibold text-gray-700">Display Title <span className="text-red-500">*</span></label>
-                            <InputText
+                            <InputTextarea
                                 id="title"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Enter a public display title"
-                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                rows={1}
+                                autoResize
+                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
                             />
                         </div>
 
@@ -752,24 +767,28 @@ const ProposeThesisPage = () => {
                             {/* English Name */}
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="thesisNameEn" className="font-semibold text-gray-700">English Name <span className="text-red-500">*</span></label>
-                                <InputText
+                                <InputTextarea
                                     id="thesisNameEn"
                                     value={thesisNameEn}
                                     onChange={(e) => setThesisNameEn(e.target.value)}
                                     placeholder="Official English Title"
-                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                    rows={1}
+                                    autoResize
+                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
                                 />
                             </div>
 
                             {/* Vietnamese Name */}
                             <div className="flex flex-col gap-2">
                                 <label htmlFor="thesisNameVi" className="font-semibold text-gray-700">Vietnamese Name <span className="text-red-500">*</span></label>
-                                <InputText
+                                <InputTextarea
                                     id="thesisNameVi"
                                     value={thesisNameVi}
                                     onChange={(e) => setThesisNameVi(e.target.value)}
                                     placeholder="Official Vietnamese Title"
-                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                    rows={1}
+                                    autoResize
+                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
                                 />
                             </div>
                         </div>
