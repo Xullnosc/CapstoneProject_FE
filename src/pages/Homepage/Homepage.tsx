@@ -91,8 +91,14 @@ const Homepage = () => {
         const members: (TeamMember | { isEmpty: true })[] = [];
 
         if (team) {
-            // Add existing members
-            team.members.forEach(member => {
+            // Sort existing members: Leader first, then by fullName
+            const sortedMembers = [...team.members].sort((a, b) => {
+                if (a.role === 'Leader') return -1;
+                if (b.role === 'Leader') return 1;
+                return a.fullName.localeCompare(b.fullName);
+            });
+            
+            sortedMembers.forEach(member => {
                 members.push(member);
             });
         }
@@ -206,13 +212,13 @@ const Homepage = () => {
                                             <div className="h-full rounded-full bg-linear-to-r from-orange-400 via-orange-500 to-amber-500 transition-all duration-500" style={{ width: `${thesisProgress}%` }} />
                                         </div>
                                     </div>
-                                    <div className="grid gap-2 text-sm md:grid-cols-2">
+                                    <div className="flex justify-between text-sm">
                                         <span className="font-semibold text-gray-600">Mentor 1</span>
-                                        <span className="font-bold text-gray-700 md:text-right">{myThesis.mentorEmail1 ?? 'Not assigned'}</span>
+                                        <span className="font-bold text-gray-700">{myThesis.mentorName1 || 'Not assigned'}</span>
                                     </div>
-                                    <div className="grid gap-2 text-sm md:grid-cols-2">
+                                    <div className="flex justify-between text-sm">
                                         <span className="font-semibold text-gray-600">Mentor 2</span>
-                                        <span className="font-bold text-gray-700 md:text-right">{myThesis.mentorEmail2 ?? 'Not assigned'}</span>
+                                        <span className="font-bold text-gray-700">{myThesis.mentorName2 || 'Not assigned'}</span>
                                     </div>
                                 </div>
                                 <Button label="View Thesis" icon="pi pi-arrow-right" iconPos="right" size="small" severity="warning" className="mt-5 rounded-xl px-5 font-semibold shadow-sm" onClick={() => navigate('/my-thesis')} />
