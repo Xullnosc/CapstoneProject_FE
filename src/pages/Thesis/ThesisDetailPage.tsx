@@ -582,7 +582,6 @@ const ThesisDetailPage = () => {
   const canToggleLock = Boolean(
     thesis &&
     thesis.status === "Published" &&
-    thesis.status !== "Cancelled" &&
     Boolean(isLecturer || isHOD) &&
     thesis.userId === user?.userId,
   );
@@ -595,14 +594,13 @@ const ThesisDetailPage = () => {
       thesis.status === "Registered" ||
       thesis.status === "On Mentor Inviting" ||
       thesis.status === "Need Update"
-    ) && thesis.status !== "Cancelled",
+    ),
   );
 
   const canUploadRevision = Boolean(
     isOwner && 
     (isStudent || isLecturer || isHOD) && 
-    thesis?.status === "Need Update" &&
-    thesis?.status !== "Cancelled"
+    thesis?.status === "Need Update"
   );
 
   if (loading) {
