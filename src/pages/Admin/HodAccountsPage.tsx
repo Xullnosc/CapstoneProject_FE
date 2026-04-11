@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Dialog } from 'primereact/dialog';
@@ -17,6 +18,7 @@ const CAMPUSES = [
 ];
 
 const HodAccountsPage = () => {
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [items, setItems] = useState<HodAccount[]>([]);
@@ -187,12 +189,20 @@ const HodAccountsPage = () => {
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">HOD Accounts</h1>
           <p className="text-gray-500 mt-2 font-medium">Manage administrative access for Department Heads.</p>
         </div>
-        <Button
-          label="New HOD Account"
-          icon="pi pi-user-plus"
-          className={styles.premiumButton}
-          onClick={openCreate}
-        />
+        <div className="flex items-center gap-3">
+          <Button
+            label="Promote from Lecturer Pool"
+            icon="pi pi-users"
+            className={styles.premiumButtonSecondary}
+            onClick={() => navigate('/lecturers')}
+          />
+          <Button
+            label="New HOD Account"
+            icon="pi pi-user-plus"
+            className={styles.premiumButton}
+            onClick={openCreate}
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
