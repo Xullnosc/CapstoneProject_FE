@@ -192,15 +192,17 @@ const LecturerManagementPage = () => {
                             />
                         </div>
 
-                        <div className="w-full md:w-64">
-                            <Dropdown
-                                value={selectedCampus}
-                                onChange={(e) => { setSelectedCampus(e.value); setPage(0); }}
-                                options={campuses}
-                                placeholder="Filter by Campus"
-                                className="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm"
-                            />
-                        </div>
+                        {isAdmin && (
+                            <div className="w-full md:w-64">
+                                <Dropdown
+                                    value={selectedCampus}
+                                    onChange={(e) => { setSelectedCampus(e.value); setPage(0); }}
+                                    options={campuses}
+                                    placeholder="Filter by Campus"
+                                    className="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm"
+                                />
+                            </div>
+                        )}
 
                     <div className="flex gap-4 w-full md:w-auto">
                         <div className="flex-1 md:flex-none px-8 py-3 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">

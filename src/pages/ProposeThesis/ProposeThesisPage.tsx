@@ -278,6 +278,8 @@ const ProposeThesisPage = () => {
             return;
         }
 
+        const isStaff = user?.roleName === 'Lecturer' || user?.roleName === 'HOD' || user?.roleName === 'Admin';
+
         setIsSubmitting(true);
         try {
             await thesisService.proposeThesis({
@@ -292,8 +294,8 @@ const ProposeThesisPage = () => {
                 isApplied,
                 isAppUsed,
                 authorId: isProposingForOther ? selectedLecturer?.userId : undefined,
-                memberIds: (isAssigningStudents && user?.roleName === 'Lecturer') ? selectedStudents.map(s => s.userId) : undefined,
-                leaderId: (isAssigningStudents && user?.roleName === 'Lecturer') ? (leaderUserId ?? undefined) : undefined
+                memberIds: (isAssigningStudents && isStaff) ? selectedStudents.map(s => s.userId) : undefined,
+                leaderId: (isAssigningStudents && isStaff) ? (leaderUserId ?? undefined) : undefined
             });
 
             Swal.fire({
@@ -536,8 +538,8 @@ const ProposeThesisPage = () => {
                             </div>
                         )}
 
-                        {/* Direct Student Assignment Section (Lecturer Only) */}
-                        {user?.roleName === 'Lecturer' && (
+                        {/* Direct Student Assignment Section (Staff Only) */}
+                        {(user?.roleName === 'Lecturer' || user?.roleName === 'HOD') && (
                             <div className="flex flex-col gap-4 p-6 bg-slate-50/50 rounded-2xl border border-slate-200 mb-6 shadow-sm">
                                 <div 
                                     className="flex items-start gap-3 group cursor-pointer transition-all"
@@ -963,13 +965,6 @@ const ProposeThesisPage = () => {
 
                         {/* Submit Actions */}
                         <div className="flex justify-end gap-4 border-t border-gray-100 pt-6 mt-2">
-                            <Button
-                                label="Cancel"
-                                type="button"
-                                severity="secondary"
-                                text
-                                className="px-6 py-3 rounded-xl font-bold"
-                            />
                             <Button
                                 label={isSubmitting ? "Submitting..." : "Submit Proposal"}
                                 type="submit"
