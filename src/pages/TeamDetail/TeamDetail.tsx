@@ -162,9 +162,14 @@ const TeamDetail: React.FC = () => {
     };
 
     const handleDisband = async () => {
+        const hasPendingThesis = team && ['Draft', 'On Mentor Inviting', 'Reviewing', 'Need Update'].includes(team.topicStatus || '');
+        const textMessage = hasPendingThesis 
+            ? "Since you have a pending proposal, your thesis will be cancelled. This action cannot be undone!"
+            : "This action cannot be undone!";
+
         const result = await Swal.fire({
             title: 'Disband Team?',
-            text: "This action cannot be undone!",
+            text: textMessage,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
