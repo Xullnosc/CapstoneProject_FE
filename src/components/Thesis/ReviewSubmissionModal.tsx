@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -26,20 +26,35 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
     const [checklists, setChecklists] = useState<Checklist[]>([]);
     const [checkedIds, setCheckedIds] = useState<number[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
+    const [aiReviewing, setAiReviewing] = useState(false);
+    const aiRunRef = useRef(0);
+
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const handleHide = () => {
+        aiRunRef.current += 1;
+        setAiReviewing(false);
+        onHide();
+    };
 
     useEffect(() => {
         if (visible) {
             fetchChecklists();
+        } else {
+            aiRunRef.current += 1;
+            setAiReviewing(false);
         }
     }, [visible]);
 
-    const fetchChecklists = async () => {
+    const fetchChecklists = async (): Promise<Checklist[]> => {
         setLoadingChecklists(true);
         try {
             const data = await thesisService.getChecklists();
             setChecklists(data);
+            return data;
         } catch (err) {
             console.error('Failed to fetch checklists:', err);
+            return [];
         } finally {
             setLoadingChecklists(false);
         }
@@ -80,7 +95,7 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
             });
             Swal.fire({ icon: 'success', title: 'Submitted', text: 'Your evaluation has been recorded.', timer: 2000, showConfirmButton: false });
             onSuccess();
-            onHide();
+            handleHide();
             // Reset
             setStatus(null);
             setComment('');
@@ -98,13 +113,91 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
         }
     };
 
+    const handleAiReview = async () => {
+        if (aiReviewing || loading || loadingChecklists || !thesisId) {
+            return;
+        }
+
+        const runId = ++aiRunRef.current;
+        setAiReviewing(true);
+
+        try {
+            let criteria = checklists;
+            if (!criteria.length) {
+                criteria = await fetchChecklists();
+            }
+
+            if (!criteria.length) {
+                Swal.fire({
+                    icon: "warning",
+                    title: "Checklist unavailable",
+                    text: "No checklist criteria found. Please add criteria before running AI review.",
+                });
+                return;
+            }
+
+            const preview = await thesisService.getAiReviewPreview(thesisId);
+            if (aiRunRef.current !== runId) return;
+
+            const checkedSet = new Set<number>(checkedIds);
+            for (const item of preview.checklist) {
+                if (item.checked) {
+                    checkedSet.add(item.checklistId);
+                }
+                if (aiRunRef.current !== runId) return;
+                setCheckedIds(Array.from(checkedSet));
+                await delay(250);
+            }
+
+            const aiFeedback = (preview.feedback || "").trim();
+            if (aiFeedback.length > 0) {
+                const currentComment = comment.trim();
+                const prefix = currentComment.length > 0 ? `${currentComment}\n\n` : "";
+                let typed = prefix;
+
+                for (const ch of aiFeedback) {
+                    if (aiRunRef.current !== runId) return;
+                    typed += ch;
+                    setComment(typed);
+                    await delay(25);
+                }
+            }
+
+            if (aiRunRef.current !== runId) return;
+
+            if (preview.suggestedDecision === "OK" || preview.suggestedDecision === "Consider") {
+                setStatus(preview.suggestedDecision);
+            }
+
+            if (preview.warnings?.length) {
+                Swal.fire({
+                    icon: "info",
+                    title: "AI review completed with warnings",
+                    text: preview.warnings.join("\n"),
+                });
+            }
+        } catch (err) {
+            console.error("AI review failed:", err);
+            Swal.fire({
+                icon: "error",
+                title: "AI review failed",
+                text: "Could not complete AI review. Any generated checks or text were kept.",
+            });
+        } finally {
+            if (aiRunRef.current === runId) {
+                setAiReviewing(false);
+            }
+        }
+    };
+
     const footer = (
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
             <Button
                 label="Cancel"
                 icon="pi pi-times"
-                onClick={onHide}
+                onClick={handleHide}
                 className="p-button-text p-button-secondary p-button-sm font-bold px-4"
+                disabled={loading}
             />
             <Button
                 label={loading ? "Submitting..." : "Submit Evaluation"}
@@ -131,15 +224,43 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                 </div>
             }
             visible={visible}
-            onHide={onHide}
+            onHide={handleHide}
             style={{ width: '95vw', maxWidth: '1400px' }}
             footer={footer}
             draggable={false}
             resizable={false}
             modal
             className="p-fluid shadow-2xl rounded-[2.5rem] overflow-hidden"
+            icons={
+                <Button 
+                    icon={aiReviewing ? "pi pi-spin pi-spinner" : "pi pi-sparkles"}
+                    label={aiReviewing ? "Reviewing..." : "AI Review"}
+                    className="p-button-sm font-bold text-orange-600 bg-orange-50 border border-orange-200 hover:bg-orange-100"
+                    style={{ marginRight: '0.5rem' }}
+                    tooltip="AI-assisted review"
+                    tooltipOptions={{ position: 'bottom' }}
+                    onClick={handleAiReview}
+                    disabled={loading || loadingChecklists || aiReviewing}
+                />
+            }
             pt={{
                 header: { className: 'p-6 border-b border-gray-100 bg-white' },
+                headerIcons: { className: 'flex items-center gap-2' },
+                closeButton: {
+                    style: {
+                        width: '2.5rem',
+                        minWidth: '2.5rem',
+                        height: '2.5rem',
+                        borderRadius: '50%',
+                        padding: '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }
+                },
+                closeButtonIcon: {
+                    style: { fontSize: '1.1rem' }
+                },
                 content: { className: 'p-6 bg-white overflow-hidden' },
                 mask: { className: 'backdrop-blur-sm bg-slate-900/40' }
             }}

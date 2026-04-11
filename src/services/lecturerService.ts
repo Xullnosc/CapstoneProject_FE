@@ -30,9 +30,9 @@ export interface PagedResult<T> {
 }
 
 export const lecturerService = {
-    getAllLecturers: async (page: number = 1, pageSize: number = 10, search?: string): Promise<PagedResult<Lecturer>> => {
+    getAllLecturers: async (page: number = 1, pageSize: number = 10, search?: string, campusId?: number): Promise<PagedResult<Lecturer>> => {
         const response = await api.get<PagedResult<Lecturer>>('/lecturer', {
-            params: { page, pageSize, search }
+            params: { page, pageSize, search, campusId }
         });
         return response.data;
     },
@@ -59,6 +59,12 @@ export const lecturerService = {
     
     toggleReviewerStatus: async (id: number, isReviewer: boolean): Promise<void> => {
         await api.put(`/Lecturer/toggle-reviewer/${id}`, isReviewer, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    },
+
+    toggleHod: async (id: number, isHod: boolean): Promise<void> => {
+        await api.put(`/Lecturer/toggle-hod/${id}`, isHod, {
             headers: { 'Content-Type': 'application/json' }
         });
     },

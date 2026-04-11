@@ -39,8 +39,8 @@ const AppRouter = () => {
     <Routes>
       <Route path="/" element={<Login />} />
 
-      {/* Semester Management - Only HOD (Admin removed) */}
-      <Route element={<ProtectedRoute allowedRoles={["HOD"]} />}>
+      {/* Semester Management - HOD & Admin */}
+      <Route element={<ProtectedRoute allowedRoles={["HOD", "Admin"]} />}>
         <Route element={<MainLayout />}>
           <Route path="/semesters" element={<SemesterDashboardPage />} />
           <Route path="/semesters/semester" element={<SemesterDetailPage />} />

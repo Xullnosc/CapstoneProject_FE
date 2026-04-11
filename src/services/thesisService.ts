@@ -218,10 +218,16 @@ export const thesisService = {
     return response.data;
   },
 
-  /** POST /thesis/:id/force-assign - HOD: force-assign thesis to a team */
   forceAssignThesis: async (id: string, teamId: number) => {
     const response = await api.post(`/thesis/${id}/force-assign`, { teamId });
     return response.data;
   },
+
+  /** GET /thesis/enterprises/search - Search previously registered enterprises */
+  searchEnterprises: async (query: string): Promise<string[]> => {
+    const response = await api.get<string[]>("/thesis/enterprises/search", { params: { query } });
+    return response.data;
+  },
+
 };
 

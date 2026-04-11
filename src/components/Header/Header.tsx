@@ -146,9 +146,13 @@ const Header = () => {
                         )}
                         {canManageHodAccounts && (
                             <>
-                                <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <div onClick={() => { navigate('/admin/hod'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-id-card text-xl"></i>
                                     <span>HOD Accounts</span>
+                                </div>
+                                <div onClick={() => { navigate('/lecturers'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/lecturers') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-users text-xl"></i>
+                                    <span>Lecturer Pool</span>
                                 </div>
                                 <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-history text-xl"></i>
@@ -357,6 +361,10 @@ const Header = () => {
                                 <div onClick={() => navigate('/admin/hod')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/hod') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
                                     <i className="pi pi-id-card text-xl"></i>
                                     <span className="hidden 2xl:block whitespace-nowrap">HOD Accounts</span>
+                                </div>
+                                <div onClick={() => navigate('/lecturers')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/lecturers') ? 'text-orange-600 bg-orange-50' : 'text-gray-500 hover:text-orange-600'}`}>
+                                    <i className="pi pi-users text-xl"></i>
+                                    <span className="hidden 2xl:block whitespace-nowrap">Lecturer Pool</span>
                                 </div>
                                 <div onClick={() => navigate('/admin/access-logs')} className={`flex items-center gap-2 font-semibold px-3 py-2 rounded-xl hover:bg-orange-50 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/admin/access-logs') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                     <i className="pi pi-history text-xl"></i>

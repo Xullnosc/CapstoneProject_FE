@@ -28,12 +28,34 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
     onDecline
 }) => {
     const [showTooltip, setShowTooltip] = useState(false);
+    const [isAccepting, setIsAccepting] = useState(false);
+    const [isDeclining, setIsDeclining] = useState(false);
 
     const teamInitials = invitation.teamCode
         ? invitation.teamCode.replace(/[^A-Z0-9]/gi, '').slice(0, 2).toUpperCase()
         : invitation.teamName.slice(0, 2).toUpperCase();
 
     const relativeTime = timeAgo(invitation.createdAt);
+
+    const handleAccept = async () => {
+        if (isAtMaxTeams || isProcessing) return;
+        setIsAccepting(true);
+        try {
+            await onAccept(invitation.invitationId);
+        } finally {
+            setIsAccepting(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        if (isProcessing) return;
+        setIsDeclining(true);
+        try {
+            await onDecline(invitation.invitationId);
+        } finally {
+            setIsDeclining(false);
+        }
+    };
 
     return (
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:shadow-md transition-shadow">
@@ -125,11 +147,11 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
 
                 {/* Decline */}
                 <button
-                    onClick={() => onDecline(invitation.invitationId)}
+                    onClick={handleDecline}
                     disabled={isProcessing}
                     className="border border-red-400 text-red-500 rounded-full px-5 py-2 text-sm font-medium hover:bg-red-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                    {isProcessing ? (
+                    {isDeclining ? (
                         <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
                     ) : (
                         'Decline'
@@ -143,7 +165,7 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
                     onMouseLeave={() => setShowTooltip(false)}
                 >
                     <button
-                        onClick={() => !isAtMaxTeams && !isProcessing && onAccept(invitation.invitationId)}
+                        onClick={handleAccept}
                         disabled={isAtMaxTeams || isProcessing}
                         className={`rounded-full px-5 py-2 text-sm font-bold transition-all shadow-sm
                             ${isAtMaxTeams || isProcessing
@@ -151,7 +173,7 @@ const MentorInvitationCard: React.FC<MentorInvitationCardProps> = ({
                                 : 'bg-[#f26f21] text-white hover:bg-[#d95d1a] shadow-orange-200/50 cursor-pointer active:scale-95'
                             }`}
                     >
-                        {isProcessing ? (
+                        {isAccepting ? (
                             <span className="material-symbols-outlined animate-spin text-base">progress_activity</span>
                         ) : (
                             '✓ Accept'
