@@ -126,9 +126,11 @@ const HodAccountsPage = () => {
       setCampusId(null);
       setIsUpsertOpen(false);
       await load(trimmed.search || undefined);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const message = err.response?.data?.message || err.message || 'Could not create/update HOD account.';
+      const axiosError = err as { response?: { data?: { message?: string } }; message?: string };
+      const message =
+        axiosError.response?.data?.message || axiosError.message || 'Could not create/update HOD account.';
       await toast('error', 'Failed', message);
     } finally {
       setIsSubmitting(false);
@@ -385,7 +387,7 @@ const HodAccountsPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="hod.name@fpt.edu.vn"
-                className="w-full !pl-11"
+                className="w-full pl-11!"
                 disabled={isSubmitting}
               />
             </div>
