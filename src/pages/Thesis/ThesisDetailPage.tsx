@@ -452,8 +452,8 @@ const ThesisDetailPage = () => {
            (user?.userId && (user.userId === thesis.teamMentorId1 || user.userId === thesis.teamMentorId2));
   }, [thesis, user]);
 
-  const canReplyToTimeline = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || isMentor);
-  const canComment = Boolean(isHOD || isReviewer || (isLecturer && isOwner) || isMentor);
+  const canReplyToTimeline = Boolean(thesis?.status !== "Cancelled" && (isHOD || isReviewer || (isLecturer && isOwner) || isMentor));
+  const canComment = Boolean(thesis?.status !== "Cancelled" && (isHOD || isReviewer || (isLecturer && isOwner) || isMentor));
 
   const handleAddReply = useCallback(
     async (eventId: number, body: string) => {
@@ -535,17 +535,15 @@ const ThesisDetailPage = () => {
     // Proposer cannot evaluate their own thesis
     if (thesis.userId === user.userId) return false;
 
-    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
-
     // Fix: Mentors cannot evaluate topics they mentor
     if (isMentor) return false;
 
-    // HOD can always see the button to (re)finalize/veto
-    if (isHOD && isAvailableStatus) return true;
+    const isHODDecisionStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update' || thesis.status === 'Published';
+    const isReviewerStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing';
+
+    if (thesis.status === 'Cancelled') return false;
 
     // Allow reviewers to submit again after author uploads a new revision.
-    // Backend returns the latest reviewer decision per user, so we must only block
-    // when the reviewer has already decided in the *current* revision iteration.
     const lastIterationAt = thesis.upDate ?? thesis.updateDate;
     const lastIterationMs = lastIterationAt ? new Date(lastIterationAt).getTime() : 0;
 
@@ -557,8 +555,10 @@ const ThesisDetailPage = () => {
         new Date(review.reviewedAt).getTime() >= lastIterationMs
     );
 
+    if (isHOD) return isHODDecisionStatus;
+
     return (
-      isReviewer && isAvailableStatus && !hasReviewedInCurrentIteration
+      isReviewer && isReviewerStatus && !hasReviewedInCurrentIteration
     );
   }, [isReviewer, isHOD, reviewStatus?.reviewers, thesis, user, isMentor]);
 
@@ -568,14 +568,21 @@ const ThesisDetailPage = () => {
     // HOD cannot finalize if they proposed the thesis or are leading the team
     if (thesis.userId === user.userId || isMentor) return false;
 
+    if (thesis.status === "Cancelled") return false;
+
     // HOD can finalize only in reviewing/need update statuses
-    const isAvailableStatus = thesis.status === 'Reviewing' || thesis.status === 'HOD Reviewing' || thesis.status === 'Need Update';
+    const isAvailableStatus =
+      thesis.status === "Reviewing" ||
+      thesis.status === "HOD Reviewing" ||
+      thesis.status === "Need Update" ||
+      thesis.status === "Published";
     return isAvailableStatus;
   }, [isHOD, reviewStatus, thesis, user, isMentor]);
 
   const canToggleLock = Boolean(
     thesis &&
     thesis.status === "Published" &&
+    thesis.status !== "Cancelled" &&
     Boolean(isLecturer || isHOD) &&
     thesis.userId === user?.userId,
   );
@@ -588,13 +595,14 @@ const ThesisDetailPage = () => {
       thesis.status === "Registered" ||
       thesis.status === "On Mentor Inviting" ||
       thesis.status === "Need Update"
-    ),
+    ) && thesis.status !== "Cancelled",
   );
 
   const canUploadRevision = Boolean(
     isOwner && 
     (isStudent || isLecturer || isHOD) && 
-    thesis?.status === "Need Update"
+    thesis?.status === "Need Update" &&
+    thesis?.status !== "Cancelled"
   );
 
   if (loading) {

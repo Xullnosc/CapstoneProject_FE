@@ -94,8 +94,16 @@ const HodAccountsPage = () => {
   };
 
   const handleCreateOrUpdate = async () => {
-    if (!trimmed.email || !trimmed.username || (!selected && !trimmed.password)) {
-      await toast('warning', 'Missing information', 'Please enter Email, Username, and Password.');
+    // Better validation
+    const missing = [];
+    if (!trimmed.fullName) missing.push('Full Name');
+    if (!trimmed.email) missing.push('Email');
+    if (!trimmed.campusId) missing.push('Campus');
+    if (!trimmed.username) missing.push('Username');
+    if (!selected && !trimmed.password) missing.push('Password');
+
+    if (missing.length > 0) {
+      await toast('warning', 'Missing information', `Please provide: ${missing.join(', ')}.`);
       return;
     }
 
@@ -118,9 +126,10 @@ const HodAccountsPage = () => {
       setCampusId(null);
       setIsUpsertOpen(false);
       await load(trimmed.search || undefined);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      await toast('error', 'Failed', (err as { message?: string })?.message ?? 'Could not create/update HOD account.');
+      const message = err.response?.data?.message || err.message || 'Could not create/update HOD account.';
+      await toast('error', 'Failed', message);
     } finally {
       setIsSubmitting(false);
     }

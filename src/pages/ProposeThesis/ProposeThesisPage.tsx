@@ -304,7 +304,8 @@ const ProposeThesisPage = () => {
                 text: 'Thesis proposal submitted successfully!',
                 confirmButtonColor: '#f97415'
             }).then(() => {
-                navigate(isHOD ? '/thesis' : '/my-thesis');
+                const targetPath = (isHOD && isProposingForOther) ? '/thesis' : '/my-thesis';
+                navigate(targetPath);
             });
 
             // Reset form
@@ -602,11 +603,11 @@ const ProposeThesisPage = () => {
                                                 placeholder="Type name, email or Student ID to add members..."
                                                 className="w-full"
                                                 appendTo="self"
-                                                inputClassName="w-full p-4 rounded-xl border-2 border-slate-100 hover:border-[#f97415] focus:border-[#f97415] outline-none transition-all shadow-sm bg-white"
+                                                inputClassName="w-full !p-3 !border-none outline-none bg-transparent shadow-none"
                                                 panelClassName="premium-autocomplete-panel"
                                                 pt={{
                                                     root: { className: 'w-full' },
-                                                    container: { className: 'w-full !border-none !p-0 !bg-transparent' },
+                                                    container: { className: 'w-full p-1 rounded-xl border border-slate-200 hover:border-[#f97415] focus-within:border-[#f97415] focus-within:ring-4 focus-within:ring-[#f97415]/5 transition-all bg-white shadow-sm' },
                                                     token: { style: { display: 'none' } },
                                                     inputToken: { className: 'w-full !m-0 !p-0' },
                                                     panel: { className: 'bg-white shadow-2xl border border-slate-100 rounded-2xl mt-2 overflow-hidden' },
@@ -761,38 +762,36 @@ const ProposeThesisPage = () => {
                                 placeholder="Enter a public display title"
                                 rows={1}
                                 autoResize
-                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
+                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-none focus:shadow-none resize-none"
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* English Name */}
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="thesisNameEn" className="font-semibold text-gray-700">English Name <span className="text-red-500">*</span></label>
-                                <InputTextarea
-                                    id="thesisNameEn"
-                                    value={thesisNameEn}
-                                    onChange={(e) => setThesisNameEn(e.target.value)}
-                                    placeholder="Official English Title"
-                                    rows={1}
-                                    autoResize
-                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
-                                />
-                            </div>
+                        {/* English Name */}
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="thesisNameEn" className="font-semibold text-gray-700">English Name <span className="text-red-500">*</span></label>
+                            <InputTextarea
+                                id="thesisNameEn"
+                                value={thesisNameEn}
+                                onChange={(e) => setThesisNameEn(e.target.value)}
+                                placeholder="Official English Title"
+                                rows={1}
+                                autoResize
+                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-none focus:shadow-none resize-none"
+                            />
+                        </div>
 
-                            {/* Vietnamese Name */}
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="thesisNameVi" className="font-semibold text-gray-700">Vietnamese Name <span className="text-red-500">*</span></label>
-                                <InputTextarea
-                                    id="thesisNameVi"
-                                    value={thesisNameVi}
-                                    onChange={(e) => setThesisNameVi(e.target.value)}
-                                    placeholder="Official Vietnamese Title"
-                                    rows={1}
-                                    autoResize
-                                    className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none resize-none"
-                                />
-                            </div>
+                        {/* Vietnamese Name */}
+                        <div className="flex flex-col gap-2">
+                            <label htmlFor="thesisNameVi" className="font-semibold text-gray-700">Vietnamese Name <span className="text-red-500">*</span></label>
+                            <InputTextarea
+                                id="thesisNameVi"
+                                value={thesisNameVi}
+                                onChange={(e) => setThesisNameVi(e.target.value)}
+                                placeholder="Official Vietnamese Title"
+                                rows={1}
+                                autoResize
+                                className="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-none focus:shadow-none resize-none"
+                            />
                         </div>
 
                         {/* Abbreviation & Classification Row */}
@@ -888,7 +887,11 @@ const ProposeThesisPage = () => {
                                         placeholder="Name of the partnering company"
                                         className="w-full"
                                         appendTo="self"
-                                        inputClassName="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
+                                        inputClassName="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all shadow-none focus:shadow-none"
+                                        loadingIcon={<></>}
+                                        pt={{
+                                            loadingIcon: { className: 'hidden', style: { display: 'none' } }
+                                        }}
                                     />
                                 </div>
                             )}

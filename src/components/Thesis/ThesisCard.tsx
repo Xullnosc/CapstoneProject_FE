@@ -141,23 +141,23 @@ const ThesisCard = ({
       </div>
 
       {/* Actions */}
-      <div className="px-6 pb-6 pt-2 flex flex-col sm:flex-row gap-3">
+      <div className="px-6 pb-6 pt-2 flex flex-col gap-3">
         <button
           onClick={() => navigate(`/thesis/${thesis.thesisId}`)}
-          className="flex-1 py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
+          className="w-full py-2.5 border-2 border-primary text-primary font-bold rounded-xl cursor-pointer hover:bg-orange-50 transition-colors text-sm"
         >
           View Details
         </button>
         {canUpload && (
           <button
             onClick={() => onUploadClick?.(thesis)}
-            className="flex-1 py-2.5 bg-primary text-white cursor-pointer font-bold rounded-xl hover:bg-primary/90 transition-colors text-sm"
+            className="w-full py-2.5 bg-primary text-white cursor-pointer font-bold rounded-xl hover:bg-primary/90 transition-colors text-sm"
           >
             Upload New
           </button>
         )}
         {canLock && thesis.status === "Published" && (
-          <div className="flex flex-1 items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:border-amber-200 transition-colors group/lock">
+          <div className="flex w-full items-center justify-between px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:border-amber-200 transition-colors group/lock">
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none mb-1">
                 Thesis Access

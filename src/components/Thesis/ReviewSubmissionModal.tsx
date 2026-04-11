@@ -337,7 +337,6 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                                                 }}
                                             />
                                             <label 
-                                                htmlFor={`item-${item.checklistId}`} 
                                                 className={`text-xs font-bold leading-relaxed cursor-pointer transition-colors ${checkedIds.includes(item.checklistId) ? 'text-orange-900' : 'text-slate-600'}`}
                                             >
                                                 {item.content}
