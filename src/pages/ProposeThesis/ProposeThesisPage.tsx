@@ -17,7 +17,6 @@ import { AxiosError } from 'axios';
 import type { ThesisForm } from '../../types/thesisForm';
 import { AutoComplete } from 'primereact/autocomplete';
 import type { AutoCompleteCompleteEvent } from 'primereact/autocomplete';
-import enterpriseData from '../../data/enterprises.json';
 import MemberAvatar from '../../components/team/MemberAvatar';
 
 const ProposeThesisPage = () => {
@@ -53,12 +52,13 @@ const ProposeThesisPage = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const searchEnterprise = (event: AutoCompleteCompleteEvent) => {
-        const query = event.query.toLowerCase();
-        const filtered = (enterpriseData as string[]).filter(item =>
-            item.toLowerCase().includes(query)
-        );
-        setFilteredEnterprises(filtered);
+    const searchEnterprise = async (event: AutoCompleteCompleteEvent) => {
+        try {
+            const results = await thesisService.searchEnterprises(event.query);
+            setFilteredEnterprises(results);
+        } catch (error) {
+            console.error("Failed to search enterprises", error);
+        }
     };
 
     const searchLecturers = async (event: AutoCompleteCompleteEvent) => {
@@ -887,7 +887,6 @@ const ProposeThesisPage = () => {
                                         className="w-full"
                                         appendTo="self"
                                         inputClassName="w-full p-3 rounded-xl border border-gray-300 hover:border-orange-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors shadow-none focus:shadow-none"
-                                        dropdown
                                     />
                                 </div>
                             )}
