@@ -158,20 +158,10 @@ const SemesterCard: FC<SemesterCardProps> = ({ semester }) => {
                     </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2 bg-white/70 backdrop-blur-md rounded-xl p-2 border border-white/60 shadow-sm">
-                    <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
-                        <span className="material-symbols-outlined text-[18px]">visibility</span> View
+                <div className="mt-4 bg-white/70 backdrop-blur-md rounded-xl p-2 border border-white/60 shadow-sm">
+                    <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="w-full cursor-pointer flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 text-sm font-bold transition-all active:scale-[0.98]">
+                        <span className="material-symbols-outlined text-[20px]">visibility</span> View Details
                     </button>
-                    {!isClosed && (
-                        <button onClick={() => navigate(`/semesters/semester?id=${semester.id}`)} className="cursor-pointer flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 text-gray-700 text-xs font-bold transition-colors">
-                            <span className="material-symbols-outlined text-[18px]">edit</span> Edit
-                        </button>
-                    )}
-                    {isClosed && (
-                        <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 text-gray-400 text-xs font-bold cursor-default">
-                            <span className="material-symbols-outlined text-[18px]">lock</span> Closed
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
