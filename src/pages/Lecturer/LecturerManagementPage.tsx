@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Paginator, type PaginatorPageChangeEvent } from 'primereact/paginator';
+import { Dropdown } from 'primereact/dropdown';
 import { lecturerService, type Lecturer } from '../../services/lecturerService';
 import MemberAvatar from '../../components/team/MemberAvatar';
 import LecturerModal from './LecturerModal';
+import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 
 const LecturerManagementPage = () => {
@@ -14,13 +16,25 @@ const LecturerManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(0);
     const [rows, setRows] = useState(10);
+    const [selectedCampus, setSelectedCampus] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null);
+    const currentUser = authService.getUser();
+    const isAdmin = currentUser?.roleName === 'Admin';
+
+    const campuses = [
+        { label: 'All Campuses', value: null },
+        { label: 'FU-Hòa Lạc', value: 1 },
+        { label: 'FU-Đà Nẵng', value: 2 },
+        { label: 'FU-Hồ Chí Minh', value: 3 },
+        { label: 'FU-Cần Thơ', value: 4 },
+        { label: 'FU-Quy Nhơn', value: 5 },
+    ];
 
     const fetchLecturers = useCallback(async () => {
         try {
             setIsLoading(true);
-            const data = await lecturerService.getAllLecturers(page + 1, rows, searchTerm);
+            const data = await lecturerService.getAllLecturers(page + 1, rows, searchTerm, selectedCampus ?? undefined);
 
             setLecturers(data.items || []);
             setTotalCount(data.totalCount ?? 0);
@@ -30,7 +44,7 @@ const LecturerManagementPage = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [page, rows, searchTerm]);
+    }, [page, rows, searchTerm, selectedCampus]);
 
     useEffect(() => {
         fetchLecturers();
@@ -75,6 +89,41 @@ const LecturerManagementPage = () => {
         } catch (error) {
             console.error(error);
             Swal.fire('Error', 'Failed to update reviewer status', 'error');
+        }
+    };
+
+    const handleToggleHod = async (lecturer: Lecturer) => {
+        const newStatus = !lecturer.isHod;
+        
+        // Confirmation for promoting
+        if (newStatus) {
+            const confirm = await Swal.fire({
+                title: 'Assign HOD Role?',
+                text: `Are you sure you want to promote ${lecturer.fullName || lecturer.email} to HOD of this campus?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Promote',
+                confirmButtonColor: '#f26e21'
+            });
+            if (!confirm.isConfirmed) return;
+        }
+
+        try {
+            await lecturerService.toggleHod(lecturer.lecturerId, newStatus);
+            setLecturers(prev => prev.map(l =>
+                l.lecturerId === lecturer.lecturerId ? { ...l, isHod: newStatus } : l
+            ));
+
+            Swal.fire({
+                icon: 'success',
+                title: 'HOD Status Updated',
+                text: `${lecturer.fullName || lecturer.email} is now ${newStatus ? 'HOD' : 'a Lecturer'}`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error: unknown) {
+            const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update HOD status';
+            Swal.fire('Conflict', message, 'error');
         }
     };
 
@@ -132,7 +181,6 @@ const LecturerManagementPage = () => {
 
                 {/* Search & Stats Carrier */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto flex-1">
                         <div className="relative w-full md:w-96">
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                             <input
@@ -143,7 +191,16 @@ const LecturerManagementPage = () => {
                                 className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all outline-none"
                             />
                         </div>
-                    </div>
+
+                        <div className="w-full md:w-64">
+                            <Dropdown
+                                value={selectedCampus}
+                                onChange={(e) => { setSelectedCampus(e.value); setPage(0); }}
+                                options={campuses}
+                                placeholder="Filter by Campus"
+                                className="w-full rounded-2xl border-gray-100 bg-gray-50 text-sm"
+                            />
+                        </div>
 
                     <div className="flex gap-4 w-full md:w-auto">
                         <div className="flex-1 md:flex-none px-8 py-3 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
@@ -162,6 +219,7 @@ const LecturerManagementPage = () => {
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Lecturer</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Contact Info</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Campus</th>
+                                    {isAdmin && <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">HOD</th>}
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Active</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Reviewer</th>
                                     <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
@@ -174,13 +232,13 @@ const LecturerManagementPage = () => {
                                             <td className="px-8 py-5"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-gray-100 rounded-2xl"></div><div className="h-4 bg-gray-100 rounded w-32"></div></div></td>
                                             <td className="px-8 py-5"><div className="h-4 bg-gray-100 rounded w-48"></div></td>
                                             <td className="px-8 py-5"><div className="h-4 bg-gray-100 rounded w-16 mx-auto"></div></td>
-                                            <td className="px-8 py-5"><div className="h-8 bg-gray-100 rounded-xl w-24 mx-auto"></div></td>
-                                            <td className="px-8 py-5"></td>
+                                            {isAdmin && <td className="px-8 py-5"><div className="h-8 bg-gray-100 rounded-xl w-24 mx-auto"></div></td>}
+                                            <td className="px-8 py-5"><div className="h-4 bg-gray-100 rounded w-16 mx-auto"></div></td>
                                         </tr>
                                     ))
                                 ) : displayLecturers.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-8 py-20 text-center">
+                                        <td colSpan={isAdmin ? 7 : 6} className="px-8 py-20 text-center">
                                             <div className="flex flex-col items-center gap-4 opacity-40">
                                                 <span className="material-symbols-outlined text-6xl">person_search</span>
                                                 <p className="font-bold">No lecturers found matching your criteria</p>
@@ -213,34 +271,35 @@ const LecturerManagementPage = () => {
                                             <td className="px-8 py-5 text-center">
                                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-black uppercase">{l.campus || 'Global'}</span>
                                             </td>
+                                            {isAdmin && (
+                                                <td className="px-8 py-5 text-center">
+                                                    <div className="flex justify-center">
+                                                        <InputSwitch
+                                                            checked={l.isHod}
+                                                            onChange={() => handleToggleHod(l)}
+                                                            disabled={!isAdmin}
+                                                            className={l.isHod ? 'orange-switch shadow-[0_0_12px_rgba(249,115,22,0.3)]' : ''}
+                                                            tooltip={!isAdmin ? "Only Admin can promote/demote HOD" : ""}
+                                                        />
+                                                    </div>
+                                                </td>
+                                            )}
                                             <td className="px-8 py-5 text-center">
                                                 <div className="flex justify-center">
-                                                    {!l.isHod ? (
-                                                        <InputSwitch
-                                                            checked={l.isActive}
-                                                            onChange={() => handleToggleStatus(l)}
-                                                            className={l.isActive ? 'orange-switch' : ''}
-                                                        />
-                                                    ) : (
-                                                        <span className="px-3 py-1.5 bg-green-50 text-green-600 rounded-xl text-[10px] font-black uppercase tracking-wider">
-                                                            HOD Permanent
-                                                        </span>
-                                                    )}
+                                                    <InputSwitch
+                                                        checked={l.isActive}
+                                                        onChange={() => handleToggleStatus(l)}
+                                                        className={l.isActive ? 'orange-switch' : ''}
+                                                    />
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5 text-center">
                                                 <div className="flex justify-center">
-                                                    {!l.isHod ? (
-                                                        <InputSwitch
-                                                            checked={l.isReviewer}
-                                                            onChange={() => handleToggleReviewer(l)}
-                                                            className={l.isReviewer ? 'blue-switch' : ''}
-                                                        />
-                                                    ) : (
-                                                        <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-wider">
-                                                            HOD Access
-                                                        </span>
-                                                    )}
+                                                    <InputSwitch
+                                                        checked={l.isReviewer}
+                                                        onChange={() => handleToggleReviewer(l)}
+                                                        className={l.isReviewer ? 'blue-switch' : ''}
+                                                    />
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5">
