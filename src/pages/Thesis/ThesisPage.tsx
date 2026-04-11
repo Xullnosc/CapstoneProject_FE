@@ -393,7 +393,7 @@ const ThesisPage = () => {
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20 items-start">
                                 {theses.map((t) => (
                                     <ThesisCard 
                                         key={t.thesisId} 

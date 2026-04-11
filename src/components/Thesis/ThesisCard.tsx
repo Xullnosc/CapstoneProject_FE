@@ -78,8 +78,8 @@ const ThesisCard = ({
   const displayDate = thesis.updateDate ?? thesis.upDate;
 
   return (
-    <div className="bg-white border rounded-2xl border-slate-200 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 flex flex-col overflow-hidden">
-      <div className="p-6 flex-1 bg-white">
+    <div className="bg-white border rounded-2xl border-slate-200 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-200 flex flex-col overflow-hidden h-fit">
+      <div className="p-6 bg-white">
         {/* Header: Title + Status */}
         <div className="flex justify-between items-start gap-4 mb-4">
           <h3 className="text-slate-900 font-bold text-base leading-snug line-clamp-2 flex-1">
