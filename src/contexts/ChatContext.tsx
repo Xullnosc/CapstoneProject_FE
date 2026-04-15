@@ -95,13 +95,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 1. Notify listeners (ChatPage UI)
       messageHandlers.current.forEach(handler => handler(message));
       
+      const isIncomingFromOtherUser = Number(message.senderId) !== Number(userId);
+
       // 2. Local Recency Sorting
       if (message.teamId) {
           setTeams(prev => {
               const target = prev.find(t => t.teamId === message.teamId);
               const others = prev.filter(t => t.teamId !== message.teamId);
               if (target) {
-                  return [{ ...target, lastMessage: message.content, lastMessageAt: message.createdAt, unreadCount: target.unreadCount + 1 }, ...others];
+                  return [{
+                    ...target,
+                    lastMessage: message.content,
+                    lastMessageAt: message.createdAt,
+                    unreadCount: isIncomingFromOtherUser ? target.unreadCount + 1 : target.unreadCount
+                  }, ...others];
               }
               // If not in list, refresh for full data
               setTimeout(refreshLists, 500);
@@ -112,7 +119,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const target = prev.find(c => c.conversationId === message.conversationId);
               const others = prev.filter(c => c.conversationId !== message.conversationId);
               if (target) {
-                  return [{ ...target, lastMessage: message.content, lastMessageAt: message.createdAt, unreadCount: target.unreadCount + 1 }, ...others];
+                  return [{
+                    ...target,
+                    lastMessage: message.content,
+                    lastMessageAt: message.createdAt,
+                    unreadCount: isIncomingFromOtherUser ? target.unreadCount + 1 : target.unreadCount
+                  }, ...others];
               }
               setTimeout(refreshLists, 500);
               return prev;

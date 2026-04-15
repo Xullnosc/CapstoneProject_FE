@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { Info, MessageSquare, Loader2 } from 'lucide-react';
 import { chatService } from '../../services/chatService';
@@ -24,8 +24,15 @@ const ChatPage: React.FC = () => {
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const historyRequestRef = useRef(0);
 
   const currentUserId = useMemo(() => jwtUtils.getUserId(), []);
+  const activeChatKey = useMemo(() => {
+    if (!activeConv) return '';
+    if (activeConv.teamId) return `team:${activeConv.teamId}`;
+    if (activeConv.id) return `conv:${activeConv.id}`;
+    return '';
+  }, [activeConv]);
 
   // Handle incoming messages for history update
   const onMessageReceived = useCallback((message: ChatMessageDto) => {
@@ -38,8 +45,13 @@ const ChatPage: React.FC = () => {
             if (prev.some(m => m.messageId === message.messageId)) return prev;
             return [message, ...prev]; // Prepend for flex-col-reverse
         });
+
+        // If user is viewing this chat, incoming messages are considered read immediately.
+        if (Number(message.senderId) !== Number(currentUserId)) {
+          void markAsRead(activeConv?.id, activeConv?.teamId);
+        }
     }
-  }, [activeConv]);
+  }, [activeConv, currentUserId, markAsRead]);
 
   useEffect(() => {
     registerMessageHandler('ChatPage', onMessageReceived);
@@ -55,7 +67,10 @@ const ChatPage: React.FC = () => {
   }, [activeConv?.id, activeConv?.teamId, searchParams]);
 
   const handleSelectChat = useCallback((conv: { id?: number; teamId?: number }) => {
-      setActiveConv(conv);
+      setActiveConv(prev => {
+        if (prev?.id === conv.id && prev?.teamId === conv.teamId) return prev;
+        return conv;
+      });
       if (conv.id) setSearchParams({ id: conv.id.toString() });
       else if (conv.teamId) setSearchParams({ teamId: conv.teamId.toString() });
   }, [setSearchParams]);
@@ -90,19 +105,28 @@ const ChatPage: React.FC = () => {
 
   // Fetch History
   useEffect(() => {
-    if (!activeConv || (!activeConv.id && !activeConv.teamId)) return;
+    if (!activeConv || (!activeConv.id && !activeConv.teamId)) {
+      setMessages([]);
+      return;
+    }
     
+    setMessages([]);
+    const requestId = ++historyRequestRef.current;
+
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
             const history = await chatService.getChatHistory(activeConv.id, activeConv.teamId);
+            if (requestId !== historyRequestRef.current) return;
             setMessages(history); // Keep descending order for flex-col-reverse
             await markAsRead(activeConv.id, activeConv.teamId);
         } catch (error) { console.error('Failed to fetch chat history', error); }
-        finally { setLoadingHistory(false); }
+        finally {
+          if (requestId === historyRequestRef.current) setLoadingHistory(false);
+        }
     };
     fetchHistory();
-  }, [activeConv, markAsRead]);
+  }, [activeChatKey, activeConv, markAsRead]);
 
   const handleSendMessage = async (content: string) => {
     if (!activeConv) return;

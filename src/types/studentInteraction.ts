@@ -1,6 +1,8 @@
 export interface UserSkillDto {
   skillId: number;
   skillTag: string;
+  // Backward compatibility: some responses may still return skillName.
+  skillName?: string;
   skillLevel: string;
 }
 

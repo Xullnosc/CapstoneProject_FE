@@ -10,20 +10,14 @@ import { Button } from 'primereact/button';
 import { authService } from '../../services/authService';
 import { userService } from '../../services/userService';
 import { discoveryService } from '../../services/discoveryService';
-import type { SkillEntry } from '../../types/studentInteraction';
+import type { SkillEntry, UserSkillDto } from '../../types/studentInteraction';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
 
-type SkillsPayload = { skills?: unknown };
-const isSkillsPayload = (v: unknown): v is SkillsPayload =>
-    typeof v === 'object' && v !== null && 'skills' in v;
-
-const normalizeSkillEntry = (v: unknown): SkillEntry | null => {
-    if (typeof v !== 'object' || v === null) return null;
-    const s = v as { skillTag?: unknown; skillName?: unknown; skillLevel?: unknown };
-    const tag = typeof s.skillTag === 'string' ? s.skillTag : typeof s.skillName === 'string' ? s.skillName : '';
+const normalizeSkillEntry = (s: UserSkillDto): SkillEntry | null => {
+    const tag = s.skillTag || s.skillName || '';
     if (!tag) return null;
-    const level = typeof s.skillLevel === 'string' ? s.skillLevel : 'Intermediate';
+    const level = s.skillLevel || 'Intermediate';
     return { skillTag: tag, skillLevel: level };
 };
 
@@ -129,12 +123,7 @@ const ProfilePage = () => {
                 // Load skills
                 const skillsData = await discoveryService.getMySkills();
                 // Handle both object wrapper and raw array
-                const raw =
-                    Array.isArray(skillsData)
-                        ? skillsData
-                        : (isSkillsPayload(skillsData) ? skillsData.skills : undefined);
-
-                const list = Array.isArray(raw) ? raw : [];
+                const list = Array.isArray(skillsData) ? skillsData : [];
                 setSkills(list.map(normalizeSkillEntry).filter((x): x is SkillEntry => x !== null));
             } catch (error) {
                 console.error("Load profile/skills error:", error);

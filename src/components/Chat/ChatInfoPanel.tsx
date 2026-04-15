@@ -7,10 +7,6 @@ import { teamService } from '../../services/teamService';
 import { discoveryService } from '../../services/discoveryService';
 import type { Team } from '../../types/team';
 
-type SkillsPayload = { skills?: UserSkillDto[] };
-const isSkillsPayload = (v: unknown): v is SkillsPayload =>
-  typeof v === 'object' && v !== null && 'skills' in v;
-
 interface ChatInfoPanelProps {
   onClose: () => void;
   activeConv: { id?: number; teamId?: number } | null;
@@ -41,11 +37,8 @@ const ChatInfoPanel: React.FC<ChatInfoPanelProps> = ({ onClose, activeConv, acti
           ]);
           setProfile(userProfile);
           
-          // Defensive check for array format
-          const finalSkills = Array.isArray(userSkillsData)
-            ? userSkillsData
-            : (isSkillsPayload(userSkillsData) && Array.isArray(userSkillsData.skills) ? userSkillsData.skills : []);
-          setSkills(finalSkills as UserSkillDto[]);
+          // API contract returns UserSkillDto[]
+          setSkills(Array.isArray(userSkillsData) ? userSkillsData : []);
         }
       } catch (error) {
         console.error("Failed to fetch info details", error);
