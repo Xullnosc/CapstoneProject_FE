@@ -34,6 +34,13 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config;
     const url = originalRequest?.url ?? '';
+    // Redirect forbidden requests to Access Denied page (avoid loops).
+    if (error.response?.status === 403) {
+      if (!window.location.pathname.startsWith('/access-denied')) {
+        window.location.href = '/access-denied';
+      }
+      return Promise.reject(error);
+    }
     // Don't attempt refresh for auth endpoints to avoid loops.
     if (url.includes('/Auth/refresh') || url.includes('/Auth/login') || url.includes('/Auth/logout')) {
       return Promise.reject(error);

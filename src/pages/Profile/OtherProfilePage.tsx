@@ -8,9 +8,24 @@ import Swal from '../../utils/swal';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import { authService } from '../../services/authService';
 import { userService, type UserInfo } from '../../services/userService';
+import { discoveryService } from '../../services/discoveryService';
+import type { SkillEntry } from '../../types/studentInteraction';
 
 const DEFAULT_AVATAR =
     'https://cdn.haitrieu.com/wp-content/uploads/2021/10/Logo-Dai-hoc-FPT.png';
+
+type SkillsPayload = { skills?: unknown };
+const isSkillsPayload = (v: unknown): v is SkillsPayload =>
+    typeof v === 'object' && v !== null && 'skills' in v;
+
+const normalizeSkillEntry = (v: unknown): SkillEntry | null => {
+    if (typeof v !== 'object' || v === null) return null;
+    const s = v as { skillTag?: unknown; skillName?: unknown; skillLevel?: unknown };
+    const tag = typeof s.skillTag === 'string' ? s.skillTag : typeof s.skillName === 'string' ? s.skillName : '';
+    if (!tag) return null;
+    const level = typeof s.skillLevel === 'string' ? s.skillLevel : 'Intermediate';
+    return { skillTag: tag, skillLevel: level };
+};
 
 const formatExternalLink = (url: string | null | undefined) => {
     if (!url) return '#';
@@ -29,6 +44,7 @@ const OtherProfilePage = () => {
     }, [userId]);
 
     const [profile, setProfile] = useState<UserInfo | null>(null);
+    const [skills, setSkills] = useState<SkillEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     const breadcrumbItems = [
@@ -57,6 +73,16 @@ const OtherProfilePage = () => {
             try {
                 const data = await userService.getProfileByUserId(parsedUserId);
                 setProfile(data);
+
+                // Load skills for this user
+                const skillsData = await discoveryService.getUserSkills(parsedUserId);
+                const raw =
+                    Array.isArray(skillsData)
+                        ? skillsData
+                        : (isSkillsPayload(skillsData) ? skillsData.skills : undefined);
+
+                const list = Array.isArray(raw) ? raw : [];
+                setSkills(list.map(normalizeSkillEntry).filter((x): x is SkillEntry => x !== null));
             } catch {
                 Swal.fire({
                     icon: 'error',
@@ -147,8 +173,8 @@ const OtherProfilePage = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-5 space-y-6">
                         <Card className="border-none shadow-sm rounded-[2.5rem]">
                             <div className="p-2">
                                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">
@@ -181,6 +207,31 @@ const OtherProfilePage = () => {
                                             <p className="text-sm font-bold text-gray-800 tracking-tight">
                                                 {profile.campus || 'N/A'}
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Divider className="my-8" />
+
+                                <div className="space-y-6">
+                                    <div className="px-2">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                Professional Skills
+                                            </h3>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            {skills.length > 0 ? (
+                                                skills.map((skill, index) => (
+                                                    <div key={index} className="flex items-center justify-between w-full p-3 bg-gray-50 rounded-2xl border border-gray-100 animate-fade-in">
+                                                        <span className="text-xs font-bold text-gray-800">{skill.skillTag}</span>
+                                                        <Tag value={skill.skillLevel} className="bg-orange-50 text-[#F26F21] border border-orange-100 font-bold px-2 py-0.5 text-[9px] rounded-full" />
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-xs text-gray-400 italic px-2">No skills added yet.</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -259,7 +310,7 @@ const OtherProfilePage = () => {
                         </Card>
                     </div>
 
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-7 space-y-6">
                         <Card className="border-none shadow-sm rounded-[2.5rem]">
                             <div className="p-2">
                                 <div className="flex items-center gap-3 mb-8 px-2">

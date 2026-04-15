@@ -7,6 +7,7 @@ import 'primeicons/primeicons.css';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 import notificationService from '../../services/notificationService';
+import { chatService } from '../../services/chatService';
 import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
@@ -15,6 +16,8 @@ const Header = () => {
     const [visible, setVisible] = useState(false);
     const [currentSemesterCode, setCurrentSemesterCode] = useState<string>('');
     const [unreadCount, setUnreadCount] = useState<number>(0);
+    const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+    const [hasMentoredTeams, setHasMentoredTeams] = useState<boolean>(true);
 
     // Auth & Permissions
     const user = authService.getUser();
@@ -28,8 +31,11 @@ const Header = () => {
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isLecturer = user?.roleName === 'Lecturer';
     const isStudent = user?.roleName === 'Student';
+    const canChat = isStudent || ((isLecturer || isHOD) && hasMentoredTeams);
     const hasUnread = unreadCount > 0;
+    const hasUnreadChat = unreadChatCount > 0;
     const isNotificationsPath = location.pathname.startsWith('/notifications');
+    const isChatPath = location.pathname.startsWith('/chat');
 
     useEffect(() => {
         const fetchCurrentSemester = async () => {
@@ -39,6 +45,12 @@ const Header = () => {
                 // Ensure we get the *latest* active semester
                 const current = await semesterService.getCurrentSemester();
                 setCurrentSemesterCode(current ? current.semesterCode : '');
+
+                // Check mentor status for Chat button visibility
+                if ((isLecturer || isHOD) && current) {
+                    const teams = await chatService.getTeamList(current.semesterId);
+                    setHasMentoredTeams(teams.length > 0);
+                }
             } catch (error) {
                 console.error("Failed to fetch semester context", error);
             }
@@ -57,7 +69,20 @@ const Header = () => {
         return () => {
             window.removeEventListener('semesterChanged', handleSemesterChange);
         };
-    }, []);
+    }, [isHOD, isLecturer]);
+
+    // Manual refresh listener (always active)
+    useEffect(() => {
+        const handleRefresh = () => {
+            notificationService.getUnreadCount().then(setUnreadCount);
+            if (canChat) {
+                chatService.getTotalUnread().then(setUnreadChatCount);
+            }
+        };
+        
+        window.addEventListener('refreshUnreadCount', handleRefresh);
+        return () => window.removeEventListener('refreshUnreadCount', handleRefresh);
+    }, [canChat]);
 
     // Smart polling for notification count - pause when on notifications page
     useEffect(() => {
@@ -65,8 +90,13 @@ const Header = () => {
             try {
                 const count = await notificationService.getUnreadCount();
                 setUnreadCount(count);
+                
+                if (canChat) {
+                    const chatCount = await chatService.getTotalUnread();
+                    setUnreadChatCount(chatCount);
+                }
             } catch (error) {
-                console.error('Failed to fetch unread count:', error);
+                console.error('Failed to fetch unread counts:', error);
             }
         };
 
@@ -76,16 +106,15 @@ const Header = () => {
         // Only poll if NOT on notifications page (smart polling)
         const isOnNotificationsPage = location.pathname.startsWith('/notifications');
         if (isOnNotificationsPage) {
-            return; // Don't poll while viewing notifications
+            return; 
         }
 
-        // Poll every 60 seconds when not on notifications page
         const pollInterval = setInterval(fetchUnreadCount, 60000);
 
         return () => {
             clearInterval(pollInterval);
         };
-    }, [location.pathname]);
+    }, [location.pathname, canChat]);
 
     return (
         <header className="h-16 bg-white shadow-sm border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 lg:px-8 sticky top-0 z-50">
@@ -133,10 +162,16 @@ const Header = () => {
                             <span>Dashboard</span>
                         </div>
                         {user?.roleName !== 'Admin' && isStudent && (
-                            <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                <i className="pi pi-list text-xl"></i>
-                                <span>List Thesis</span>
-                            </div>
+                            <>
+                                <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-list text-xl"></i>
+                                    <span>List Thesis</span>
+                                </div>
+                                <div onClick={() => { navigate('/discovery'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/discovery' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                    <i className="pi pi-compass text-xl"></i>
+                                    <span>Discovery Board</span>
+                                </div>
+                            </>
                         )}
                         {(canManageSemesters || isHOD) && user?.roleName !== 'Admin' && (
                             <div onClick={() => navigate('/semesters')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
@@ -215,6 +250,27 @@ const Header = () => {
                                 <span>AI Studio</span>
                             </div>
                         )}
+                        {user?.roleName !== 'Admin' && canChat && (
+                            <div
+                                onClick={() => {
+                                    navigate('/chat');
+                                    setVisible(false);
+                                }}
+                                className={`flex items-center justify-between gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${isChatPath ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="relative">
+                                        <i className="pi pi-comments text-xl"></i>
+                                        {hasUnreadChat && (
+                                            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] text-white font-bold">
+                                                {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span>Messages</span>
+                                </div>
+                            </div>
+                        )}
                         {user?.roleName !== 'Admin' && (
                             <div
                                 onClick={() => {
@@ -265,6 +321,7 @@ const Header = () => {
                         const navItems: NavItem[] = [
                             { id: 'home', label: 'Homepage', icon: 'pi pi-home', path: '/home', show: true },
                             { id: 'list-thesis', label: 'List Thesis', icon: 'pi pi-list', path: '/published-thesis', show: isStudent },
+                            { id: 'discovery', label: 'Discovery', icon: 'pi pi-compass', path: '/discovery', show: isStudent },
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer || isHOD ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer || isHOD ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer || isHOD },
@@ -390,14 +447,24 @@ const Header = () => {
 
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
+                {user && canChat && (
+                    <button
+                        onClick={() => navigate('/chat')}
+                        className={`relative p-2 rounded-full hover:bg-gray-50 transition-all duration-200 ${isChatPath ? 'text-orange-600 bg-orange-50' : 'text-gray-500'}`}
+                        title="Messages"
+                    >
+                        <i className="pi pi-comments text-xl"></i>
+                        {hasUnreadChat && (
+                            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold px-1">
+                                {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                            </span>
+                        )}
+                    </button>
+                )}
                 {user && (
                     <NotificationDropdown 
                         unreadCount={unreadCount} 
                         onRefreshCount={() => {
-                            // Using the internal fetchUnreadCount defined in the effect scope might be tricky,
-                            // but Header has it defined inside a useEffect. I should lift it or just trigger a refresh.
-                            // Actually, I'll pass a simpler refresh trigger or rely on the polling.
-                            // Better: call the service directly or trigger the polling early.
                             notificationService.getUnreadCount(true).then(setUnreadCount);
                         }} 
                     />
