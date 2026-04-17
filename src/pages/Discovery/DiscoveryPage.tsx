@@ -4,7 +4,7 @@ import { semesterService } from '../../services/semesterService';
 import { type DiscoveryStudentDto, type DiscoveryTeamDto } from '../../types/studentInteraction';
 import DiscoveryCard from '../../components/Discovery/DiscoveryCard';
 import TeamDiscoveryCard from '../../components/Discovery/TeamDiscoveryCard';
-import SkillFilter from '../../components/Discovery/SkillFilter';
+import Pagination from '../../components/Common/Pagination';
 import DiscoveryGrid from '../../components/Discovery/DiscoveryGrid';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -16,13 +16,10 @@ const DiscoveryPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedSkill, setSelectedSkill] = useState('');
-  const [popularSkills, setPopularSkills] = useState<string[]>([]);
   const [currentSemesterId, setCurrentSemesterId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [loadingTeamId, setLoadingTeamId] = useState<number | null>(null); // Fix #14: prevent double-click
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingTeamId, setLoadingTeamId] = useState<number | null>(null); 
   const navigate = useNavigate();
   const PAGE_SIZE = 12;
 
@@ -38,13 +35,8 @@ const DiscoveryPage: React.FC = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [semester, topSkills] = await Promise.all([
-          semesterService.getCurrentSemester(),
-          discoveryService.getPopularSkills()
-        ]);
-        
+        const semester = await semesterService.getCurrentSemester();
         if (semester) setCurrentSemesterId(semester.semesterId);
-        if (topSkills) setPopularSkills(topSkills);
       } catch (error) {
         console.error('Failed to fetch initial discovery data', error);
       }
@@ -52,52 +44,46 @@ const DiscoveryPage: React.FC = () => {
     fetchInitialData();
   }, []);
 
-  const fetchData = useCallback(async (isLoadMore = false) => {
+  const fetchData = useCallback(async (targetPage = 1) => {
     if (!currentSemesterId) return;
 
-    if (isLoadMore) setLoadingMore(true);
-    else setLoading(true);
+    setLoading(true);
 
     try {
-      const currentPage = isLoadMore ? page + 1 : 1;
-      
       if (activeTab === 'students') {
-        const data = await discoveryService.getLookingStudents(currentSemesterId, selectedSkill, debouncedSearch, currentPage, PAGE_SIZE);
-        setStudents(prev => isLoadMore ? [...prev, ...data.items] : data.items);
-        setHasMore(data.items.length === PAGE_SIZE);
+        const data = await discoveryService.getLookingStudents(currentSemesterId, '', debouncedSearch, targetPage, PAGE_SIZE);
+        setStudents(data.items);
+        setTotalPages(data.totalPages);
       } else {
-        const data = await discoveryService.getOpenTeams(currentSemesterId, selectedSkill, debouncedSearch, currentPage, PAGE_SIZE);
-        setTeams(prev => isLoadMore ? [...prev, ...data.items] : data.items);
-        setHasMore(data.items.length === PAGE_SIZE);
+        const data = await discoveryService.getOpenTeams(currentSemesterId, '', debouncedSearch, targetPage, PAGE_SIZE);
+        setTeams(data.items);
+        setTotalPages(data.totalPages);
       }
       
-      setPage(currentPage);
+      setPage(targetPage);
     } catch (error) {
       console.error('Failed to fetch discovery data', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
-  }, [activeTab, selectedSkill, debouncedSearch, currentSemesterId, page]);
+  }, [activeTab, debouncedSearch, currentSemesterId]);
 
-  // Refresh list when tab, skill or search changes - Fix #9: also reset page to 1
+  // Refresh list when tab or search changes
   useEffect(() => {
     if (currentSemesterId) {
-      setPage(1);
-      fetchData(false);
+      fetchData(1);
     }
-  }, [activeTab, selectedSkill, debouncedSearch, currentSemesterId, fetchData]);
+  }, [activeTab, debouncedSearch, currentSemesterId, fetchData]);
 
   const handleJoinTeam = async (teamId: number) => {
-    setLoadingTeamId(teamId); // Fix #14: disable button while loading
+    setLoadingTeamId(teamId);
     try {
       await discoveryService.requestJoin(teamId);
-      // Fix #2: only update UI AFTER API succeeds (was updating before)
       setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, hasPendingJoinRequest: true } : t));
       Swal.fire({
           icon: 'success',
           title: 'Request Sent',
-          text: 'Join request sent successfully! The team leader will be notified.',
+          text: 'Join request sent successfully!',
           confirmButtonColor: '#F26F21',
           customClass: { confirmButton: 'rounded-xl' }
       });
@@ -120,7 +106,6 @@ const DiscoveryPage: React.FC = () => {
   const handleCancelRequest = async (teamId: number) => {
     try {
       await discoveryService.cancelJoinRequest(teamId);
-      // Optimistically update UI
       setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, hasPendingJoinRequest: false } : t));
     } catch {
       Swal.fire({
@@ -150,12 +135,6 @@ const DiscoveryPage: React.FC = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
-        <SkillFilter 
-          skills={popularSkills.length > 0 ? popularSkills : ['React', '.NET', 'Design', 'Python', 'Java']} 
-          selectedSkill={selectedSkill}
-          onSkillSelect={setSelectedSkill}
-        />
       </section>
 
       <nav className="flex gap-12 border-b border-slate-200 mb-10">
@@ -204,27 +183,15 @@ const DiscoveryPage: React.FC = () => {
         />
       )}
 
-      {!loading && hasMore && (activeTab === 'students' ? students.length > 0 : teams.length > 0) && (
-        <div className="py-12 flex justify-center">
-          <button 
-            onClick={() => fetchData(true)}
-            disabled={loadingMore}
-            className="group relative bg-white border border-slate-200 text-slate-700 px-10 py-3.5 rounded-2xl text-sm font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm active:scale-95 disabled:opacity-50 flex items-center gap-3"
-          >
-            {loadingMore ? (
-              <span className="material-symbols-outlined text-lg animate-spin text-[#F27123]">progress_activity</span>
-            ) : (
-              <span className="material-symbols-outlined text-lg group-hover:translate-y-0.5 transition-transform">expand_more</span>
-            )}
-            {loadingMore ? 'Syncing...' : 'Load More Results'}
-          </button>
-        </div>
-      )}
-
-      {!loading && !hasMore && (activeTab === 'students' ? students.length > 0 : teams.length > 0) && (
-        <p className="text-center py-12 text-slate-400 text-sm font-medium italic">
-          — You've reached the end of the treasure map —
-        </p>
+      {!loading && (
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(p) => {
+            fetchData(p);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
       )}
     </main>
   );

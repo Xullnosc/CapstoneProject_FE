@@ -1,21 +1,112 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useReducer } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { chatService } from '../services/chatService';
 import { semesterService } from '../services/semesterService';
 import { type ChatMessageDto, type ConversationDto, type TeamChatInfoDto } from '../types/studentInteraction';
-import { jwtUtils } from '../utils/jwtUtils';
 import { ChatContext } from './chatContextBase';
 
+type ChatState = {
+  isConnected: boolean;
+  onlineUsers: number[];
+  conversations: ConversationDto[];
+  teams: TeamChatInfoDto[];
+  totalUnreadCount: number;
+};
+
+type ChatAction = 
+  | { type: 'SET_CONNECTED'; payload: boolean }
+  | { type: 'SET_ONLINE_USERS'; payload: number[] }
+  | { type: 'SET_CONVERSATIONS'; payload: ConversationDto[] }
+  | { type: 'SET_TEAMS'; payload: TeamChatInfoDto[] }
+  | { type: 'SET_UNREAD_COUNT'; payload: number }
+  | { type: 'MARK_READ_OPTIMISTIC'; payload: { id?: number; teamId?: number } }
+  | { type: 'RESET_ALL' };
+
+const initialState: ChatState = {
+  isConnected: false,
+  onlineUsers: [],
+  conversations: [],
+  teams: [],
+  totalUnreadCount: 0
+};
+
+function chatReducer(state: ChatState, action: ChatAction): ChatState {
+  switch (action.type) {
+    case 'SET_CONNECTED': return { ...state, isConnected: action.payload };
+    case 'SET_ONLINE_USERS': return { ...state, onlineUsers: action.payload };
+    case 'SET_CONVERSATIONS': return { ...state, conversations: action.payload };
+    case 'SET_TEAMS': return { ...state, teams: action.payload };
+    case 'SET_UNREAD_COUNT': return { ...state, totalUnreadCount: action.payload };
+    case 'MARK_READ_OPTIMISTIC': {
+        const { id, teamId } = action.payload;
+        let deductedCount = 0;
+        
+        let nextTeams = state.teams;
+        let nextConvs = state.conversations;
+
+        if (teamId) {
+            nextTeams = state.teams.map(t => {
+                if (t.teamId === teamId) {
+                    deductedCount = t.unreadCount;
+                    return { ...t, unreadCount: 0 };
+                }
+                return t;
+            });
+        } else if (id) {
+            nextConvs = state.conversations.map(c => {
+                if (c.conversationId === id) {
+                    deductedCount = c.unreadCount;
+                    return { ...c, unreadCount: 0 };
+                }
+                return c;
+            });
+        }
+
+        return {
+            ...state,
+            teams: nextTeams,
+            conversations: nextConvs,
+            totalUnreadCount: Math.max(0, state.totalUnreadCount - deductedCount)
+        };
+    }
+    case 'RESET_ALL': return initialState;
+    default: return state;
+  }
+}
+
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [onlineUsers, setOnlineUsers] = useState<number[]>([]);
-  const [conversations, setConversations] = useState<ConversationDto[]>([]);
-  const [teams, setTeams] = useState<TeamChatInfoDto[]>([]);
-  const userId = jwtUtils.getUserId();
+  const [state, dispatch] = useReducer(chatReducer, initialState);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   
   const connectionRef = useRef<signalR.HubConnection | null>(null);
-  const isConnecting = useRef(false);
+  const semesterIdRef = useRef<number | null>(null);
   const messageHandlers = useRef<Map<string, (msg: ChatMessageDto) => void>>(new Map());
+
+  // 1. TOKEN SYNCHRONIZER
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('token');
+      setToken(prev => (prev !== newToken ? newToken : prev));
+    };
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 1000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // 2. DATA RESET
+  useEffect(() => {
+    if (!token) {
+        if (connectionRef.current) {
+            connectionRef.current.stop();
+            connectionRef.current = null;
+        }
+        semesterIdRef.current = null;
+        dispatch({ type: 'RESET_ALL' });
+    }
+  }, [token]);
 
   const registerMessageHandler = useCallback((id: string, handler: (msg: ChatMessageDto) => void) => {
     messageHandlers.current.set(id, handler);
@@ -25,59 +116,41 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     messageHandlers.current.delete(id);
   }, []);
 
-  // Helper to safely compare dates from any format
-  const safeGetTime = (dateStr?: string) => {
-    if (!dateStr) return 0;
-    const time = Date.parse(dateStr);
-    if (isNaN(time)) {
-        // Fallback for non-ISO formats if needed (like DD/MM/YYYY)
-        const parts = dateStr.match(/(\d+)/g);
-        if (parts && parts.length >= 3) {
-            // Try to construct a date object manually if common standard fails
-            return new Date(dateStr).getTime() || 0;
-        }
-        return 0;
-    }
-    return time;
-  };
-
+  // TECH LEAD: Stable refreshLists with SemesterID caching to prevent 429
   const refreshLists = useCallback(async () => {
-    try {
-      const semester = await semesterService.getCurrentSemester();
-      if (!semester) return;
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) return;
 
-      const [convList, teamList] = await Promise.all([
-        chatService.getConversations(semester.semesterId),
-        chatService.getTeamList(semester.semesterId)
+    try {
+      let semId = semesterIdRef.current;
+      if (semId === null) {
+          const semester = await semesterService.getCurrentSemester();
+          if (!semester) return;
+          semId = semester.semesterId;
+          semesterIdRef.current = semId;
+      }
+
+      const [convList, teamList, totalUnread] = await Promise.all([
+        chatService.getConversations(semId),
+        chatService.getTeamList(semId),
+        chatService.getTotalUnread()
       ]);
 
-      // Sort by recency with safe parsing
-      convList.sort((a, b) => safeGetTime(b.lastMessageAt) - safeGetTime(a.lastMessageAt));
-      teamList.sort((a, b) => safeGetTime(b.lastMessageAt) - safeGetTime(a.lastMessageAt));
-
-      setConversations(convList);
-      setTeams(teamList);
+      dispatch({ type: 'SET_CONVERSATIONS', payload: convList.filter(c => c.lastMessage != null) });
+      dispatch({ type: 'SET_TEAMS', payload: teamList });
+      dispatch({ type: 'SET_UNREAD_COUNT', payload: totalUnread });
     } catch (e) {
       console.error('Failed to refresh chat lists', e);
     }
   }, []);
 
+  // 3. SIGNALR MANAGER
   useEffect(() => {
-    if (!userId) {
-        setIsConnected(false);
-        setConversations([]);
-        setTeams([]);
-        if (connectionRef.current) {
-            connectionRef.current.stop();
-            connectionRef.current = null;
-        }
-        return;
-    }
-
-    if (connectionRef.current || isConnecting.current) return;
-
-    const token = localStorage.getItem('token');
     if (!token) return;
+
+    if (connectionRef.current) {
+        connectionRef.current.stop();
+    }
 
     const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
     const hubUrl = `${baseUrl}/chatHub`;
@@ -92,78 +165,38 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .build();
 
     connection.on('ReceiveMessage', (message: ChatMessageDto) => {
-      // 1. Notify listeners (ChatPage UI)
       messageHandlers.current.forEach(handler => handler(message));
-      
-      const isIncomingFromOtherUser = Number(message.senderId) !== Number(userId);
-
-      // 2. Local Recency Sorting
-      if (message.teamId) {
-          setTeams(prev => {
-              const target = prev.find(t => t.teamId === message.teamId);
-              const others = prev.filter(t => t.teamId !== message.teamId);
-              if (target) {
-                  return [{
-                    ...target,
-                    lastMessage: message.content,
-                    lastMessageAt: message.createdAt,
-                    unreadCount: isIncomingFromOtherUser ? target.unreadCount + 1 : target.unreadCount
-                  }, ...others];
-              }
-              // If not in list, refresh for full data
-              setTimeout(refreshLists, 500);
-              return prev;
-          });
-      } else {
-          setConversations(prev => {
-              const target = prev.find(c => c.conversationId === message.conversationId);
-              const others = prev.filter(c => c.conversationId !== message.conversationId);
-              if (target) {
-                  return [{
-                    ...target,
-                    lastMessage: message.content,
-                    lastMessageAt: message.createdAt,
-                    unreadCount: isIncomingFromOtherUser ? target.unreadCount + 1 : target.unreadCount
-                  }, ...others];
-              }
-              setTimeout(refreshLists, 500);
-              return prev;
-          });
-      }
-
-      window.dispatchEvent(new CustomEvent('refreshUnreadCount'));
+      void refreshLists();
     });
 
     connection.on('UpdateOnlineUsers', (userIds: number[]) => {
-      setOnlineUsers(userIds);
+      dispatch({ type: 'SET_ONLINE_USERS', payload: userIds });
+    });
+
+    connection.on('UpdateUnreadCount', (count: number) => {
+      dispatch({ type: 'SET_UNREAD_COUNT', payload: count });
     });
 
     const startConnection = async () => {
-      if (isConnecting.current) return;
-      isConnecting.current = true;
       try {
         await connection.start();
         connectionRef.current = connection;
-        setIsConnected(true);
+        dispatch({ type: 'SET_CONNECTED', payload: true });
         void refreshLists();
-      } catch (err: unknown) {
-        const maybeErr = err as { name?: string };
-        if (maybeErr?.name !== 'AbortError') console.warn('SignalR Start Warning: ', err);
-        setIsConnected(false);
-      } finally {
-        isConnecting.current = false;
+      } catch (err) {
+        console.warn('SignalR Connection Error: ', err);
+        dispatch({ type: 'SET_CONNECTED', payload: false });
       }
     };
 
     void startConnection();
 
     return () => {
-        if (connectionRef.current) {
-            connectionRef.current.stop();
-            connectionRef.current = null;
-        }
+        connection.stop();
+        connectionRef.current = null;
+        dispatch({ type: 'SET_CONNECTED', payload: false });
     };
-  }, [refreshLists, userId]);
+  }, [token, refreshLists]);
 
   const sendDirectMessage = useCallback(async (conversationId: number, content: string) => {
     if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
@@ -177,16 +210,22 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // TECH LEAD: Stable markAsRead using MARK_READ_OPTIMISTIC action
   const markAsRead = useCallback(async (conversationId?: number, teamId?: number) => {
+    // 1. Dispatch optimistic update (atomic, no state dependency)
+    dispatch({ type: 'MARK_READ_OPTIMISTIC', payload: { id: conversationId, teamId } });
+
+    // 2. Server notify
     if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
-        await connectionRef.current.invoke('MarkAsRead', conversationId, teamId);
-        if (teamId) {
-            setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, unreadCount: 0 } : t));
-        } else if (conversationId) {
-            setConversations(prev => prev.map(c => c.conversationId === conversationId ? { ...c, unreadCount: 0 } : c));
+        try {
+            await connectionRef.current.invoke('MarkAsRead', conversationId, teamId);
+            setTimeout(refreshLists, 300);
+        } catch (e) {
+            console.error("MarkAsRead failed", e);
+            void refreshLists(); 
         }
     }
-  }, []);
+  }, [refreshLists]);
 
   const joinConversation = useCallback(async (conversationId: number) => {
     if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
@@ -202,7 +241,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <ChatContext.Provider value={{ 
-      isConnected, onlineUsers, conversations, teams,
+      ...state,
       sendDirectMessage, sendTeamMessage, markAsRead, 
       joinConversation, leaveConversation,
       registerMessageHandler, unregisterMessageHandler, refreshLists

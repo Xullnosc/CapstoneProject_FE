@@ -6,9 +6,10 @@ interface ChatMessageProps {
   message: ChatMessageDto;
   isMe: boolean;
   showAvatar?: boolean;
+  isLeader?: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMe, showAvatar = true }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMe, showAvatar = true, isLeader = false }) => {
   return (
     <div className={`flex items-end gap-3 w-full animate-fade-in mb-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
       {/* Avatar Container */}
@@ -31,9 +32,19 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isMe, showAvatar = t
       {/* Message Content Area */}
       <div className={`flex flex-col max-w-[75%] ${isMe ? 'items-end' : 'items-start'}`}>
         {!isMe && showAvatar && (
-          <span className="text-[11px] font-bold text-gray-400 mb-1 ml-1 uppercase tracking-wider">
-            {message.senderName}
-          </span>
+          <div className="flex items-center gap-1.5 mb-1 ml-1">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              {message.senderName}
+            </span>
+            {isLeader && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-100 text-[#F27123] rounded-md text-[8px] font-black uppercase tracking-tighter border border-orange-200 shadow-sm">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" className="mb-0.5">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                Leader
+              </span>
+            )}
+          </div>
         )}
         
         <div className={`

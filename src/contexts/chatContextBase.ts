@@ -6,6 +6,7 @@ export interface ChatContextType {
   onlineUsers: number[];
   conversations: ConversationDto[];
   teams: TeamChatInfoDto[];
+  totalUnreadCount: number;
   sendDirectMessage: (conversationId: number, content: string) => Promise<void>;
   sendTeamMessage: (teamId: number, content: string) => Promise<void>;
   markAsRead: (conversationId?: number, teamId?: number) => Promise<void>;

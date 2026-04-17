@@ -14,7 +14,7 @@ const ChatPage: React.FC = () => {
   const { 
     isConnected, onlineUsers, conversations, teams,
     sendDirectMessage, sendTeamMessage, markAsRead, 
-    joinConversation, leaveConversation,
+    joinConversation,
     registerMessageHandler, unregisterMessageHandler, refreshLists
   } = useChat();
 
@@ -58,13 +58,21 @@ const ChatPage: React.FC = () => {
     return () => unregisterMessageHandler('ChatPage');
   }, [onMessageReceived, registerMessageHandler, unregisterMessageHandler]);
 
-  // URL Sync
+  // 1. URL Sync - Using primitive dependencies and stable variables to satisfy ESLint
+  const sConvId = searchParams.get('id');
+  const sTeamId = searchParams.get('teamId');
+  const aConvId = activeConv?.id;
+  const aTeamId = activeConv?.teamId;
+
   useEffect(() => {
-     const convId = searchParams.get('id');
-     const teamId = searchParams.get('teamId');
-     if (convId && parseInt(convId) !== activeConv?.id) setActiveConv({ id: parseInt(convId) });
-     else if (teamId && parseInt(teamId) !== activeConv?.teamId) setActiveConv({ teamId: parseInt(teamId) });
-  }, [activeConv?.id, activeConv?.teamId, searchParams]);
+     if (sConvId) {
+        const id = parseInt(sConvId, 10);
+        if (id !== aConvId) setActiveConv({ id });
+     } else if (sTeamId) {
+        const id = parseInt(sTeamId, 10);
+        if (id !== aTeamId) setActiveConv({ teamId: id });
+     }
+  }, [sConvId, sTeamId, aConvId, aTeamId]); 
 
   const handleSelectChat = useCallback((conv: { id?: number; teamId?: number }) => {
       setActiveConv(prev => {
@@ -75,66 +83,78 @@ const ChatPage: React.FC = () => {
       else if (conv.teamId) setSearchParams({ teamId: conv.teamId.toString() });
   }, [setSearchParams]);
 
-  // Auto-resolve target user from URL (Discovery redirect)
+  // 2. Auto-resolve target user from URL (Discovery redirect) - Robust dependency handling
+  const targetIdParam = searchParams.get('targetUserId');
+  const targetIdState = (location.state as { targetUserId?: string | number } | null)?.targetUserId;
+  
   useEffect(() => {
-    const state = location.state as { targetUserId?: string | number } | null;
-    const targetUserId = searchParams.get('targetUserId') || state?.targetUserId;
-    if (targetUserId) {
-        const resolveTarget = async () => {
-            try {
-                const { semesterService } = await import('../../services/semesterService');
-                const sem = await semesterService.getCurrentSemester();
-                if (sem) {
-                    const conv = await chatService.getOrCreateConversation(parseInt(String(targetUserId), 10), sem.semesterId);
-                    setResolvedConv(conv);
-                    await refreshLists();
-                    handleSelectChat({ id: conv.conversationId });
-                }
-            } catch (e) { console.error("Failed to resolve target", e); }
-        };
-        resolveTarget();
-    }
-  }, [handleSelectChat, location.state, refreshLists, searchParams]);
+    const targetUserId = targetIdParam || targetIdState;
+    if (!targetUserId) return;
 
-  // Room management
-  useEffect(() => {
-    if (!isConnected || !activeConv?.id) return;
-    joinConversation(activeConv.id);
-    return () => { if (activeConv.id) leaveConversation(activeConv.id); };
-  }, [activeConv?.id, isConnected, joinConversation, leaveConversation]);
+    const resolveTarget = async () => {
+        try {
+            const { semesterService } = await import('../../services/semesterService');
+            const sem = await semesterService.getCurrentSemester();
+            if (sem) {
+                const conv = await chatService.getOrCreateConversation(parseInt(String(targetUserId), 10), sem.semesterId);
+                setResolvedConv(conv);
+                await refreshLists();
+                handleSelectChat({ id: conv.conversationId });
+                // Clean state/params to avoid re-triggering
+                if (targetIdParam) setSearchParams(prev => { prev.delete('targetUserId'); return prev; });
+            }
+        } catch (e) { console.error("Failed to resolve target", e); }
+    };
+    resolveTarget();
+  }, [targetIdParam, targetIdState, refreshLists, handleSelectChat, setSearchParams]);
 
-  // Fetch History
+  // 3. Room management
+  const activeId = activeConv?.id;
   useEffect(() => {
-    if (!activeConv || (!activeConv.id && !activeConv.teamId)) {
+    if (!isConnected || !activeId) return;
+    joinConversation(activeId);
+    // Note: leaveConversation removed as requested, using joinConversation as cleanup logic if necessary or relying on backend
+    return () => { /* connection unregister handled by context stop */ };
+  }, [activeId, isConnected, joinConversation]);
+
+  // 4. Fetch History - Using activeChatKey as the stable trigger
+  useEffect(() => {
+    if (!activeChatKey) {
       setMessages([]);
       return;
     }
     
     setMessages([]);
     const requestId = ++historyRequestRef.current;
+    
+    // Extract IDs from key for fetching
+    const [type, idStr] = activeChatKey.split(':');
+    const id = parseInt(idStr, 10);
+    const teamId = type === 'team' ? id : undefined;
+    const convId = type === 'conv' ? id : undefined;
 
     const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-            const history = await chatService.getChatHistory(activeConv.id, activeConv.teamId);
+            const history = await chatService.getChatHistory(convId, teamId);
             if (requestId !== historyRequestRef.current) return;
-            setMessages(history); // Keep descending order for flex-col-reverse
-            await markAsRead(activeConv.id, activeConv.teamId);
+            
+            setMessages(history);
+            // Stable markAsRead from Context
+            await markAsRead(convId, teamId);
         } catch (error) { console.error('Failed to fetch chat history', error); }
         finally {
           if (requestId === historyRequestRef.current) setLoadingHistory(false);
         }
     };
     fetchHistory();
-  }, [activeChatKey, activeConv, markAsRead]);
+  }, [activeChatKey, markAsRead]);
 
   const handleSendMessage = async (content: string) => {
     if (!activeConv) return;
     try {
       if (activeConv.teamId) await sendTeamMessage(activeConv.teamId, content);
       else if (activeConv.id) await sendDirectMessage(activeConv.id, content);
-      
-      // Local echo is handled by sending message moving to top in Context
     } catch (error) { console.error('Failed to send message', error); }
   };
 
@@ -183,15 +203,29 @@ const ChatPage: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-bold text-gray-900 leading-tight mb-0.5">
-                    {activeConv.teamId ? (activeInfo as TeamChatInfoDto)?.teamName : (activeInfo as ConversationDto)?.otherUserName}
-                  </h3>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${isOtherUserOnline || activeConv.teamId ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <p className={`text-[11px] font-bold uppercase tracking-wider ${isOtherUserOnline || activeConv.teamId ? 'text-green-600' : 'text-gray-400'}`}>
-                      {isOtherUserOnline || activeConv.teamId ? 'Active Now' : 'Offline'}
-                    </p>
-                  </div>
+                   <h3 className="text-[16px] font-bold text-gray-900 leading-tight mb-0.5 flex items-center gap-2">
+                     {activeConv.teamId ? (activeInfo as TeamChatInfoDto)?.teamName : (activeInfo as ConversationDto)?.otherUserName}
+                     {!activeConv.teamId && (activeInfo as ConversationDto)?.otherUserLeadingTeamName && (
+                        <span className="px-2 py-0.5 bg-orange-100 text-[#F27123] text-[9px] font-black uppercase tracking-tighter rounded-md border border-orange-200">
+                           Leader
+                        </span>
+                     )}
+                   </h3>
+                   <div className="flex items-center gap-1.5 min-h-[1.25rem]">
+                     {(activeInfo as ConversationDto)?.otherUserLeadingTeamName ? (
+                        <p className="text-[10px] font-bold text-[#F27123] flex items-center gap-1">
+                           <span className="material-symbols-outlined text-[10px]">stars</span>
+                           Leader of {(activeInfo as ConversationDto).otherUserLeadingTeamName}
+                        </p>
+                     ) : (
+                        <>
+                           <div className={`w-1.5 h-1.5 rounded-full ${isOtherUserOnline || activeConv.teamId ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                           <p className={`text-[11px] font-bold uppercase tracking-wider ${isOtherUserOnline || activeConv.teamId ? 'text-green-600' : 'text-gray-400'}`}>
+                             {isOtherUserOnline || activeConv.teamId ? 'Active Now' : 'Offline'}
+                           </p>
+                        </>
+                     )}
+                   </div>
                 </div>
               </div>
 
@@ -208,6 +242,7 @@ const ChatPage: React.FC = () => {
                         key={msg.messageId} 
                         message={msg} 
                         isMe={Number(msg.senderId) === Number(currentUserId)}
+                        isLeader={!activeConv.teamId && Number(msg.senderId) === Number((activeInfo as ConversationDto)?.otherUserId) && !!(activeInfo as ConversationDto)?.otherUserLeadingTeamName}
                         showAvatar={index === messages.length - 1 || messages[index + 1]?.senderId !== msg.senderId}
                       />
                     ))}

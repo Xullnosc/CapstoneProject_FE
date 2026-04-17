@@ -72,6 +72,7 @@ export interface ConversationDto {
   lastMessage?: string;
   lastMessageAt?: string;
   unreadCount: number;
+  otherUserLeadingTeamName?: string;
 }
 
 export interface TeamChatInfoDto {

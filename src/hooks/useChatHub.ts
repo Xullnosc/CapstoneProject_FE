@@ -4,24 +4,36 @@ import { type ChatMessageDto } from '../types/studentInteraction';
 
 interface UseChatHubProps {
   onMessageReceived?: (message: ChatMessageDto) => void;
-  semesterId: number;
+  token: string | null;
 }
 
-export const useChatHub = ({ onMessageReceived }: Omit<UseChatHubProps, 'semesterId'>) => {
+export const useChatHub = ({ onMessageReceived, token }: UseChatHubProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const handlerRef = useRef(onMessageReceived);
 
-  // Update handler ref when callback changes, without triggering useEffect
+  // Update handler ref when callback changes
   useEffect(() => {
     handlerRef.current = onMessageReceived;
   }, [onMessageReceived]);
 
+  // 1. SIGNALR MANAGER: Manage connection lifecycle
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    // If no token, we ensure the connection is stopped and state is reset
+    if (!token) {
+        if (connectionRef.current) {
+            connectionRef.current.stop();
+            connectionRef.current = null;
+        }
+        setTimeout(() => setIsConnected(false), 0);
+        return;
+    }
 
-    // Build connection URL (Remove /api if present to point to hub at root)
+    // KILL OLD CONNECTION before starting new one
+    if (connectionRef.current) {
+        connectionRef.current.stop();
+    }
+
     const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
     const hubUrl = `${baseUrl}/chatHub`;
 
@@ -36,60 +48,62 @@ export const useChatHub = ({ onMessageReceived }: Omit<UseChatHubProps, 'semeste
       .build();
 
     connection.on('ReceiveMessage', (message: ChatMessageDto) => {
-      console.log('SignalR: Received message', message);
       handlerRef.current?.(message);
+    });
+
+    connection.on('ChatRead', (data: { conversationId?: number, teamId?: number }) => {
+      console.log('SignalR: Chat marked as read', data);
     });
 
     const startConnection = async () => {
       try {
         await connection.start();
-        console.log('SignalR Connected to ChatHub');
-        setIsConnected(true);
+        setTimeout(() => setIsConnected(true), 0);
         connectionRef.current = connection;
       } catch (err) {
-        console.error('SignalR Connection Error: ', err);
-        setIsConnected(false);
+        console.warn('SignalR Connection Error: ', err);
+        setTimeout(() => setIsConnected(false), 0);
       }
     };
 
-    startConnection();
+    void startConnection();
 
     return () => {
-      console.log('SignalR: Stopping connection');
       connection.stop();
       connectionRef.current = null;
+      setTimeout(() => setIsConnected(false), 0);
     };
-  }, []); // Connection starts ONLY ONCE
+  }, [token]);
 
   const sendDirectMessage = useCallback(async (conversationId: number, content: string) => {
-    if (connectionRef.current && isConnected) {
+    if (connectionRef.current && connectionRef.current.state === signalR.HubConnectionState.Connected) {
       await connectionRef.current.invoke('SendDirectMessage', conversationId, content);
     }
-  }, [isConnected]);
+  }, []);
 
   const sendTeamMessage = useCallback(async (teamId: number, content: string) => {
-    if (connectionRef.current && isConnected) {
+    if (connectionRef.current && connectionRef.current.state === signalR.HubConnectionState.Connected) {
       await connectionRef.current.invoke('SendTeamMessage', teamId, content);
     }
-  }, [isConnected]);
+  }, []);
 
   const markAsRead = useCallback(async (conversationId?: number, teamId?: number) => {
-    if (connectionRef.current && isConnected) {
+    if (connectionRef.current && connectionRef.current.state === signalR.HubConnectionState.Connected) {
       await connectionRef.current.invoke('MarkAsRead', conversationId, teamId);
     }
-  }, [isConnected]);
+  }, []);
 
   const joinConversation = useCallback(async (conversationId: number) => {
-    if (connectionRef.current && isConnected) {
+    if (connectionRef.current && connectionRef.current.state === signalR.HubConnectionState.Connected) {
       await connectionRef.current.invoke('JoinConversation', conversationId);
     }
-  }, [isConnected]);
+  }, []);
 
   const leaveConversation = useCallback(async (conversationId: number) => {
-    if (connectionRef.current && isConnected) {
+    if (connectionRef.current && connectionRef.current.state === signalR.HubConnectionState.Connected) {
       await connectionRef.current.invoke('LeaveConversation', conversationId);
     }
-  }, [isConnected]);
+  }, []);
 
   return {
     isConnected,

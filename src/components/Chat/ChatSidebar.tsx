@@ -20,6 +20,12 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, teams, activeC
     return isNaN(time) ? 0 : time;
   };
 
+  const formatTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const utcStr = dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`;
+    return new Date(utcStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   const sortedTeams = React.useMemo(() => {
     return [...teams]
       .filter(t => t.teamName.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -79,7 +85,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, teams, activeC
                             <Users size={22} />
                         </div>
                     )}
-                    {/* For Teams, we could show if there's active activity, or just a static design */}
                 </div>
                 
                 <div className="flex-1 text-left min-w-0">
@@ -88,7 +93,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, teams, activeC
                         {team.teamName}
                     </span>
                     <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-2">
-                        {team.lastMessageAt ? new Date(team.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {formatTime(team.lastMessageAt)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -137,7 +142,6 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, teams, activeC
                         <User size={22} />
                       </div>
                     )}
-                    {/* Real-time Status Indicator */}
                     {isOnline && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -147,11 +151,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ conversations, teams, activeC
 
                 <div className="ml-0.5 flex-1 text-left min-w-0">
                   <div className="flex justify-between items-center mb-0.5">
-                    <span className={`text-[14px] truncate transition-colors ${activeConv?.id === conv.conversationId ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
+                    <span className={`text-[14px] truncate transition-colors flex items-center gap-1.5 ${activeConv?.id === conv.conversationId ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
                       {conv.otherUserName}
+                      {conv.otherUserLeadingTeamName && (
+                        <span title={`Leader of ${conv.otherUserLeadingTeamName}`} className="flex-shrink-0 text-orange-400">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                        </span>
+                      )}
                     </span>
                     <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap ml-2">
-                      {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      {formatTime(conv.lastMessageAt)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
