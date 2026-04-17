@@ -8,42 +8,37 @@ import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 import notificationService from '../../services/notificationService';
 import NotificationDropdown from './NotificationDropdown';
-import { useChat } from '../../contexts/useChat';
-import { chatService } from '../../services/chatService';
 
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { totalUnreadCount } = useChat(); 
     const [visible, setVisible] = useState(false);
     const [currentSemesterCode, setCurrentSemesterCode] = useState<string>('');
     const [unreadCount, setUnreadCount] = useState<number>(0);
-    const [hasMentoredTeams, setHasMentoredTeams] = useState<boolean>(true);
 
+    // Auth & Permissions
     const user = authService.getUser();
+    // Assuming HOD/Admin role check. Adjust strings/IDs as per your system
+    // Based on previous Context: "HOD" or "Admin".
+    // In Header, it used IDs. Let's use roleName if available, or IDs for safety if roleName is unreliable.
+    // However, I previously added roleName to authService.
     const canManageSemesters = user?.roleName === 'Admin' || user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const canManageHodAccounts = user?.roleName === 'Admin';
     const isHOD = user?.roleName === 'HOD' || user?.roleName === 'Head of Department';
     const isReviewer = (user as { isReviewer?: boolean } | null)?.isReviewer === true;
     const isLecturer = user?.roleName === 'Lecturer';
     const isStudent = user?.roleName === 'Student';
-    const canChat = isStudent || ((isLecturer || isHOD) && hasMentoredTeams);
     const hasUnread = unreadCount > 0;
-    const hasUnreadChat = totalUnreadCount > 0;
     const isNotificationsPath = location.pathname.startsWith('/notifications');
-    const isChatPath = location.pathname.startsWith('/chat');
 
     useEffect(() => {
         const fetchCurrentSemester = async () => {
             try {
+                // Dynamic import not strictly needed if we want to standard import, but keeping existing style
                 const { semesterService } = await import('../../services/semesterService');
+                // Ensure we get the *latest* active semester
                 const current = await semesterService.getCurrentSemester();
                 setCurrentSemesterCode(current ? current.semesterCode : '');
-
-                if ((isLecturer || isHOD) && current) {
-                    const teams = await chatService.getTeamList(current.semesterId);
-                    setHasMentoredTeams(teams.length > 0);
-                }
             } catch (error) {
                 console.error("Failed to fetch semester context", error);
             }
@@ -51,42 +46,45 @@ const Header = () => {
 
         fetchCurrentSemester();
 
+        // Listen for updates
         const handleSemesterChange = () => {
+            console.log("Semester changed event received. Refreshing Header...");
             fetchCurrentSemester();
         };
 
         window.addEventListener('semesterChanged', handleSemesterChange);
-        return () => window.removeEventListener('semesterChanged', handleSemesterChange);
-    }, [isHOD, isLecturer]);
 
-    // Manual refresh listener (for notificationCount, chat handled by context)
-    useEffect(() => {
-        const handleRefresh = () => {
-            notificationService.getUnreadCount().then(setUnreadCount);
+        return () => {
+            window.removeEventListener('semesterChanged', handleSemesterChange);
         };
-        
-        window.addEventListener('refreshUnreadCount', handleRefresh);
-        return () => window.removeEventListener('refreshUnreadCount', handleRefresh);
     }, []);
 
-    // Polling only for regular Notifications (Chat is real-time now)
+    // Smart polling for notification count - pause when on notifications page
     useEffect(() => {
         const fetchUnreadCount = async () => {
             try {
                 const count = await notificationService.getUnreadCount();
                 setUnreadCount(count);
             } catch (error) {
-                console.error('Failed to fetch unread counts:', error);
+                console.error('Failed to fetch unread count:', error);
             }
         };
 
+        // Initial fetch
         fetchUnreadCount();
 
+        // Only poll if NOT on notifications page (smart polling)
         const isOnNotificationsPage = location.pathname.startsWith('/notifications');
-        if (isOnNotificationsPage) return; 
+        if (isOnNotificationsPage) {
+            return; // Don't poll while viewing notifications
+        }
 
+        // Poll every 60 seconds when not on notifications page
         const pollInterval = setInterval(fetchUnreadCount, 60000);
-        return () => clearInterval(pollInterval);
+
+        return () => {
+            clearInterval(pollInterval);
+        };
     }, [location.pathname]);
 
     return (
@@ -135,16 +133,10 @@ const Header = () => {
                             <span>Dashboard</span>
                         </div>
                         {user?.roleName !== 'Admin' && isStudent && (
-                            <>
-                                <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                    <i className="pi pi-list text-xl"></i>
-                                    <span>List Thesis</span>
-                                </div>
-                                <div onClick={() => { navigate('/discovery'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/discovery' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
-                                    <i className="pi pi-compass text-xl"></i>
-                                    <span>Discovery Board</span>
-                                </div>
-                            </>
+                            <div onClick={() => { navigate('/published-thesis'); setVisible(false); }} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname === '/published-thesis' ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-list text-xl"></i>
+                                <span>List Thesis</span>
+                            </div>
                         )}
                         {(canManageSemesters || isHOD) && user?.roleName !== 'Admin' && (
                             <div onClick={() => navigate('/semesters')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/semesters') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
@@ -223,27 +215,6 @@ const Header = () => {
                                 <span>AI Studio</span>
                             </div>
                         )}
-                        {user?.roleName !== 'Admin' && canChat && (
-                            <div
-                                onClick={() => {
-                                    navigate('/chat');
-                                    setVisible(false);
-                                }}
-                                className={`flex items-center justify-between gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${isChatPath ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <i className="pi pi-comments text-xl"></i>
-                                        {hasUnreadChat && (
-                                            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-white flex items-center justify-center text-[8px] text-white font-bold">
-                                                {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span>Messages</span>
-                                </div>
-                            </div>
-                        )}
                         {user?.roleName !== 'Admin' && (
                             <div
                                 onClick={() => {
@@ -294,7 +265,6 @@ const Header = () => {
                         const navItems: NavItem[] = [
                             { id: 'home', label: 'Homepage', icon: 'pi pi-home', path: '/home', show: true },
                             { id: 'list-thesis', label: 'List Thesis', icon: 'pi pi-list', path: '/published-thesis', show: isStudent },
-                            { id: 'discovery', label: 'Discovery', icon: 'pi pi-compass', path: '/discovery', show: isStudent },
                             { id: 'semesters', label: 'Semesters', icon: 'pi pi-calendar', path: '/semesters', show: canManageSemesters },
                             { id: 'hod-accounts', label: 'HOD Accounts', icon: 'pi pi-id-card', path: '/admin/hod', show: canManageHodAccounts },
                             { id: 'teams', label: `My Team${isLecturer || isHOD ? 's' : ''}`, icon: 'pi pi-users', path: isLecturer || isHOD ? '/teams/my-teams' : '/teams/team', show: isStudent || isLecturer || isHOD },
@@ -420,24 +390,14 @@ const Header = () => {
 
             {/* Right Section: User Profile */}
             <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
-                {user && canChat && (
-                    <button
-                        onClick={() => navigate('/chat')}
-                        className={`relative p-2 rounded-full hover:bg-gray-50 transition-all duration-200 ${isChatPath ? 'text-orange-600 bg-orange-50' : 'text-gray-500'}`}
-                        title="Messages"
-                    >
-                        <i className="pi pi-comments text-xl"></i>
-                        {hasUnreadChat && (
-                            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold px-1">
-                                {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
-                            </span>
-                        )}
-                    </button>
-                )}
                 {user && (
                     <NotificationDropdown 
                         unreadCount={unreadCount} 
                         onRefreshCount={() => {
+                            // Using the internal fetchUnreadCount defined in the effect scope might be tricky,
+                            // but Header has it defined inside a useEffect. I should lift it or just trigger a refresh.
+                            // Actually, I'll pass a simpler refresh trigger or rely on the polling.
+                            // Better: call the service directly or trigger the polling early.
                             notificationService.getUnreadCount(true).then(setUnreadCount);
                         }} 
                     />
