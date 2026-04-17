@@ -37,7 +37,6 @@ interface UpdateProfileDTO {
     personalId?: string | null;
     placeOfBirth?: string | null;
     enrollmentYear?: number | null;
-    campusId?: number | null;
 }
 
 export const userService = {

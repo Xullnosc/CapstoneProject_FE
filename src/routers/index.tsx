@@ -27,9 +27,6 @@ import ProfilePage from "../pages/Profile/ProfilePage";
 import OtherProfilePage from "../pages/Profile/OtherProfilePage";
 import MyApplicationsPage from "../pages/Application/MyApplicationsPage";
 import ApplicationReviewPage from "../pages/Application/ApplicationReviewPage";
-import DiscoveryPage from "../pages/Discovery/DiscoveryPage";
-import ChatPage from "../pages/Chat/ChatPage";
-import AccessDeniedPage from "../pages/AccessDenied/AccessDeniedPage";
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(
@@ -78,7 +75,6 @@ const AppRouter = () => {
       >
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
-          <Route path="/access-denied" element={<AccessDeniedPage />} />
         </Route>
       </Route>
 
@@ -148,8 +144,6 @@ const AppRouter = () => {
             <Route index element={<AISettingsPage />} />
             <Route path="api-keys" element={<AIApiKeysManagerPage />} />
           </Route>
-          <Route path="/discovery" element={<DiscoveryPage />} />
-          <Route path="/chat" element={<ChatPage />} />
         </Route>
       </Route>
 

@@ -56,7 +56,6 @@ export interface TeamInvitation {
     };
     message?: string;
     status: "Pending" | "Accepted" | "Declined";
-    type?: "Member" | "Mentor" | "JoinRequest";
     createdAt: string;
 }
 

@@ -6,20 +6,10 @@ import { Password } from 'primereact/password';
 import { Avatar } from 'primereact/avatar';
 import { Tag } from 'primereact/tag';
 import { Divider } from 'primereact/divider';
-import { Button } from 'primereact/button';
 import { authService } from '../../services/authService';
 import { userService } from '../../services/userService';
-import { discoveryService } from '../../services/discoveryService';
-import type { SkillEntry, UserSkillDto } from '../../types/studentInteraction';
 import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 import Swal from '../../utils/swal';
-
-const normalizeSkillEntry = (s: UserSkillDto): SkillEntry | null => {
-    const tag = s.skillTag || s.skillName || '';
-    if (!tag) return null;
-    const level = s.skillLevel || 'Intermediate';
-    return { skillTag: tag, skillLevel: level };
-};
 
 const passwordIconStyle = `
   .p-password {
@@ -76,20 +66,10 @@ const ProfilePage = () => {
         personalId: user?.personalId || '',
         placeOfBirth: user?.placeOfBirth || '',
         enrollmentYear: user?.enrollmentYear?.toString() || '',
-        campusId: user?.campusId || null,
         newPassword: '',
         confirmPassword: ''
     });
 
-    const [skills, setSkills] = useState<SkillEntry[]>([]);
-
-    const campusOptions = [
-        { label: 'FU-Hòa Lạc', value: 1 },
-        { label: 'FU-Đà Nẵng', value: 2 },
-        { label: 'FU-Hồ Chí Minh', value: 3 },
-        { label: 'FU-Cần Thơ', value: 4 },
-        { label: 'FU-Quy Nhơn', value: 5 }
-    ];
     const dataSource = profile || user;
 
     useEffect(() => {
@@ -115,26 +95,11 @@ const ProfilePage = () => {
                     personalId: data.personalId || '',
                     placeOfBirth: data.placeOfBirth || '',
                     enrollmentYear: data.enrollmentYear?.toString() || '',
-                    campusId: data.campusId || null,
                     newPassword: '',
                     confirmPassword: ''
                 });
-                
-                // Load skills
-                const skillsData = await discoveryService.getMySkills();
-                // Handle both object wrapper and raw array
-                const list = Array.isArray(skillsData) ? skillsData : [];
-                setSkills(list.map(normalizeSkillEntry).filter((x): x is SkillEntry => x !== null));
-            } catch (error) {
-                console.error("Load profile/skills error:", error);
-                // Fallback to initial user if getProfile fails
-                if (user) {
-                    setFormData(prev => ({ 
-                        ...prev, 
-                        campusId: user.campusId || null,
-                        campus: user.campus || '' 
-                    }));
-                }
+            } catch {
+                setProfile(user);
             } finally {
                 setLoadingProfile(false);
             }
@@ -151,29 +116,25 @@ const ProfilePage = () => {
     const handleEdit = () => setIsEditing(true);
     const handleCancel = () => {
         setIsEditing(false);
-        const target = profile || user;
-        if (!target) return;
-
         setFormData({
-            fullName: target.fullName || '',
-            email: target.email || '',
-            studentCode: target.studentCode || '',
-            campus: target.campus || '',
-            role: target.roleName || '',
-            phoneNumber: target.phoneNumber || '',
-            githubLink: target.githubLink || '',
-            linkedinLink: target.linkedinLink || '',
-            facebookLink: target.facebookLink || '',
-            dateOfBirth: target.dateOfBirth ? String(target.dateOfBirth).slice(0, 10) : '',
-            gender: target.gender || '',
-            address: target.address || '',
-            major: target.major || '',
-            personalId: target.personalId || '',
-            placeOfBirth: target.placeOfBirth || '',
-            enrollmentYear: target.enrollmentYear?.toString() || '',
+            fullName: dataSource?.fullName || '',
+            email: dataSource?.email || '',
+            studentCode: dataSource?.studentCode || '',
+            campus: dataSource?.campus || '',
+            role: dataSource?.roleName || '',
+            phoneNumber: dataSource?.phoneNumber || '',
+            githubLink: dataSource?.githubLink || '',
+            linkedinLink: dataSource?.linkedinLink || '',
+            facebookLink: dataSource?.facebookLink || '',
+            dateOfBirth: dataSource?.dateOfBirth ? String(dataSource.dateOfBirth).slice(0, 10) : '',
+            gender: dataSource?.gender || '',
+            address: dataSource?.address || '',
+            major: dataSource?.major || '',
+            personalId: dataSource?.personalId || '',
+            placeOfBirth: dataSource?.placeOfBirth || '',
+            enrollmentYear: dataSource?.enrollmentYear?.toString() || '',
             newPassword: '',
-            confirmPassword: '',
-            campusId: target.campusId || null
+            confirmPassword: ''
         });
     };
 
@@ -209,7 +170,7 @@ const ProfilePage = () => {
                 }
 
                 try {
-                    const profileUpdatePromise = userService.updateProfile({
+                    const updatedUser = await userService.updateProfile({
                         fullName: formData.fullName,
                         phoneNumber: formData.phoneNumber,
                         githubLink: formData.githubLink,
@@ -221,14 +182,8 @@ const ProfilePage = () => {
                         major: formData.major || null,
                         personalId: formData.personalId || null,
                         placeOfBirth: formData.placeOfBirth || null,
-                        enrollmentYear: formData.enrollmentYear ? parseInt(formData.enrollmentYear, 10) : null,
-                        campusId: formData.campusId
+                        enrollmentYear: formData.enrollmentYear ? parseInt(formData.enrollmentYear, 10) : null
                     });
-
-                    // Update skills with structured list
-                    const skillsUpdatePromise = discoveryService.updateMySkills(skills.filter(s => s.skillTag.trim() !== ''));
-
-                    const [updatedUser] = await Promise.all([profileUpdatePromise, skillsUpdatePromise]);
 
                     setProfile(updatedUser);
                     authService.setUser(updatedUser);
@@ -344,9 +299,9 @@ const ProfilePage = () => {
 
             {/* Content Area */}
             <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Account Summary */}
-                    <div className="lg:col-span-5 space-y-6">
+                    <div className="lg:col-span-1 space-y-6">
                         <Card className="border-none shadow-sm rounded-[2.5rem]">
                             <div className="p-2">
                                 <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">Identification</h3>
@@ -364,108 +319,16 @@ const ProfilePage = () => {
                                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
                                             <i className="pi pi-map-marker text-lg" />
                                         </div>
-                                        <div className="flex-1">
+                                        <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Affiliated Campus</p>
-                                            {isEditing && (!formData.campusId || formData.campusId === 0) ? (
-                                                <Dropdown
-                                                    value={formData.campusId}
-                                                    onChange={(e) => setFormData({ ...formData, campusId: e.value })}
-                                                    options={campusOptions}
-                                                    placeholder="Select Campus"
-                                                    className="w-full border-none bg-transparent! shadow-none font-bold text-sm"
-                                                    style={{ padding: 0 }}
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-bold text-gray-800 tracking-tight">
-                                                    {campusOptions.find(c => c.value === formData.campusId)?.label || formData.campus || 'N/A'}
-                                                </p>
-                                            )}
-                                            {isEditing && formData.campusId > 0 && (
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1">
-                                                    <i className="pi pi-info-circle text-[8px]" />
-                                                    Campus assignment is managed by Registry
-                                                </p>
-                                            )}
+                                            <p className="text-sm font-bold text-gray-800 tracking-tight">{formData.campus || 'N/A'}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <Divider className="my-8" />
 
-                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">Skill Management</h3>
-                                <div className="space-y-4 px-2">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Professional Skills</label>
-                                            {isEditing && (
-                                                <Button 
-                                                    type="button"
-                                                    icon="pi pi-plus" 
-                                                    label="Add Skill" 
-                                                    className="p-button-text p-button-sm text-[#F26F21] text-[10px] font-bold uppercase tracking-tight"
-                                                    onClick={() => setSkills([...skills, { skillTag: '', skillLevel: 'Intermediate' }])}
-                                                />
-                                            )}
-                                        </div>
-                                        
-                                        <div className="space-y-3">
-                                            {skills.length > 0 ? (
-                                                skills.map((skill, index) => (
-                                                    <div key={index} className="flex gap-3 items-center group animate-fade-in">
-                                                        {isEditing ? (
-                                                            <>
-                                                                <div className="flex-1">
-                                                                    <InputText 
-                                                                        value={skill.skillTag}
-                                                                        onChange={(e) => {
-                                                                            const newSkills = [...skills];
-                                                                            newSkills[index].skillTag = e.target.value;
-                                                                            setSkills(newSkills);
-                                                                        }}
-                                                                        placeholder="Skill Name (e.g. React)"
-                                                                        className="w-full text-xs font-bold py-3! px-4! border-gray-100! bg-gray-50! rounded-xl!"
-                                                                    />
-                                                                </div>
-                                                                <div className="w-48">
-                                                                    <Dropdown 
-                                                                        value={skill.skillLevel}
-                                                                        onChange={(e) => {
-                                                                            const newSkills = [...skills];
-                                                                            newSkills[index].skillLevel = e.value;
-                                                                            setSkills(newSkills);
-                                                                        }}
-                                                                        options={[
-                                                                            { label: 'Beginner', value: 'Beginner' },
-                                                                            { label: 'Intermediate', value: 'Intermediate' },
-                                                                            { label: 'Advanced', value: 'Advanced' },
-                                                                            { label: 'Expert', value: 'Expert' }
-                                                                        ]}
-                                                                        className="w-full text-xs font-bold border-gray-100! bg-gray-50! rounded-xl! py-1!"
-                                                                    />
-                                                                </div>
-                                                                <Button 
-                                                                    type="button"
-                                                                    icon="pi pi-trash" 
-                                                                    className="p-button-rounded p-button-text p-button-danger p-button-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    onClick={() => setSkills(skills.filter((_, i) => i !== index))}
-                                                                />
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex items-center justify-between w-full p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                                                                <span className="text-xs font-bold text-gray-800">{skill.skillTag}</span>
-                                                                <Tag value={skill.skillLevel} className="bg-orange-50 text-[#F26F21] border border-orange-100 font-bold px-2 py-0.5 text-[9px] rounded-full" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-xs text-gray-400 italic px-2">No skills added yet.</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <Divider className="my-8" />
+                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 px-2">Professional Presence</h3>
                                 <div className="space-y-4 px-2">
                                     {(isEditing || formData.githubLink) && (
                                         <div className="flex items-center gap-3">
@@ -541,7 +404,7 @@ const ProfilePage = () => {
                     </div>
 
                     {/* Right Column: User Details */}
-                    <div className="lg:col-span-7 space-y-6">
+                    <div className="lg:col-span-2 space-y-6">
                         <Card className="border-none shadow-sm rounded-[2.5rem]">
                             <div className="p-2">
                                 <div className="flex items-center gap-3 mb-8 px-2">
