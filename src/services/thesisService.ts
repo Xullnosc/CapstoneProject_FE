@@ -7,6 +7,7 @@ import type {
   ReviewTimelineComment,
   Checklist,
   ThesisAIReviewPreview,
+  DuplicationCheckResult,
 } from "../types/thesis";
 
 export type ThesisDecision = "Pass" | "Fail";
@@ -166,6 +167,13 @@ export const thesisService = {
   getAiReviewPreview: async (id: string): Promise<ThesisAIReviewPreview> => {
     const response = await api.post<ThesisAIReviewPreview>(
       `/thesis/${id}/ai-review-preview`,
+    );
+    return response.data;
+  },
+
+  getDuplicationCheckResult: async (id: string): Promise<DuplicationCheckResult> => {
+    const response = await api.post<DuplicationCheckResult>(
+      `/thesis/${id}/duplication-check`,
     );
     return response.data;
   },

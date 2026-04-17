@@ -31,6 +31,25 @@ export interface ThesisAIReviewPreview {
   generatedAtUtc: string;
 }
 
+export interface DuplicationMatch {
+  candidateThesisId: string;
+  candidateTitle?: string | null;
+  candidateSemesterId?: number | null;
+  candidateSemesterCode?: string | null;
+  maxChunkSimilarity: number;
+  averageTopChunkSimilarity: number;
+  similarityBand: "LOW" | "MEDIUM" | "HIGH" | string;
+}
+
+export interface DuplicationCheckResult {
+  thesisId: string;
+  thesisTitle?: string | null;
+  semestersScanned: number;
+  candidatesScanned: number;
+  isSuspicious: boolean;
+  matches: DuplicationMatch[];
+}
+
 // Matches ThesisHistoryDTO from backend
 export interface ThesisHistory {
   id: number;
