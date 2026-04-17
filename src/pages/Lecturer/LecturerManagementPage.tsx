@@ -287,22 +287,26 @@ const LecturerManagementPage = () => {
                                                 </td>
                                             )}
                                             <td className="px-8 py-5 text-center">
-                                                <div className="flex justify-center">
-                                                    <InputSwitch
-                                                        checked={l.isActive}
-                                                        onChange={() => handleToggleStatus(l)}
-                                                        className={l.isActive ? 'orange-switch' : ''}
-                                                    />
-                                                </div>
+                                                {!l.isHod && (
+                                                    <div className="flex justify-center">
+                                                        <InputSwitch
+                                                            checked={l.isActive}
+                                                            onChange={() => handleToggleStatus(l)}
+                                                            className={l.isActive ? 'orange-switch' : ''}
+                                                        />
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-8 py-5 text-center">
-                                                <div className="flex justify-center">
-                                                    <InputSwitch
-                                                        checked={l.isReviewer}
-                                                        onChange={() => handleToggleReviewer(l)}
-                                                        className={l.isReviewer ? 'blue-switch' : ''}
-                                                    />
-                                                </div>
+                                                {!l.isHod && (
+                                                    <div className="flex justify-center">
+                                                        <InputSwitch
+                                                            checked={l.isReviewer}
+                                                            onChange={() => handleToggleReviewer(l)}
+                                                            className={l.isReviewer ? 'blue-switch' : ''}
+                                                        />
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
