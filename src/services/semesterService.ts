@@ -1,4 +1,5 @@
 import api from './api';
+import type { AxiosError } from 'axios';
 
 
 export interface TeamSimple {
@@ -54,6 +55,16 @@ export interface PagedResult<T> {
     hasPreviousPage: boolean;
 }
 
+interface SemesterCacheEntry {
+    value: Semester;
+    timestamp: number;
+}
+
+const CURRENT_SEMESTER_CACHE_TTL = 60000; // 1 minute
+let currentSemesterCache: SemesterCacheEntry | null = null;
+let currentSemesterInFlight: Promise<Semester> | null = null;
+let currentSemesterCooldownUntil = 0;
+
 export const semesterService = {
     getAllSemesters: async (): Promise<Semester[]> => {
         const response = await api.get<Semester[]>('/semester');
@@ -73,8 +84,43 @@ export const semesterService = {
     },
     
     getCurrentSemester: async (): Promise<Semester> => {
-        const response = await api.get<Semester>('/semester/current');
-        return response.data;
+        const now = Date.now();
+
+        if (currentSemesterCache && now - currentSemesterCache.timestamp < CURRENT_SEMESTER_CACHE_TTL) {
+            return currentSemesterCache.value;
+        }
+
+        if (now < currentSemesterCooldownUntil && currentSemesterCache) {
+            return currentSemesterCache.value;
+        }
+
+        if (currentSemesterInFlight) {
+            return currentSemesterInFlight;
+        }
+
+        currentSemesterInFlight = (async () => {
+            try {
+                const response = await api.get<Semester>('/semester/current');
+                currentSemesterCache = {
+                    value: response.data,
+                    timestamp: Date.now()
+                };
+                return response.data;
+            } catch (error) {
+                const axiosError = error as AxiosError;
+                if (axiosError.response?.status === 429) {
+                    currentSemesterCooldownUntil = Date.now() + 30000; // 30s cooldown
+                    if (currentSemesterCache) {
+                        return currentSemesterCache.value;
+                    }
+                }
+                throw error;
+            } finally {
+                currentSemesterInFlight = null;
+            }
+        })();
+
+        return currentSemesterInFlight;
     },
 
     getWhitelistsPaginated: async (semesterId: number, params: {
