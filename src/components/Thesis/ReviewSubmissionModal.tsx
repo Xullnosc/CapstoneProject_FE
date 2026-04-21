@@ -405,13 +405,18 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
                                             {duplicationResult.matches.slice(0, 5).map((match) => (
                                                 <div
                                                     key={match.candidateThesisId}
-                                                    className="bg-white border border-slate-200 rounded-xl p-3"
+                                                    className="bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:border-sky-300 hover:bg-sky-50 transition-colors"
+                                                    title="Click to view thesis details"
+                                                    onClick={() => window.open(`/thesis/${match.candidateThesisId}`, '_blank')}
                                                 >
                                                     <div className="flex items-start justify-between gap-2 mb-1">
-                                                        <div className="text-xs font-bold text-slate-700 line-clamp-2">
-                                                            {match.candidateTitle || match.candidateThesisId}
+                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                            <div className="text-xs font-bold text-slate-700 line-clamp-2">
+                                                                {match.candidateTitle || match.candidateThesisId}
+                                                            </div>
+                                                            <i className="pi pi-external-link text-[10px] text-sky-400 shrink-0" />
                                                         </div>
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 ${
                                                             match.similarityBand === 'HIGH'
                                                                 ? 'bg-red-100 text-red-700'
                                                                 : match.similarityBand === 'MEDIUM'

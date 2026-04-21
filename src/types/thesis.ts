@@ -39,6 +39,9 @@ export interface DuplicationMatch {
   maxChunkSimilarity: number;
   averageTopChunkSimilarity: number;
   similarityBand: "LOW" | "MEDIUM" | "HIGH" | string;
+  aiConfirmedSuspicious?: boolean | null;
+  aiReasoning?: string | null;
+  aiSkipped?: boolean;
 }
 
 export interface DuplicationCheckResult {
@@ -47,6 +50,7 @@ export interface DuplicationCheckResult {
   semestersScanned: number;
   candidatesScanned: number;
   isSuspicious: boolean;
+  aiEnriched?: boolean;
   matches: DuplicationMatch[];
 }
 
