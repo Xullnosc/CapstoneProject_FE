@@ -21,6 +21,7 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
     const [status, setStatus] = useState<'OK' | 'Consider' | null>(null);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
+    const [previewKey, setPreviewKey] = useState(0);
     
     // Checklist state
     const [checklists, setChecklists] = useState<Checklist[]>([]);
@@ -289,13 +290,23 @@ const ReviewSubmissionModal: React.FC<ReviewSubmissionModalProps> = ({ visible, 
             <div className="flex flex-col lg:flex-row gap-6 h-[60vh]">
                 {/* Left Pane: Document Preview */}
                 <div className="flex-1 flex flex-col h-full border border-slate-100 rounded-[2rem] bg-slate-50 overflow-hidden shadow-inner relative">
-                    <div className="absolute top-4 left-4 z-10">
+                    <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
                         <div className="bg-slate-800 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2">
                              <i className="pi pi-file-pdf" /> Document Preview
                         </div>
+                        <Button 
+                            icon="pi pi-refresh" 
+                            onClick={() => setPreviewKey(prev => prev + 1)}
+                            className="p-button-rounded p-button-text p-button-sm bg-white/90 hover:bg-white text-slate-700 shadow-xl"
+                            tooltip="Reload Preview"
+                            tooltipOptions={{ position: 'bottom' }}
+                            aria-label="Reload Preview"
+                            style={{ width: '2rem', height: '2rem' }}
+                        />
                     </div>
                     {thesisFileUrl ? (
                          <iframe 
+                            key={previewKey}
                             src={`https://docs.google.com/gview?url=${encodeURIComponent(thesisFileUrl)}&embedded=true`} 
                             className="w-full h-full border-none rounded-[2rem]"
                             title="Thesis Document Preview"
