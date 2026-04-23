@@ -209,12 +209,10 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
 
         const droppedFile = droppedFiles[0];
         const isExcelFile = droppedFile.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-            droppedFile.type === 'application/vnd.ms-excel' ||
-            droppedFile.name.endsWith('.xlsx') ||
-            droppedFile.name.endsWith('.xls');
+            droppedFile.name.endsWith('.xlsx');
 
         if (!isExcelFile) {
-            Swal.fire('Invalid file', 'Please drop an Excel file (.xlsx or .xls)', 'error');
+            Swal.fire('Invalid file', 'Please drop an Excel file (.xlsx)', 'error');
             return;
         }
 
@@ -320,11 +318,11 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                             </div>
                             <div className="text-left">
                                 <h4 className="text-base font-bold text-gray-700">Drag & Drop or Click to Upload</h4>
-                                <p className="text-xs text-gray-500 mt-0.5">Supported formats: .xlsx, .xls</p>
+                                <p className="text-xs text-gray-500 mt-0.5">Supported format: .xlsx</p>
                             </div>
                             <label className="cursor-pointer bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-400 transition-colors shadow-sm text-sm ml-4">
                                 Browse
-                                <input type="file" className="hidden" accept=".xlsx, .xls" onChange={handleFileChange} />
+                                <input type="file" className="hidden" accept=".xlsx" onChange={handleFileChange} />
                             </label>
                         </div>
                     ) : (
