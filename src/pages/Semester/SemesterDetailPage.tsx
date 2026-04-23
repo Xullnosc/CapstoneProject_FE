@@ -268,6 +268,45 @@ const SemesterDetailPage = () => {
         }
     };
 
+    const handleAnnounceMidtermReview = async () => {
+        if (!semester) return;
+        const result = await Swal.fire({
+            title: 'Announce Midterm Review',
+            html: `
+                <div class="text-left mt-4 text-sm text-gray-600 mb-4">
+                    Set a date to automatically notify all users about the upcoming midterm review deadline. 
+                    The system will notify you to manually lock the semester on this date.
+                </div>
+                <div class="text-left">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Select Lock Date <span class="text-red-500">*</span></label>
+                    <input type="date" id="midtermLockDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" min="${new Date(Math.max(new Date().getTime(), new Date(semester.startDate).getTime())).toISOString().split('T')[0]}" max="${new Date(semester.endDate).toISOString().split('T')[0]}" />
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Announce',
+            confirmButtonColor: '#f97316',
+            preConfirm: () => {
+                const dateVal = (document.getElementById('midtermLockDate') as HTMLInputElement).value;
+                if (!dateVal) {
+                    Swal.showValidationMessage('Please select a valid date');
+                }
+                return dateVal;
+            }
+        });
+
+        if (result.isConfirmed && result.value) {
+            try {
+                await semesterService.announceMidtermReview(semester.semesterId, result.value);
+                Swal.fire({ icon: 'success', title: 'Announced!', text: 'Midterm review lock date has been announced.' });
+                fetchSemesterDetail();
+            } catch (err: unknown) {
+                const error = err as AxiosError<{ message?: string }>;
+                const errorMessage = error.response?.data?.message || error.message || 'Failed to announce midterm review';
+                Swal.fire({ icon: 'error', title: 'Error', text: errorMessage });
+            }
+        }
+    };
+
     const handleEditSuccess = () => {
         setIsEditModalOpen(false);
         fetchSemesterDetail();
@@ -456,10 +495,16 @@ const SemesterDetailPage = () => {
                             {canManage && (
                                 <div className="flex flex-row sm:flex-col gap-3 justify-center w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2 sm:border-l border-gray-100 sm:pl-6">
                                     {isOpen && (
-                                        <button onClick={handleLockSubmission} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">
-                                            <span className="material-symbols-outlined text-lg">lock</span>
-                                            Lock Submissions
-                                        </button>
+                                        <>
+                                            <button onClick={handleAnnounceMidtermReview} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 shadow-lg shadow-orange-500/20 transition-all mb-2 sm:mb-0">
+                                                <span className="material-symbols-outlined text-lg">calendar_month</span>
+                                                Announce Midterm
+                                            </button>
+                                            <button onClick={handleLockSubmission} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-500/20 transition-all">
+                                                <span className="material-symbols-outlined text-lg">lock</span>
+                                                Lock Submissions
+                                            </button>
+                                        </>
                                     )}
                                     {isInProgress && (
                                         <button onClick={handleCloseSemester} className="cursor-pointer flex items-center gap-2 px-5 h-11 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all">

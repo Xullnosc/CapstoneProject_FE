@@ -36,6 +36,7 @@ export interface Semester {
     semesterName: string;
     startDate: string;
     endDate: string;
+    midtermLockDate?: string;
     status: 'Open' | 'In Progress' | 'Closed' | 'Upcoming' | 'Active' | 'Review Thesis' | 'Review Middle Semester';
     teamCount: number; // Optimized field
     activeTeamCount: number; // Added field
@@ -123,6 +124,10 @@ export const semesterService = {
     // Alias for compatibility
     endSemester: async (id: number) => {
         await api.post(`/semester/${id}/close`);
+    },
+
+    announceMidtermReview: async (id: number, lockDate: string) => {
+        await api.post(`/semester/${id}/announce-midterm-review`, { lockDate });
     },
 
     exportEvaluation: async (semesterId: number): Promise<void> => {
