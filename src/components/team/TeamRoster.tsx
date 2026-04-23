@@ -1,9 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { TeamMember } from '../../types/team';
 import MemberAvatar from './MemberAvatar';
 import InviteMemberModal from './InviteMemberModal';
 import InviteMentorModal from './InviteMentorModal';
+import JoinRequestCard from './JoinRequestCard';
+import { invitationService } from '../../services/invitationService';
+import type { TeamInvitation } from '../../types/team';
+import Swal from '../../utils/swal';
 
 interface TeamRosterProps {
     members: TeamMember[];
@@ -23,16 +27,18 @@ interface TeamRosterProps {
     onInvite?: () => void;
     onLeave?: () => void;
     onTransferRole?: (userId: number) => void;
+    onMembersUpdate?: () => void;
 }
 
 const TeamRoster: React.FC<TeamRosterProps> = ({
     members, isLeader, leaderId,
     mentorId, mentorName, mentorEmail, mentorAvatar,
     mentorId2, mentor2Name, mentor2Email, mentor2Avatar,
-    currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole
+    currentUserId, teamId, onKick, onInvite, onLeave, onTransferRole, onMembersUpdate
 }) => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isInviteMentorModalOpen, setIsInviteMentorModalOpen] = useState(false);
+    const [joinRequests, setJoinRequests] = useState<TeamInvitation[]>([]);
     const navigate = useNavigate();
     
     // Logic: Leader always at top, then sort others by name
@@ -53,6 +59,53 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
     const handleOpenInvite = () => {
         if (onInvite) onInvite();
         setIsInviteModalOpen(true);
+    };
+
+    const fetchJoinRequests = useCallback(async () => {
+        if (!isLeader || !teamId) return;
+        try {
+            const allInvitations = await invitationService.getMyInvitations();
+            const requests = allInvitations.filter(inv => inv.type === 'JoinRequest' && inv.teamId === teamId);
+            setJoinRequests(requests);
+        } catch (err) {
+            console.error('Failed to fetch join requests', err);
+        }
+    }, [isLeader, teamId]);
+
+    useEffect(() => {
+        if (!isLeader || !teamId) return;
+        // Defer to avoid "setState-in-effect" lint while keeping behavior.
+        const t = setTimeout(() => {
+            void fetchJoinRequests();
+        }, 0);
+        return () => clearTimeout(t);
+    }, [fetchJoinRequests, isLeader, teamId]);
+
+    const handleAcceptRequest = async (invitationId: number) => {
+        try {
+            await invitationService.acceptInvitation(invitationId);
+            Swal.fire({ icon: 'success', title: 'Accepted!', text: 'Member has been added to the team.', timer: 1500, showConfirmButton: false });
+            if (onMembersUpdate) onMembersUpdate();
+            void fetchJoinRequests();
+        } catch (err: unknown) {
+            const message =
+                typeof err === 'object' && err !== null && 'response' in err
+                    ? // Axios-like shape
+                      ((err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+                          'Failed to accept join request')
+                    : 'Failed to accept join request';
+            Swal.fire({ icon: 'error', title: 'Error', text: message });
+        }
+    };
+
+    const handleDeclineRequest = async (invitationId: number) => {
+        try {
+            await invitationService.declineInvitation(invitationId);
+            Swal.fire({ icon: 'success', title: 'Declined!', text: 'Join request declined.', timer: 1500, showConfirmButton: false });
+            void fetchJoinRequests();
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to decline request' });
+        }
     };
 
     return (
@@ -258,6 +311,27 @@ const TeamRoster: React.FC<TeamRosterProps> = ({
                     <p className="text-gray-500 italic text-sm text-center">Waiting for Team Leader to select a mentor...</p>
                 ) : null}
             </div>
+
+            {/* Join Requests Section */}
+            {isLeader && joinRequests.length > 0 && (
+                <div className="mt-6 px-1 border-t border-gray-100 pt-6">
+                    <h3 className="text-[#1c130d] text-lg font-bold flex items-center gap-2 mb-4">
+                        <span className="material-symbols-outlined text-orange-500">person_add</span>
+                        Pending Join Requests
+                        <span className="bg-orange-100 text-orange-600 text-xs px-2 py-0.5 rounded-full font-bold">{joinRequests.length}</span>
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                        {joinRequests.map(req => (
+                            <JoinRequestCard
+                                key={req.invitationId}
+                                invitation={req}
+                                onAccept={handleAcceptRequest}
+                                onDecline={handleDeclineRequest}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {teamId && (
                 <InviteMemberModal

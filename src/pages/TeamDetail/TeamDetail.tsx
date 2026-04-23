@@ -317,6 +317,7 @@ const TeamDetail: React.FC = () => {
                         onKick={handleKick}
                         onLeave={handleLeave}
                         onTransferRole={handleTransferRole}
+                        onMembersUpdate={() => loadTeam(team.teamId)}
                     />
 
                     {isLeader && (
