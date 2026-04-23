@@ -107,3 +107,15 @@ button:disabled {
 .blue-switch.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
   background: #2563eb !important;
 }
+
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 60s linear infinite;
+}
