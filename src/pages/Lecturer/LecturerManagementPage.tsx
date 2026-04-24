@@ -317,7 +317,7 @@ const LecturerManagementPage = () => {
                                                             checked={l.isHod}
                                                             onChange={() => handleToggleHod(l)}
                                                             disabled={!isAdmin}
-                                                            className={l.isHod ? 'orange-switch shadow-[0_0_12px_rgba(249,115,22,0.3)]' : ''}
+                                                            className={l.isHod ? 'orange-switch' : ''}
                                                             tooltip={!isAdmin ? "Only Admin can promote/demote HOD" : ""}
                                                         />
                                                     </div>
