@@ -93,9 +93,14 @@ const ImportWhitelistModal: FC<ImportWhitelistModalProps> = ({ isOpen, onClose, 
                     'warning'
                 );
             }
-        } catch (err) {
+        } catch (err: unknown) {
             console.error(err);
-            Swal.fire('Error', 'Unable to parse file.', 'error');
+            let msg = 'Unable to parse file.';
+            if (typeof err === 'object' && err !== null && 'response' in err) {
+                const e = err as { response?: { data?: { message?: string } } };
+                msg = e.response?.data?.message ?? msg;
+            }
+            Swal.fire('Error', msg, 'error');
             setPreviewData([]);
             setPreviewErrors([]);
         } finally {
