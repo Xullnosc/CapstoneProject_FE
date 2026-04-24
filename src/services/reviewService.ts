@@ -7,14 +7,28 @@ export interface ReviewPeriod {
     endDate: string;
 }
 
+export interface ReviewMember {
+    lecturerId: number;
+    fullName: string;
+    email: string;
+    role: string;
+}
+
+export interface ReviewTeam {
+    teamId: number;
+    teamCode: string;
+    thesisTitle?: string;
+    mentorName?: string;
+}
+
 export interface ReviewCouncil {
     councilId: number;
     semesterId: number;
     councilName: string;
     status: string;
     createdBy: number;
-    members: any[];
-    teams: any[];
+    members: ReviewMember[];
+    teams: { teamId: number; team: ReviewTeam }[];
 }
 
 export interface ReviewSchedule {
@@ -26,6 +40,17 @@ export interface ReviewSchedule {
     endTime: string;
     meetLink: string;
     setByLecturerId: number;
+}
+
+export interface ReviewSubmission {
+    submissionId: number;
+    councilId: number;
+    teamId: number;
+    reviewRound: number;
+    fileUrl: string;
+    fileName: string;
+    submittedAt: string;
+    submittedBy: number;
 }
 
 export const reviewService = {
@@ -89,7 +114,7 @@ export const reviewService = {
         const response = await api.get(`/review-schedules/councils/${councilId}`);
         return response.data;
     },
-    updateSchedule: async (payload: any) => {
+    updateSchedule: async (payload: Partial<ReviewSchedule>) => {
         const response = await api.post(`/review-schedules`, payload);
         return response.data;
     },
@@ -103,7 +128,7 @@ export const reviewService = {
         const response = await api.get(`/review-assessments/councils/${councilId}/rounds/${round}/teams/${teamId}/results`);
         return response.data;
     },
-    submitAssessment: async (results: any[]) => {
+    submitAssessment: async (results: unknown[]) => {
         const response = await api.post(`/review-assessments/submit`, results);
         return response.data;
     },
@@ -113,6 +138,24 @@ export const reviewService = {
     },
     overrideStatus: async (councilId: number, teamId: number, payload: { round: number; status: string; comment: string }) => {
         const response = await api.post(`/review-assessments/councils/${councilId}/teams/${teamId}/override`, payload);
+        return response.data;
+    },
+
+    // Submissions
+    uploadSubmission: async (payload: { councilId: number; teamId: number; round: number; file: File }) => {
+        const formData = new FormData();
+        formData.append('CouncilId', payload.councilId.toString());
+        formData.append('TeamId', payload.teamId.toString());
+        formData.append('ReviewRound', payload.round.toString());
+        formData.append('File', payload.file);
+
+        const response = await api.post(`/review-submissions`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+    getSubmissions: async (councilId: number, round: number, teamId: number): Promise<ReviewSubmission[]> => {
+        const response = await api.get(`/review-submissions/councils/${councilId}/rounds/${round}/teams/${teamId}`);
         return response.data;
     }
 };

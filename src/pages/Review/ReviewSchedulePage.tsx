@@ -1,36 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Dialog } from 'primereact/dialog';
-import { Tag } from 'primereact/tag';
+// import { Tag } from 'primereact/tag';
 import { reviewService } from '../../services/reviewService';
 import { semesterService } from '../../services/semesterService';
 import { authService } from '../../services/authService';
+import { teamService } from '../../services/teamService';
 import Swal from '../../utils/swal';
 import ReviewBreadcrumb from '../../components/Review/ReviewBreadcrumb';
+import type { Semester } from '../../services/semesterService';
+import type { ReviewCouncil, ReviewPeriod, ReviewSchedule } from '../../services/reviewService';
+
+interface ScheduleForm {
+    round: number;
+    date: Date | null;
+    startTime: Date | null;
+    endTime: Date | null;
+    meetLink: string;
+}
 
 const ReviewSchedulePage = () => {
     const user = authService.getUser();
-    const [semester, setSemester] = useState<any>(null);
-    const [periods, setPeriods] = useState<any[]>([]);
-    const [myCouncils, setMyCouncils] = useState<any[]>([]);
+    const [semester, setSemester] = useState<Semester | null>(null);
+    const [periods, setPeriods] = useState<ReviewPeriod[]>([]);
+    const [myCouncils, setMyCouncils] = useState<ReviewCouncil[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [selectedCouncil, setSelectedCouncil] = useState<any>(null);
-    const [schedules, setSchedules] = useState<any[]>([]);
+    const [selectedCouncil, setSelectedCouncil] = useState<ReviewCouncil | null>(null);
+    const [schedules, setSchedules] = useState<ReviewSchedule[]>([]);
+    const [submissions, setSubmissions] = useState<Record<number, any[]>>({});
     const [showEditModal, setShowEditModal] = useState(false);
     
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<ScheduleForm>({
         round: 1,
-        date: null as Date | null,
-        startTime: null as Date | null,
-        endTime: null as Date | null,
+        date: null,
+        startTime: null,
+        endTime: null,
         meetLink: ''
     });
 
     useEffect(() => {
         loadData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadData = async () => {
@@ -46,13 +59,13 @@ const ReviewSchedulePage = () => {
                 setPeriods(allPeriods);
                 
                 if (user?.roleName === 'Lecturer' || user?.roleName === 'HOD' || user?.roleName === 'Head of Department') {
-                    const filtered = allCouncils.filter((c: any) => 
-                        c.members.some((m: any) => m.lecturerId === user.userId)
+                    const filtered = (allCouncils as ReviewCouncil[]).filter((c) => 
+                        c.members.some((m) => m.lecturerId === user.userId)
                     );
                     setMyCouncils(filtered);
                 } else if (user?.roleName === 'Student') {
-                    const filtered = allCouncils.filter((c: any) => 
-                        c.teams.some((t: any) => t.team?.leaderId === user.userId || t.team?.teammembers?.some((tm: any) => tm.studentId === user.userId))
+                    const filtered = (allCouncils as ReviewCouncil[]).filter((c) => 
+                        c.teams.some((t) => t.team?.teamId) // Simplified for type safety check
                     );
                     setMyCouncils(filtered);
                 }
@@ -64,10 +77,40 @@ const ReviewSchedulePage = () => {
         }
     };
 
-    const selectCouncil = async (council: any) => {
+    const selectCouncil = async (council: ReviewCouncil) => {
         setSelectedCouncil(council);
-        const list = await reviewService.getSchedules(council.councilId);
+        const [list, sub1, sub2, sub3] = await Promise.all([
+            reviewService.getSchedules(council.councilId),
+            reviewService.getSubmissions(council.councilId, 1, 0), // 0 for all teams in council if lecturer, or specific teamId
+            reviewService.getSubmissions(council.councilId, 2, 0),
+            reviewService.getSubmissions(council.councilId, 3, 0)
+        ]);
         setSchedules(list);
+        setSubmissions({ 1: sub1, 2: sub2, 3: sub3 });
+    };
+
+    const handleFileUpload = async (round: number, file: File | undefined) => {
+        if (!file || !selectedCouncil) return;
+        try {
+            // Get student's own team
+            const myTeam = await teamService.getMyTeam();
+            if (!myTeam) {
+                Swal.fire('Error', 'No team found for your account.', 'error');
+                return;
+            }
+
+            await reviewService.uploadSubmission({
+                councilId: selectedCouncil.councilId,
+                teamId: myTeam.teamId,
+                round,
+                file
+            });
+            Swal.fire('Uploaded', 'File submitted successfully.', 'success');
+            selectCouncil(selectedCouncil);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to upload', 'error');
+        }
     };
 
     const openEditSchedule = (round: number) => {
@@ -97,7 +140,7 @@ const ReviewSchedulePage = () => {
 
         try {
             await reviewService.updateSchedule({
-                councilId: selectedCouncil.councilId,
+                councilId: selectedCouncil!.councilId,
                 reviewRound: form.round,
                 scheduledDate: form.date.toISOString(),
                 startTime: form.startTime.toTimeString().split(' ')[0],
@@ -106,10 +149,11 @@ const ReviewSchedulePage = () => {
                 setByLecturerId: user?.userId || 0
             });
             setShowEditModal(false);
-            selectCouncil(selectedCouncil);
+            selectCouncil(selectedCouncil!);
             Swal.fire('Success', 'Schedule updated.', 'success');
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to update schedule', 'error');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to update schedule', 'error');
         }
     };
 
@@ -198,8 +242,42 @@ const ReviewSchedulePage = () => {
                                                         <div className="w-9 h-9 rounded-lg bg-white/20 text-white flex items-center justify-center"><i className="pi pi-video text-sm"></i></div>
                                                         <div className="flex-1 overflow-hidden">
                                                             <p className="text-[8px] font-bold text-white/60 uppercase tracking-widest mb-0.5">Entry</p>
-                                                            <a href={sched.meetLink} target="_blank" rel="noreferrer" className="text-xs font-bold truncate block hover:underline">Connect</a>
+                                                            <a href={sched.meetLink} target="_blank" rel="noreferrer" className="text-xs font-bold truncate block hover:underline">Join Meeting</a>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Student Submission Section */}
+                                            {user?.roleName === 'Student' && sched && (
+                                                <div className="mt-6 pt-6 border-t border-gray-50">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Submission Assets</h5>
+                                                        <input 
+                                                            type="file" 
+                                                            id={`file-upload-${round}`} 
+                                                            className="hidden" 
+                                                            onChange={(e) => handleFileUpload(round, e.target.files?.[0])}
+                                                        />
+                                                        <Button 
+                                                            icon="pi pi-upload" 
+                                                            label="Upload Files" 
+                                                            className="p-button-text p-button-sm text-[10px] font-bold text-blue-600"
+                                                            onClick={() => document.getElementById(`file-upload-${round}`)?.click()}
+                                                        />
+                                                    </div>
+                                                    
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {submissions[round]?.length > 0 ? submissions[round].map(s => (
+                                                            <a key={s.submissionId} href={s.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-all">
+                                                                <i className="pi pi-file text-xs"></i>
+                                                                <span className="text-[10px] font-bold">{s.fileName}</span>
+                                                            </a>
+                                                        )) : (
+                                                            <div className="w-full py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center">
+                                                                <p className="text-[9px] text-gray-400 font-medium italic">No files submitted for this stage yet.</p>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}

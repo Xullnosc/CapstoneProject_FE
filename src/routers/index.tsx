@@ -33,6 +33,7 @@ import ReviewCouncilManagementPage from "../pages/Review/ReviewCouncilManagement
 import ReviewSchedulePage from "../pages/Review/ReviewSchedulePage";
 import ReviewAssessmentPage from "../pages/Review/ReviewAssessmentPage";
 import ReviewOverridePage from "../pages/Review/ReviewOverridePage";
+import ReviewResultsPage from "../pages/Review/ReviewResultsPage";
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(
@@ -157,6 +158,7 @@ const AppRouter = () => {
           <Route path="/review/my-schedule" element={<ReviewSchedulePage />} />
           <Route path="/review/assessment" element={<ReviewAssessmentPage />} />
           <Route path="/review/override" element={<ReviewOverridePage />} />
+          <Route path="/review/results" element={<ReviewResultsPage />} />
         </Route>
       </Route>
 

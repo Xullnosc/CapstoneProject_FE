@@ -3,7 +3,8 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { ProgressBar } from 'primereact/progressbar';
 import Header from '../components/Header/Header';
 import Footer from '../components/Footer/Footer';
-import { semesterService, type Semester } from '../services/semesterService';
+import { semesterService } from '../services/semesterService';
+import type { Semester } from '../services/semesterService';
 import { authService } from '../services/authService';
 
 const SemesterMarquee = () => {

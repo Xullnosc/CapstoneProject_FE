@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { authService } from '../../services/authService';
@@ -41,7 +41,16 @@ const ReviewDashboardPage = () => {
     const isLocked = semester?.status === 'In Progress' || semester?.status === 'Review Middle Semester' || semester?.status === 'Review Thesis' || semester?.status === 'Closed';
     const canAccess = isLocked;
 
-    const ActionCard = ({ title, description, icon, path, color, disabled }: any) => (
+    interface ActionCardProps {
+        title: string;
+        description: string;
+        icon: string;
+        path: string;
+        color: string;
+        disabled: boolean;
+    }
+
+    const ActionCard = ({ title, description, icon, path, color, disabled }: ActionCardProps) => (
         <div 
             className={`group relative overflow-hidden rounded-[24px] p-0.5 transition-all duration-300 ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1'}`}
             onClick={() => !disabled && navigate(path)}
@@ -201,11 +210,11 @@ const ReviewDashboardPage = () => {
                         </>
                     )}
 
-                    {isStudent && (
+                    {(isStudent || isLecturer) && (
                         <>
                             <ActionCard 
                                 title="Team Schedule" 
-                                description="View your upcoming appointments." 
+                                description="View session appointments and join Meet." 
                                 icon="pi-info-circle" 
                                 path="/review/my-schedule" 
                                 color="#f97316" 
@@ -213,7 +222,7 @@ const ReviewDashboardPage = () => {
                             />
                             <ActionCard 
                                 title="Review Feedback" 
-                                description="Track progress and notes." 
+                                description="Track progress, comments, and outcomes." 
                                 icon="pi-file-pdf" 
                                 path="/review/results" 
                                 color="#6366f1" 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -11,11 +11,13 @@ import { reviewService } from '../../services/reviewService';
 import { semesterService } from '../../services/semesterService';
 import Swal from '../../utils/swal';
 import ReviewBreadcrumb from '../../components/Review/ReviewBreadcrumb';
+import type { Semester } from '../../services/semesterService';
+import type { ReviewCouncil } from '../../services/reviewService';
 
 const ReviewOverridePage = () => {
-    const [semester, setSemester] = useState<any>(null);
-    const [councils, setCouncils] = useState<any[]>([]);
-    const [selectedCouncil, setSelectedCouncil] = useState<any>(null);
+    const [semester, setSemester] = useState<Semester | null>(null);
+    const [councils, setCouncils] = useState<ReviewCouncil[]>([]);
+    const [selectedCouncil, setSelectedCouncil] = useState<ReviewCouncil | null>(null);
     const [teams, setTeams] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -47,44 +49,46 @@ const ReviewOverridePage = () => {
         }
     };
 
-    const handleCouncilChange = async (council: any) => {
+    const handleCouncilChange = async (council: ReviewCouncil) => {
         setSelectedCouncil(council);
         setLoading(true);
         try {
             const detail = await reviewService.getCouncilById(council.councilId);
             setTeams(detail.teams || []);
-        } catch (error) {
+        } catch {
+            // Handled
         } finally {
             setLoading(false);
         }
     };
 
-    const openOverride = (team: any) => {
+    const openOverride = (team: Record<string, unknown>) => {
         setOverrideForm({
-            teamId: team.teamId,
+            teamId: team.teamId as number,
             round: 1,
-            status: team.round1Status || 'Pending',
-            comment: team.hodComment || ''
+            status: (team.round1Status as string) || 'Pending',
+            comment: (team.hodComment as string) || ''
         });
         setShowOverrideModal(true);
     };
 
     const handleSaveOverride = async () => {
         try {
-            await reviewService.overrideStatus(selectedCouncil.councilId, overrideForm.teamId, {
+            await reviewService.overrideStatus(selectedCouncil!.councilId, overrideForm.teamId, {
                 round: overrideForm.round,
                 status: overrideForm.status,
                 comment: overrideForm.comment
             });
             setShowOverrideModal(false);
-            handleCouncilChange(selectedCouncil); // refresh
+            handleCouncilChange(selectedCouncil!); // refresh
             Swal.fire('Success', 'Status overridden successfully', 'success');
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to override', 'error');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to override', 'error');
         }
     };
 
-    const statusBody = (rowData: any, round: string) => {
+    const statusBody = (rowData: Record<string, string>, round: string) => {
         const val = rowData[round];
         const severity = val === 'Pass' ? 'success' : val === 'Fail' ? 'danger' : 'warning';
         return <Tag value={val || 'N/A'} severity={severity} />;

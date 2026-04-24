@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -9,17 +9,35 @@ import { semesterService } from '../../services/semesterService';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 import ReviewBreadcrumb from '../../components/Review/ReviewBreadcrumb';
+import type { ReviewCouncil, ReviewTeam, ReviewSubmission } from '../../services/reviewService';
+
+interface AssessmentQuestion {
+    questionId: number;
+    questionText: string;
+    priority: string;
+}
+
+interface AssessmentResult {
+    councilId: number;
+    teamId: number;
+    questionId: number;
+    assessment: string | null;
+    grade: number | null;
+    mentorComment: string;
+    reviewerComment: string;
+}
 
 const ReviewAssessmentPage = () => {
     const user = authService.getUser();
-    const [councils, setCouncils] = useState<any[]>([]);
-    const [selectedCouncil, setSelectedCouncil] = useState<any>(null);
-    const [teams, setTeams] = useState<any[]>([]);
-    const [selectedTeam, setSelectedTeam] = useState<any>(null);
+    const [councils, setCouncils] = useState<ReviewCouncil[]>([]);
+    const [selectedCouncil, setSelectedCouncil] = useState<ReviewCouncil | null>(null);
+    const [teams, setTeams] = useState<ReviewTeam[]>([]);
+    const [selectedTeam, setSelectedTeam] = useState<ReviewTeam | null>(null);
     const [round, setRound] = useState<number>(1);
     
-    const [questions, setQuestions] = useState<any[]>([]);
-    const [results, setResults] = useState<any[]>([]);
+    const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+    const [results, setResults] = useState<AssessmentResult[]>([]);
+    const [submissions, setSubmissions] = useState<ReviewSubmission[]>([]);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -31,39 +49,45 @@ const ReviewAssessmentPage = () => {
         try {
             const current = await semesterService.getCurrentSemester();
             if (current) {
-                const list = await reviewService.getCouncils(current.semesterId);
-                const filtered = list.filter((c: any) => c.members.some((m: any) => m.lecturerId === user?.userId));
+                const list: ReviewCouncil[] = await reviewService.getCouncils(current.semesterId);
+                const filtered = list.filter((c) => c.members.some((m) => m.lecturerId === user?.userId));
                 setCouncils(filtered);
             }
-        } catch (error) {}
+        } catch {
+            // Error handled silently
+        }
     };
 
-    const handleCouncilChange = (c: any) => {
+    const handleCouncilChange = (c: ReviewCouncil) => {
         setSelectedCouncil(c);
-        setTeams(c.teams.map((t: any) => t.team));
+        setTeams(c.teams.map((t) => t.team));
         setSelectedTeam(null);
         setQuestions([]);
     };
 
-    const handleTeamChange = async (team: any) => {
+    const handleTeamChange = async (team: ReviewTeam) => {
         setSelectedTeam(team);
         loadQuestions(round, team.teamId);
     };
 
-    const loadQuestions = async (r: number, teamId: number) => {
+    const loadQuestions = async (r: number, tId: number) => {
         if (!selectedCouncil) return;
         try {
             setLoading(true);
-            const quest = await reviewService.getQuestions(selectedCouncil.councilId, r);
-            const existing = await reviewService.getResults(selectedCouncil.councilId, r, teamId);
+            const [qList, resList, subList] = await Promise.all([
+                reviewService.getQuestions(selectedCouncil.councilId, r),
+                reviewService.getResults(selectedCouncil.councilId, r, tId),
+                reviewService.getSubmissions(selectedCouncil.councilId, r, tId)
+            ]);
             
-            setQuestions(quest);
+            setQuestions(qList);
+            setSubmissions(subList);
             
-            const initResults = quest.map((q: any) => {
-                const ex = existing.find((e: any) => e.questionId === q.questionId);
+            const initResults = qList.map((q: AssessmentQuestion) => {
+                const ex = (resList as any[]).find((e) => e.questionId === q.questionId);
                 return {
-                    councilId: selectedCouncil.councilId,
-                    teamId: teamId,
+                    councilId: selectedCouncil!.councilId,
+                    teamId: tId,
                     questionId: q.questionId,
                     assessment: ex ? ex.assessment : null, 
                     grade: ex ? (ex.grade || 0) : 0,
@@ -89,17 +113,18 @@ const ReviewAssessmentPage = () => {
         try {
             setLoading(true);
             await reviewService.submitAssessment(results);
-            const summary = await reviewService.evaluateTeam(selectedCouncil.councilId, selectedTeam.teamId);
+            await reviewService.evaluateTeam(selectedCouncil!.councilId, selectedTeam!.teamId);
             
             Swal.fire({
                 title: 'Submitted',
-                text: `Assessment for ${selectedTeam.teamCode} completed.`,
+                text: `Assessment for ${selectedTeam!.teamCode} completed.`,
                 icon: 'success'
             });
             
-            loadQuestions(round, selectedTeam.teamId);
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to submit assessment', 'error');
+            loadQuestions(round, selectedTeam!.teamId);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to submit assessment', 'error');
         } finally {
             setLoading(false);
         }
@@ -166,11 +191,25 @@ const ReviewAssessmentPage = () => {
                         {selectedTeam && (
                             <div className="rounded-[24px] bg-slate-900 p-6 text-white shadow-lg">
                                 <h4 className="text-xl font-black mb-1 leading-tight">{selectedTeam.teamCode}</h4>
-                                <p className="text-[10px] text-gray-400 mb-4 line-clamp-1">{selectedTeam.thesis?.title || 'No topic assigned'}</p>
+                                <p className="text-[10px] text-gray-400 mb-4 line-clamp-1">{selectedTeam.thesisTitle || 'No topic assigned'}</p>
                                 <div className="space-y-1.5 border-t border-white/5 pt-4 text-[10px] font-medium text-gray-400">
                                     <div className="flex justify-between"><span>Round:</span><span className="text-white">#{round}</span></div>
-                                    <div className="flex justify-between"><span>Mentor:</span><span className="text-white">{selectedTeam.mentor?.fullName?.split(' ').pop()}</span></div>
+                                    <div className="flex justify-between"><span>Mentor:</span><span className="text-white">{(selectedTeam.mentorName || '—').split(' ').pop()}</span></div>
                                 </div>
+                                
+                                {submissions.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Submissions</p>
+                                        <div className="flex flex-col gap-2">
+                                            {submissions.map(s => (
+                                                <a key={s.submissionId} href={s.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-[10px] text-indigo-300 hover:bg-white/10 transition-all truncate">
+                                                    <i className="pi pi-file"></i>
+                                                    <span className="truncate">{s.fileName}</span>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -202,7 +241,7 @@ const ReviewAssessmentPage = () => {
                                                     <div className="flex flex-col items-center gap-1.5">
                                                         <TriStateCheckbox 
                                                             value={results[idx]?.assessment === 'Y' ? true : results[idx]?.assessment === 'N' ? false : null} 
-                                                            onChange={(e) => handleAssessmentChange(idx, e.value ?? null)} 
+                                                            onChange={(e) => handleAssessmentChange(idx, e.value as boolean | null)} 
                                                         />
                                                         <span className={`text-[8px] font-black uppercase ${results[idx]?.assessment === 'Y' ? 'text-green-500' : results[idx]?.assessment === 'N' ? 'text-red-500' : 'text-gray-300'}`}>
                                                             {results[idx]?.assessment === 'Y' ? 'Pass' : results[idx]?.assessment === 'N' ? 'Fail' : 'TBA'}
@@ -211,10 +250,10 @@ const ReviewAssessmentPage = () => {
                                                 ) : (
                                                     <div className="flex flex-col items-end">
                                                         <InputNumber 
-                                                            value={results[idx]?.grade} 
+                                                            value={results[idx]?.grade ?? null} 
                                                             onValueChange={(e) => {
                                                                 const newRes = [...results];
-                                                                newRes[idx].grade = e.value;
+                                                                newRes[idx].grade = e.value as number | null;
                                                                 setResults(newRes);
                                                             }}
                                                             min={0} max={10} step={0.1} minFractionDigits={1}

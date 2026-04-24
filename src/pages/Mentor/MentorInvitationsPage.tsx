@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 
 import { useMentorInvitations } from '../../hooks/useMentorInvitations';
 import MentorInvitationCard from '../../components/mentor/MentorInvitationCard';

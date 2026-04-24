@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -10,17 +10,20 @@ import { teamService } from '../../services/teamService';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
 import ReviewBreadcrumb from '../../components/Review/ReviewBreadcrumb';
+import type { ReviewCouncil } from '../../services/reviewService';
+import type { Lecturer } from '../../services/lecturerService';
+import type { Team } from '../../types/team';
 
 // ─── Helper: normalize council so councilId is always present ───
-const normalizeCouncil = (c: any) => ({
+const normalizeCouncil = (c: any): ReviewCouncil => ({
     ...c,
     councilId: c.councilId ?? c.id,
-});
+} as ReviewCouncil);
 
 const ReviewCouncilManagementPage = () => {
     const [semester, setSemester] = useState<Semester | null>(null);
-    const [councils, setCouncils] = useState<any[]>([]);
-    const [selectedCouncil, setSelectedCouncil] = useState<any>(null);
+    const [councils, setCouncils] = useState<ReviewCouncil[]>([]);
+    const [selectedCouncil, setSelectedCouncil] = useState<ReviewCouncil | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Create modal
@@ -33,12 +36,15 @@ const ReviewCouncilManagementPage = () => {
     const [autoLoading, setAutoLoading] = useState(false);
 
     // Pickers
-    const [lecturerPool, setLecturerPool] = useState<any[]>([]);
-    const [teamPool, setTeamPool] = useState<any[]>([]);
+    const [lecturerPool, setLecturerPool] = useState<Lecturer[]>([]);
+    const [teamPool, setTeamPool] = useState<Team[]>([]);
     const [showLecturerPicker, setShowLecturerPicker] = useState(false);
     const [showTeamPicker, setShowTeamPicker] = useState(false);
 
-    useEffect(() => { loadInitial(); }, []);
+    useEffect(() => { 
+        loadInitial(); 
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const loadInitial = async () => {
         try {
@@ -49,7 +55,7 @@ const ReviewCouncilManagementPage = () => {
                 const list = await reviewService.getCouncils(current.semesterId);
                 const normalized = (Array.isArray(list) ? list : list?.items || [])
                     .map(normalizeCouncil)
-                    .sort((a: any, b: any) => (a.councilName || '').localeCompare(b.councilName || ''));
+                    .sort((a: ReviewCouncil, b: ReviewCouncil) => (a.councilName || '').localeCompare(b.councilName || ''));
                 setCouncils(normalized);
 
                 // Sync selected council if it exists
@@ -58,7 +64,7 @@ const ReviewCouncilManagementPage = () => {
                     setSelectedCouncil(latest || null);
                 }
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to load councils', error);
         } finally {
             setLoading(false);
@@ -73,7 +79,7 @@ const ReviewCouncilManagementPage = () => {
             setSelectedCouncil(norm);
             // Also update in the list
             setCouncils(prev => prev.map(c => c.councilId === councilId ? norm : c));
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
     };
 
     // ─── Create ──────────────────────────────────────────────────────────────
@@ -90,8 +96,9 @@ const ReviewCouncilManagementPage = () => {
             setNewCouncilName('');
             await loadInitial();
             Swal.fire({ title: 'Created!', text: 'Council created successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to create council', 'error');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to create council', 'error');
         }
     };
 
@@ -116,9 +123,10 @@ const ReviewCouncilManagementPage = () => {
             );
             setShowAutoModal(false);
             await loadInitial();
-            Swal.fire('Done!', res.message || `Councils generated successfully.`, 'success');
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Auto-generate failed', 'error');
+            Swal.fire('Done!', (res as any).message || `Councils generated successfully.`, 'success');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Auto-generate failed', 'error');
         } finally {
             setAutoLoading(false);
         }
@@ -139,8 +147,9 @@ const ReviewCouncilManagementPage = () => {
             await reviewService.deleteCouncil(id);
             setSelectedCouncil(null);
             await loadInitial();
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to delete', 'error');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to delete', 'error');
         }
     };
 
@@ -161,10 +170,10 @@ const ReviewCouncilManagementPage = () => {
             }
 
             // Only show lecturers who are NOT assigned yet
-            const filtered = all.filter((l: any) => l && l.lecturerId && !assignedIds.has(l.lecturerId));
+            const filtered = all.filter((l: Lecturer) => l && l.lecturerId && !assignedIds.has(l.lecturerId));
             setLecturerPool(filtered);
             setShowLecturerPicker(true);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Failed to open lecturer picker', error);
         }
     };
@@ -174,9 +183,10 @@ const ReviewCouncilManagementPage = () => {
         try {
             await reviewService.addMemberToCouncil(selectedCouncil.councilId, lecturerId, 'Midterm Reviewer');
             setShowLecturerPicker(false);
-            await refreshSelected(selectedCouncil.councilId);
-        } catch (error: any) {
-            Swal.fire('Conflict', error.response?.data?.message || 'Failed to add member', 'error');
+            await refreshSelected(selectedCouncil!.councilId);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Conflict', err.response?.data?.message || 'Failed to add member', 'error');
         }
     };
 
@@ -184,9 +194,10 @@ const ReviewCouncilManagementPage = () => {
         if (!selectedCouncil?.councilId) return;
         try {
             await reviewService.removeMemberFromCouncil(selectedCouncil.councilId, lecturerId);
-            await refreshSelected(selectedCouncil.councilId);
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to remove member', 'error');
+            await refreshSelected(selectedCouncil!.councilId);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to remove member', 'error');
         }
     };
 
@@ -197,10 +208,10 @@ const ReviewCouncilManagementPage = () => {
             const res: any = await teamService.getTeamsBySemester(semester.semesterId);
             const all = Array.isArray(res) ? res : (res?.items || []);
             // Filter out teams already in this council
-            const assigned = new Set((selectedCouncil?.teams || []).map((t: any) => t.teamId));
-            setTeamPool(all.filter((t: any) => !assigned.has(t.teamId)));
+            const assigned = new Set((selectedCouncil?.teams || []).map((t) => t.teamId));
+            setTeamPool(all.filter((t: Team) => !assigned.has(t.teamId)));
             setShowTeamPicker(true);
-        } catch (error) {
+        } catch (error: unknown) {
             console.error(error);
         }
     };
@@ -210,9 +221,10 @@ const ReviewCouncilManagementPage = () => {
         try {
             await reviewService.addTeamToCouncil(selectedCouncil.councilId, teamId);
             setShowTeamPicker(false);
-            await refreshSelected(selectedCouncil.councilId);
-        } catch (error: any) {
-            Swal.fire('Conflict', error.response?.data?.message || 'Failed to add team', 'error');
+            await refreshSelected(selectedCouncil!.councilId);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Conflict', err.response?.data?.message || 'Failed to add team', 'error');
         }
     };
 
@@ -220,9 +232,10 @@ const ReviewCouncilManagementPage = () => {
         if (!selectedCouncil?.councilId) return;
         try {
             await reviewService.removeTeamFromCouncil(selectedCouncil.councilId, teamId);
-            await refreshSelected(selectedCouncil.councilId);
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to remove team', 'error');
+            await refreshSelected(selectedCouncil!.councilId);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to remove team', 'error');
         }
     };
 
@@ -397,12 +410,12 @@ const ReviewCouncilManagementPage = () => {
                                             {(!selectedCouncil.members || selectedCouncil.members.length === 0) ? (
                                                 <div className="flex flex-col items-center justify-center py-10">
                                                     <i className="pi pi-user-plus text-2xl text-gray-200 mb-2"></i>
-                                                    <p className="text-xs text-gray-300 font-medium">No reviewers yet</p>
+                                                        <p className="text-xs text-gray-300 font-medium">No reviewers yet</p>
                                                 </div>
-                                            ) : selectedCouncil.members.map((m: any) => {
+                                            ) : selectedCouncil.members.map((m) => {
                                                 // DTO has flat: lecturerName, lecturerEmail, role
-                                                const name = m.lecturerName || m.lecturer?.fullName || 'Unknown';
-                                                const initials = (name || '?').split(' ').filter(Boolean).map((w: string) => w[0]).join('').slice(-2).toUpperCase();
+                                                const name = m.fullName || 'Unknown';
+                                                const initials = (name || '?').split(' ').filter(Boolean).map((w) => w[0]).join('').slice(-2).toUpperCase();
                                                 return (
                                                     <div key={m.lecturerId} className="group flex items-center justify-between px-5 py-3 hover:bg-gray-50">
                                                         <div className="flex items-center gap-3">
@@ -415,7 +428,7 @@ const ReviewCouncilManagementPage = () => {
                                                                     <span className="text-[10px] bg-gray-100 text-gray-500 px-1 rounded uppercase font-bold">
                                                                         {m.role === 'Chairman' ? 'CHAIR' : 'REV'}
                                                                     </span>
-                                                                    <p className="text-xs text-gray-400">{m.lecturerEmail || 'No Email'}</p>
+                                                                    <p className="text-xs text-gray-400">{m.email || 'No Email'}</p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -454,10 +467,10 @@ const ReviewCouncilManagementPage = () => {
                                                     <i className="pi pi-folder-open text-2xl text-gray-200 mb-2"></i>
                                                     <p className="text-xs text-gray-300 font-medium">No teams assigned</p>
                                                 </div>
-                                            ) : selectedCouncil.teams.map((t: any) => {
+                                            ) : selectedCouncil.teams.map((t) => {
                                                 // DTO has flat: teamCode, teamName, mentorName
-                                                const code = t.teamCode || t.team?.teamCode || 'N/A';
-                                                const mentor = t.mentorName || t.team?.mentor?.fullName || '—';
+                                                const code = t.team?.teamCode || 'N/A';
+                                                const mentor = t.team?.mentorName || '—';
                                                 return (
                                                     <div key={t.teamId} className="group flex items-center justify-between px-5 py-3 hover:bg-gray-50">
                                                         <div className="flex items-center gap-3">
@@ -613,9 +626,9 @@ const ReviewCouncilManagementPage = () => {
                     <Column field="email" header="Email" sortable style={{ fontSize: '12px', color: '#6b7280' }} />
                     <Column
                         header=""
-                        body={(row) => (
+                        body={(row: Lecturer) => (
                             <button
-                                onClick={() => addLecturer(row.lecturerId)}
+                                onClick={() => addLecturer(row.lecturerId!)}
                                 className="flex items-center gap-1.5 rounded-md bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition-colors"
                             >
                                 <i className="pi pi-plus text-[10px]"></i> Select
@@ -653,9 +666,9 @@ const ReviewCouncilManagementPage = () => {
                     />
                     <Column
                         header=""
-                        body={(row) => (
+                        body={(row: Team) => (
                             <button
-                                onClick={() => addTeam(row.teamId)}
+                                onClick={() => addTeam(row.teamId!)}
                                 className="flex items-center gap-1.5 rounded-md bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition-colors"
                             >
                                 <i className="pi pi-plus text-[10px]"></i> Assign

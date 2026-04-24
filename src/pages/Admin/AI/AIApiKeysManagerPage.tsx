@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
-import { authService } from "../../../services/authService";
 import { aiService } from "../../../services/aiService";
 import type { UserAISettingsView } from "../../../types/ai";
 import { PROVIDER_META } from "../../../types/ai";
@@ -23,7 +22,8 @@ const shortenMaskedKey = (maskedKey: string): string => {
 export default function AIApiKeysManagerPage() {
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
-  const currentUser = authService.getUser();
+  // Removed unused currentUser
+  // const currentUser = authService.getUser();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

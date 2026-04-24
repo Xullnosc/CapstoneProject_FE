@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar } from 'primereact/calendar';
 import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
+// import { Message } from 'primereact/message';
 import { semesterService, type Semester } from '../../services/semesterService';
-import { reviewService } from '../../services/reviewService';
+import { reviewService, type ReviewPeriod } from '../../services/reviewService';
 import Swal from '../../utils/swal';
 import ReviewBreadcrumb from '../../components/Review/ReviewBreadcrumb';
 
 const ReviewPeriodConfigPage = () => {
     const [semester, setSemester] = useState<Semester | null>(null);
-    const [periods, setPeriods] = useState<any[]>([]);
+    // Removed unused periods
     const [loading, setLoading] = useState(true);
     const [showSyncTip, setShowSyncTip] = useState(true);
 
-    const [roundDates, setRoundDates] = useState<any>({
+    const [roundDates, setRoundDates] = useState<Record<number, { startDate: Date | null, endDate: Date | null }>>({
         1: { startDate: null, endDate: null },
         2: { startDate: null, endDate: null },
         3: { startDate: null, endDate: null }
@@ -23,6 +23,7 @@ const ReviewPeriodConfigPage = () => {
         loadData();
         const hidden = localStorage.getItem('hide_sync_tip');
         if (hidden) setShowSyncTip(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const dismissSyncTip = () => {
@@ -37,10 +38,10 @@ const ReviewPeriodConfigPage = () => {
             if (current) {
                 setSemester(current);
                 const existing = await reviewService.getPeriods(current.semesterId);
-                setPeriods(existing);
+                // setPeriods(existing);
                 
                 const newDates = { ...roundDates };
-                existing.forEach((p: any) => {
+                existing.forEach((p: ReviewPeriod) => {
                     newDates[p.reviewRound] = {
                         startDate: p.startDate ? new Date(p.startDate) : null,
                         endDate: p.endDate ? new Date(p.endDate) : null
@@ -78,8 +79,9 @@ const ReviewPeriodConfigPage = () => {
                 showConfirmButton: false
             });
             loadData();
-        } catch (error: any) {
-            Swal.fire('Error', error.response?.data?.message || 'Failed to update period', 'error');
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { message?: string } } };
+            Swal.fire('Error', err.response?.data?.message || 'Failed to update period', 'error');
         }
     };
 
@@ -131,7 +133,7 @@ const ReviewPeriodConfigPage = () => {
                                             <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Start</label>
                                             <Calendar 
                                                 value={roundDates[round].startDate} 
-                                                onChange={(e) => setRoundDates({ ...roundDates, [round]: { ...roundDates[round], startDate: e.value } })}
+                                                onChange={(e) => setRoundDates({ ...roundDates, [round]: { ...roundDates[round], startDate: e.value as Date | null } })}
                                                 showIcon
                                                 className="p-inputtext-sm w-36"
                                                 dateFormat="dd/mm/yy"
@@ -144,7 +146,7 @@ const ReviewPeriodConfigPage = () => {
                                             <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">End</label>
                                             <Calendar 
                                                 value={roundDates[round].endDate} 
-                                                onChange={(e) => setRoundDates({ ...roundDates, [round]: { ...roundDates[round], endDate: e.value } })}
+                                                onChange={(e) => setRoundDates({ ...roundDates, [round]: { ...roundDates[round], endDate: e.value as Date | null } })}
                                                 showIcon
                                                 className="p-inputtext-sm w-36"
                                                 dateFormat="dd/mm/yy"
