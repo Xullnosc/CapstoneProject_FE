@@ -108,6 +108,96 @@ button:disabled {
   background: #2563eb !important;
 }
 
+.p-button-orange {
+  background: #f97415 !important;
+  border-color: #f97415 !important;
+  color: white !important;
+  transition: all 0.2s ease !important;
+}
+
+.p-button-orange:hover {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+  box-shadow: 0 4px 12px rgba(249, 116, 21, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Fix text buttons to use orange */
+.p-button-text.p-button-orange-text,
+.btn-orange-text.p-button {
+  background: transparent !important;
+  border: none !important;
+  color: #f97415 !important;
+}
+
+.btn-orange-text.p-button:hover {
+  background: #fff7ed !important;
+  color: #ea580c !important;
+}
+
+/* Fix DataTable sort header - prevent dark override */
+.p-datatable .p-sortable-column .p-column-header-content {
+  color: #374151 !important;
+}
+
+.p-datatable .p-sortable-column .p-sortable-column-icon {
+  color: #9ca3af !important;
+}
+
+.p-datatable .p-sortable-column:not(.p-highlight):hover {
+  background: #f9fafb !important;
+  color: #374151 !important;
+}
+
+.p-datatable .p-sortable-column.p-highlight {
+  background: #fff7ed !important;
+  color: #f97415 !important;
+}
+
+.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: #f97415 !important;
+}
+
+.p-datatable .p-sortable-column.p-highlight .p-column-header-content {
+  color: #f97415 !important;
+}
+
+/* DataTable row hover */
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: #fff7ed !important;
+}
+
+/* Fix Calendar (DatePicker) colors */
+.p-datepicker .p-datepicker-header {
+  background: white !important;
+}
+
+.p-datepicker table td > span.p-highlight {
+  background: #f97415 !important;
+  color: white !important;
+}
+
+.p-datepicker table td.p-datepicker-today > span {
+  background: #ffedd5 !important;
+  color: #f97415 !important;
+}
+
+.p-datepicker:not(.p-disabled) .p-datepicker-header .p-datepicker-prev:hover,
+.p-datepicker:not(.p-disabled) .p-datepicker-header .p-datepicker-next:hover {
+  background: #fff7ed !important;
+  color: #f97415 !important;
+}
+
+.p-calendar .p-button {
+  background: #f97415 !important;
+  border-color: #f97415 !important;
+}
+
+.p-calendar .p-button:hover {
+  background: #ea580c !important;
+  border-color: #ea580c !important;
+}
+
 /* Marquee Animation */
 @keyframes marquee {
   0% { transform: translateX(100vw); }

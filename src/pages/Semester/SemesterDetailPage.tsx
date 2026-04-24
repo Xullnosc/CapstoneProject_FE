@@ -345,13 +345,15 @@ const SemesterDetailPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
-            <main className="max-w-[1200px] mx-auto w-full px-6 py-6">
-
-                {/* Breadcrumb */}
-                <div className="mb-6">
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="bg-white border-b border-gray-200 mb-8">
+                <div className="max-w-[1200px] mx-auto w-full px-6 py-5">
+                    {/* Breadcrumb */}
                     <PremiumBreadcrumb items={breadcrumbItems} />
                 </div>
+            </div>
+
+            <main className="max-w-[1200px] mx-auto w-full px-6 pb-12 flex flex-col gap-10">
 
                 {/* Header Section */}
                 <div className={`group relative overflow-hidden rounded-3xl border p-8 mb-8 shadow-lg ${isEnded ? 'bg-linear-to-br from-slate-100 via-gray-100 to-zinc-100 border-gray-300' : headerTheme.container}`}>

@@ -7,6 +7,7 @@ export interface Lecturer {
     avatar: string | null;
     campus: string | null;
     campusId: number;
+    userId: number | null;
     isActive: boolean;
     isHod: boolean;
     isReviewer: boolean;

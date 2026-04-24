@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { teamService } from '../../services/teamService';
 import type { Team } from '../../types/team';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 
 const MentorTeamsPage = () => {
     const navigate = useNavigate();
@@ -35,19 +36,29 @@ const MentorTeamsPage = () => {
             </div>
         );
     }
-
     return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50/40 to-white py-10 px-4">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="bg-white border-b border-gray-200 mb-8">
+                <div className="max-w-[1200px] mx-auto w-full px-6 py-5">
+                    {/* Breadcrumb */}
+                    <PremiumBreadcrumb items={[
+                        { label: 'Home', to: '/home' },
+                        { label: 'My Mentor Teams' }
+                    ]} />
 
-                {/* Page Header */}
-                <div className="mb-8">
-                    <div className="flex items-center gap-3 mb-1">
-                        <span className="material-symbols-outlined text-orange-500 text-3xl">supervisor_account</span>
-                        <h1 className="text-3xl font-bold text-gray-900">My Mentor Teams</h1>
+                    {/* Page Header */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mt-4 gap-6">
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-2xl font-black text-gray-900 tracking-tight">My Mentor Teams</h1>
+                            <p className="text-sm font-medium text-gray-500">
+                                You are currently mentoring <span className="font-bold text-orange-600">{teams.length}</span> team{teams.length !== 1 ? 's' : ''} this semester.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-gray-500 ml-12">You are currently mentoring <span className="font-semibold text-orange-600">{teams.length}</span> team{teams.length !== 1 ? 's' : ''} this semester.</p>
                 </div>
+            </div>
+
+            <main className="max-w-[1200px] mx-auto w-full px-6 pb-12 flex flex-col gap-10">
 
                 {/* Error state */}
                 {error && (
@@ -130,7 +141,7 @@ const MentorTeamsPage = () => {
                         ))}
                     </div>
                 )}
-            </div>
+            </main>
         </div>
     );
 };

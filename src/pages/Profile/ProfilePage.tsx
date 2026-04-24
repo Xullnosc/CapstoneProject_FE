@@ -421,7 +421,8 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.fullName}
                                                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                disabled={formData.role === 'Admin'}
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl border border-transparent font-bold text-gray-900 text-sm shadow-inner">
@@ -450,8 +451,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.phoneNumber}
                                                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="Enter phone number"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl border border-transparent font-bold text-gray-900 text-sm shadow-inner flex items-center gap-2">
@@ -522,7 +524,8 @@ const ProfilePage = () => {
                                                 type="date"
                                                 value={formData.dateOfBirth}
                                                 onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                disabled={formData.role === 'Admin'}
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
@@ -541,6 +544,7 @@ const ProfilePage = () => {
                                                     { label: 'Female', value: 'Female' },
                                                     { label: 'Other', value: 'Other' }
                                                 ]}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="Select gender"
                                                 appendTo="self"
                                                 className="w-full"
@@ -557,8 +561,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.address}
                                                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="Enter address"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
@@ -572,8 +577,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.major}
                                                 onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="e.g. Software Engineering"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
@@ -587,8 +593,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.personalId}
                                                 onChange={(e) => setFormData({ ...formData, personalId: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="Citizen ID"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
@@ -602,8 +609,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.placeOfBirth}
                                                 onChange={(e) => setFormData({ ...formData, placeOfBirth: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="City/Province"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">
@@ -617,8 +625,9 @@ const ProfilePage = () => {
                                             <InputText
                                                 value={formData.enrollmentYear}
                                                 onChange={(e) => setFormData({ ...formData, enrollmentYear: e.target.value })}
+                                                disabled={formData.role === 'Admin'}
                                                 placeholder="e.g. 2022"
-                                                className="w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10!"
+                                                className={`w-full py-3! px-4! rounded-xl! bg-white! border-gray-200! focus:border-orange-500 font-bold text-gray-800 shadow-none text-sm focus:ring-2! focus:ring-orange-500/10! ${formData.role === 'Admin' ? 'opacity-70 cursor-not-allowed bg-gray-50!' : ''}`}
                                             />
                                         ) : (
                                             <div className="px-4 py-3 bg-gray-50 rounded-xl font-bold text-gray-900 text-sm shadow-inner">

@@ -1,4 +1,5 @@
 import { type FC, type ReactNode, useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Whitelist } from '../../services/semesterService';
 import { whitelistService } from '../../services/whitelistService';
 import Swal from '../../utils/swal';
@@ -43,6 +44,7 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
     searchTerm = '',
     onSearchChange
 }) => {
+    const navigate = useNavigate();
     // For client-side pagination (if totalCount/onPageChange not provided)
     const isServerSide = useMemo(() => totalCount !== undefined && onPageChange !== undefined, [totalCount, onPageChange]);
     
@@ -142,18 +144,17 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                     <thead className="bg-gray-50/80 border-b border-gray-200">
                         <tr>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[80px] w-20 text-center">Ava</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Info</th>
+                            <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Email/Info</th>
                             {showStudentCode && (
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Code</th>
+                                <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Code</th>
                             )}
                             {showSemester && (
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Semester</th>
+                                <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Semester</th>
                             )}
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Campus</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                            <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                            <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Campus</th>
+                            <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -183,27 +184,52 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                             displayWhitelists.map((user) => (
                                 <tr key={user.whitelistId || user.email} className="hover:bg-blue-50/30 transition-colors group">
                                     <td className="px-6 py-4 min-w-[80px] w-20">
-                                        <div className="flex items-center justify-center">
-                                            <MemberAvatar
-                                                email={user.email}
-                                                fullName={user.fullName || user.email}
-                                                avatarUrl={user.avatar}
-                                                className="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full object-cover shadow-sm ring-1 ring-gray-100 flex-shrink-0 aspect-square"
-                                            />
+                                        <div 
+                                            className={`flex items-center justify-center ${user.userId ? 'cursor-pointer group/avatar' : ''}`}
+                                            onClick={() => user.userId && navigate(`/profile/${user.userId}`)}
+                                        >
+                                            <div className="relative">
+                                                <MemberAvatar
+                                                    email={user.email}
+                                                    fullName={user.fullName || user.email}
+                                                    avatarUrl={user.avatar}
+                                                    className={`w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] max-w-[2.5rem] max-h-[2.5rem] rounded-full object-cover shadow-sm ring-1 ring-gray-100 flex-shrink-0 aspect-square transition-all duration-300 ${user.userId ? 'group-hover/avatar:ring-2 group-hover/avatar:ring-orange-500 group-hover/avatar:scale-105' : ''}`}
+                                                />
+                                                {user.userId && (
+                                                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                                                        <span className="material-symbols-outlined text-[12px] text-orange-600 font-bold">visibility</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-sm text-gray-900 font-medium">{user.email}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm text-gray-900 font-semibold">{user.fullName || 'N/A'}</span>
-                                        </div>
+                                        {user.userId ? (
+                                            <button
+                                                onClick={() => navigate(`/profile/${user.userId}`)}
+                                                className="group/link flex flex-col items-start gap-0.5 bg-transparent border-none p-0 text-left cursor-pointer"
+                                            >
+                                                <span className="text-base text-gray-900 font-bold group-hover/link:text-orange-600 transition-colors">
+                                                    {user.fullName || 'N/A'}
+                                                </span>
+                                                <div className="flex items-center gap-1 opacity-70 group-hover/link:opacity-100 transition-opacity">
+                                                    <span className="text-sm text-gray-500 font-medium group-hover/link:text-orange-500 italic">
+                                                        {user.email}
+                                                    </span>
+                                                    <span className="material-symbols-outlined text-[16px] text-orange-500 scale-0 group-hover/link:scale-100 transition-transform">arrow_outward</span>
+                                                </div>
+                                            </button>
+                                        ) : (
+                                            <div className="flex flex-col items-start gap-0.5">
+                                                <span className="text-base text-gray-900 font-bold">{user.fullName || 'N/A'}</span>
+                                                <span className="text-sm text-gray-500 italic lowercase">{user.email}</span>
+                                            </div>
+                                        )}
                                     </td>
                                     {showStudentCode && (
                                         <td className="px-6 py-4">
-                                            <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono italic flex items-center gap-1 w-fit">
-                                                <span className="material-symbols-outlined text-[12px]">badge</span>
+                                            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-mono italic flex items-center gap-1 w-fit">
+                                                <span className="material-symbols-outlined text-[14px]">badge</span>
                                                 {user.studentCode || '-'}
                                             </span>
                                         </td>
@@ -211,21 +237,21 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                     {showSemester && (
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
-                                                <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md border border-violet-200 font-mono w-fit tracking-wide">
+                                                <span className="text-sm font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-md border border-violet-200 font-mono w-fit tracking-wide">
                                                     {user.semesterCode || '-'}
                                                 </span>
                                                 {user.semesterName && (
-                                                    <span className="text-xs text-gray-600 font-medium">{user.semesterName}</span>
+                                                    <span className="text-sm text-gray-600 font-medium">{user.semesterName}</span>
                                                 )}
                                             </div>
                                         </td>
                                     )}
                                     <td className="px-6 py-4">
-                                        <span className="text-sm text-gray-600 font-medium">{user.campus || 'N/A'}</span>
+                                        <span className="text-base text-gray-600 font-medium">{user.campus || 'N/A'}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         {user.status ? (
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                            <span className={`px-2.5 py-1 rounded-full text-sm font-black uppercase tracking-wider border ${
                                                 user.status.toLowerCase() === 'qualified' 
                                                     ? 'bg-green-50 text-green-700 border-green-100' 
                                                     : 'bg-red-50 text-red-700 border-red-100'
@@ -233,12 +259,12 @@ const SemesterWhitelistsTable: FC<SemesterWhitelistsTableProps> = ({
                                                 {user.status}
                                             </span>
                                         ) : (
-                                            <span className="text-gray-400 text-xs italic">N/A</span>
+                                            <span className="text-gray-400 text-sm italic">N/A</span>
                                         )}
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${user.roleName?.toLowerCase() === 'student' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                            <span className={`px-2.5 py-1 rounded-full text-sm font-bold border ${user.roleName?.toLowerCase() === 'student' ? 'bg-blue-50 text-blue-700 border-blue-100' :
                                                 user.roleName?.toLowerCase() === 'lecturer' ? 'bg-purple-50 text-purple-700 border-purple-100' :
                                                     'bg-gray-50 text-gray-700 border-gray-100'
                                                 }`}>

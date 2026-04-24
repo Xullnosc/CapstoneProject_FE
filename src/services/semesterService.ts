@@ -17,6 +17,7 @@ export interface TeamSimple {
 export interface Whitelist {
     whitelistId: number;
     email: string;
+    userId?: number;
     fullName?: string;
     roleName?: string;
     roleId?: number;

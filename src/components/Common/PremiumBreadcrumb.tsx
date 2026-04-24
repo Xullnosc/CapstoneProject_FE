@@ -13,21 +13,23 @@ interface PremiumBreadcrumbProps {
 
 const PremiumBreadcrumb: React.FC<PremiumBreadcrumbProps> = ({ items, className = '' }) => {
     return (
-        <nav className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${className}`}>
+        <nav className={`flex items-center gap-2 text-sm ${className}`}>
             {items.map((item, index) => (
                 <React.Fragment key={index}>
                     {item.to ? (
                         <Link
                             to={item.to}
-                            className="text-slate-400 hover:text-orange-600 transition-colors duration-200"
+                            className="text-slate-500 hover:text-orange-600 transition-colors duration-200"
                         >
                             {item.label}
                         </Link>
                     ) : (
-                        <span className="text-slate-900">{item.label}</span>
+                        <span className="text-orange-600 font-bold">{item.label}</span>
                     )}
                     {index < items.length - 1 && (
-                        <i className="pi pi-chevron-right text-[10px] text-slate-300" />
+                        <span className="material-symbols-outlined text-[18px] text-slate-300 select-none">
+                            chevron_right
+                        </span>
                     )}
                 </React.Fragment>
             ))}

@@ -276,66 +276,11 @@ export default function AISettingsPage() {
       <Toast ref={toast} />
 
       <div className="h-full">
-        <div className="border-b border-slate-200 bg-white/85 backdrop-blur px-5 py-4 sm:px-8">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-                <span>AI Studio</span>
-                <i
-                  className="pi pi-angle-right"
-                  style={{ fontSize: "0.7rem" }}
-                />
-                <span>Settings</span>
-                <i
-                  className="pi pi-angle-right"
-                  style={{ fontSize: "0.7rem" }}
-                />
-                <span className="text-slate-700 font-medium">API Keys</span>
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-                Bring Your Own AI
-              </h1>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                <span className="font-semibold">
-                  {form.aiEnabled ? "Platform Ready" : "Platform Disabled"}
-                </span>
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
-                <span className="font-semibold text-slate-800">Workspace:</span>{" "}
-                {currentUser?.fullName ||
-                  currentUser?.email ||
-                  "Current account"}
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="px-4 py-5 sm:px-8 sm:py-8">
           <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1fr)_320px] gap-6">
-            <div className="space-y-6">
+            <div className="h-full">
               <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                      API Key Management
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                      Connect your AI providers
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                      Match the settings page you provided: configure provider
-                      keys, models, Azure endpoints, and test each connection
-                      from one place.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">
-                    <span className="font-semibold">Default provider:</span>{" "}
-                    {form.defaultProvider}
-                  </div>
-                </div>
-
                 <div className="mt-6">
                   <ApiKeySection
                     providers={form.providers}

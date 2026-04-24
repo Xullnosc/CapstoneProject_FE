@@ -160,33 +160,6 @@ export default function AIApiKeysManagerPage() {
       <Toast ref={toast} />
 
       <div className="h-full">
-        <div className="border-b border-slate-200/80 bg-white/85 px-5 py-4 backdrop-blur sm:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <div className="mb-1.5 flex items-center gap-2 text-sm text-slate-400">
-                <span>AI Studio</span>
-                <i
-                  className="pi pi-angle-right"
-                  style={{ fontSize: "0.7rem" }}
-                />
-                <span>Settings</span>
-                <i
-                  className="pi pi-angle-right"
-                  style={{ fontSize: "0.7rem" }}
-                />
-                <span className="font-medium text-slate-700">API Keys</span>
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2rem]">
-                Stored API Keys
-              </h1>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
-              <span className="font-semibold text-slate-800">Workspace:</span>{" "}
-              {currentUser?.fullName || currentUser?.email || "Current account"}
-            </div>
-          </div>
-        </div>
 
         <div className="space-y-6 px-4 py-5 sm:px-8 sm:py-8">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">

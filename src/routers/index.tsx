@@ -27,6 +27,12 @@ import ProfilePage from "../pages/Profile/ProfilePage";
 import OtherProfilePage from "../pages/Profile/OtherProfilePage";
 import MyApplicationsPage from "../pages/Application/MyApplicationsPage";
 import ApplicationReviewPage from "../pages/Application/ApplicationReviewPage";
+import ReviewDashboardPage from "../pages/Review/ReviewDashboardPage";
+import ReviewPeriodConfigPage from "../pages/Review/ReviewPeriodConfigPage";
+import ReviewCouncilManagementPage from "../pages/Review/ReviewCouncilManagementPage";
+import ReviewSchedulePage from "../pages/Review/ReviewSchedulePage";
+import ReviewAssessmentPage from "../pages/Review/ReviewAssessmentPage";
+import ReviewOverridePage from "../pages/Review/ReviewOverridePage";
 
 // Lazy load notifications page for code splitting
 const NotificationsPage = lazy(
@@ -75,6 +81,8 @@ const AppRouter = () => {
       >
         <Route element={<MainLayout />}>
           <Route path="/home" element={<Homepage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:userId" element={<OtherProfilePage />} />
         </Route>
       </Route>
 
@@ -138,12 +146,17 @@ const AppRouter = () => {
             path="/application-review"
             element={<ApplicationReviewPage />}
           />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/:userId" element={<OtherProfilePage />} />
           <Route path="/ai-settings" element={<AIStudioLayout />}>
             <Route index element={<AISettingsPage />} />
             <Route path="api-keys" element={<AIApiKeysManagerPage />} />
           </Route>
+          <Route path="/review" element={<ReviewDashboardPage />} />
+          <Route path="/review/periods" element={<ReviewPeriodConfigPage />} />
+          <Route path="/review/councils" element={<ReviewCouncilManagementPage />} />
+          <Route path="/review/schedules" element={<ReviewSchedulePage />} />
+          <Route path="/review/my-schedule" element={<ReviewSchedulePage />} />
+          <Route path="/review/assessment" element={<ReviewAssessmentPage />} />
+          <Route path="/review/override" element={<ReviewOverridePage />} />
         </Route>
       </Route>
 

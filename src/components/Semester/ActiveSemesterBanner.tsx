@@ -75,29 +75,29 @@ const ActiveSemesterBanner: React.FC<ActiveSemesterBannerProps> = ({ semester })
     };
 
     return (
-        <div className="relative w-full rounded-2xl overflow-hidden shadow-lg group min-h-[300px] flex items-center">
+        <div className="relative w-full rounded-[24px] overflow-hidden shadow-xl group min-h-[260px] flex items-center">
             <div className={`absolute inset-0 bg-[length:200%_200%] bg-gradient-to-br ${currentTheme.gradient} animate-[bannerGradient_10s_ease-in-out_infinite]`}></div>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_25%,rgba(255,255,255,0.28),transparent_48%),radial-gradient(circle_at_78%_72%,rgba(255,255,255,0.18),transparent_45%)] animate-[bannerShimmer_12s_ease-in-out_infinite]"></div>
 
             {/* Decorative SVGs */}
             {renderSeasonDecorations()}
 
-            <div className="relative z-10 w-full max-w-2xl m-6 md:m-12">
-                <div className="bg-white/20 backdrop-blur-md p-8 rounded-2xl shadow-xl border border-white/30">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded text-[10px] font-extrabold bg-white/90 mb-3 uppercase tracking-widest shadow-sm animate-pulse [animation-duration:2.8s] ${currentTheme.badgeText}`}>
+            <div className="relative z-10 w-full max-w-2xl m-6 md:mx-12 md:my-8">
+                <div className="bg-white/20 backdrop-blur-md p-8 rounded-[24px] shadow-xl border border-white/30">
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-[10px] font-extrabold bg-white/95 mb-4 uppercase tracking-[0.2em] shadow-sm animate-pulse [animation-duration:2.8s] ${currentTheme.badgeText}`}>
                         Ongoing Semester
                     </span>
-                    <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-sm mb-2">{semester.name}</h3>
-                    <p className="text-white/90 text-sm md:text-base font-medium mb-6 leading-relaxed max-w-lg">
+                    <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md mb-2">{semester.name}</h3>
+                    <p className="text-white/95 text-xs md:text-base font-semibold mb-6 leading-relaxed max-w-lg">
                         In progress. Grades submission period ends on {semester.endDate}. Ensure all teams have submitted preliminary reports.
                     </p>
-                    <div className="flex flex-wrap gap-4 md:gap-8 text-sm font-semibold text-white/90 mb-8">
+                    <div className="flex flex-wrap gap-4 md:gap-6 text-xs font-semibold text-white/90 mb-6">
                         <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
-                            <span className="material-symbols-outlined text-white">event</span>
+                            <span className="material-symbols-outlined text-white text-[16px]">event</span>
                             <span>Ends: {semester.endDate}</span>
                         </div>
                         <div className="flex items-center gap-2 bg-black/10 px-3 py-1.5 rounded-lg border border-white/10">
-                            <span className="material-symbols-outlined text-white">group</span>
+                            <span className="material-symbols-outlined text-white text-[16px]">group</span>
                             <span>{semester.totalTeams || 0} Active Teams</span>
                         </div>
                     </div>

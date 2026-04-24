@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Paginator, type PaginatorPageChangeEvent } from 'primereact/paginator';
 import { Dropdown } from 'primereact/dropdown';
@@ -8,6 +8,7 @@ import MemberAvatar from '../../components/team/MemberAvatar';
 import LecturerModal from './LecturerModal';
 import { authService } from '../../services/authService';
 import Swal from '../../utils/swal';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 
 const LecturerManagementPage = () => {
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
@@ -19,6 +20,7 @@ const LecturerManagementPage = () => {
     const [selectedCampus, setSelectedCampus] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null);
+    const navigate = useNavigate();
     const currentUser = authService.getUser();
     const isAdmin = currentUser?.roleName === 'Admin';
 
@@ -151,33 +153,37 @@ const LecturerManagementPage = () => {
 
     // Removed client-side filteredLecturers as we now use server-side pagination/search
     const displayLecturers = lecturers;
-
     return (
         <div className="min-h-screen bg-gray-50/50">
-            <main className="max-w-[1200px] mx-auto w-full px-6 py-8">
-
-                {/* Breadcrumb */}
-                <div className="flex items-center gap-2 mb-8">
-                    <Link className="text-gray-500 text-sm font-medium hover:text-orange-600 transition-colors" to="/semesters">Dashboard</Link>
-                    <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
-                    <span className="text-gray-900 text-sm font-semibold">Lecturer Pool</span>
-                </div>
-
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                    <div className="flex flex-col gap-1.5">
-                        <h1 className="text-gray-900 text-3xl font-black tracking-tight">Lecturer Pool</h1>
-                        <p className="text-gray-500 text-sm font-medium">Manage the global pool of lecturers available for all semesters</p>
+            <div className="bg-white border-b border-gray-200 mb-8">
+                <div className="max-w-[1200px] mx-auto w-full px-6 py-5">
+                    {/* Breadcrumb */}
+                    <div className="mb-4">
+                        <PremiumBreadcrumb items={[
+                            { label: 'Dashboard', to: '/semesters' },
+                            { label: 'Lecturer Pool' }
+                        ]} />
                     </div>
 
-                    <button
-                        onClick={() => { setSelectedLecturer(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-2xl text-sm font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95 transition-all cursor-pointer"
-                    >
-                        <span className="material-symbols-outlined text-xl">person_add</span>
-                        Add New Lecturer
-                    </button>
+                    {/* Header Section */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-gray-900 text-2xl font-black tracking-tight">Lecturer Pool</h1>
+                            <p className="text-gray-500 text-sm font-medium">Manage the global pool of lecturers available for all semesters</p>
+                        </div>
+
+                        <button
+                            onClick={() => { setSelectedLecturer(null); setIsModalOpen(true); }}
+                            className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-2xl text-sm font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 active:scale-95 transition-all cursor-pointer"
+                        >
+                            <span className="material-symbols-outlined text-xl">person_add</span>
+                            Add New Lecturer
+                        </button>
+                    </div>
                 </div>
+            </div>
+
+            <main className="max-w-[1200px] mx-auto w-full px-6 pb-12 flex flex-col gap-10">
 
                 {/* Search & Stats Carrier */}
                 <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -218,13 +224,13 @@ const LecturerManagementPage = () => {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50/50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Lecturer</th>
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest">Contact Info</th>
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Campus</th>
-                                    {isAdmin && <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">HOD</th>}
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Active</th>
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Reviewer</th>
-                                    <th className="px-8 py-5 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Lecturer</th>
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest">Contact Info</th>
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Campus</th>
+                                    {isAdmin && <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-center">HOD</th>}
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Active</th>
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-center">Reviewer</th>
+                                    <th className="px-8 py-5 text-sm font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -243,7 +249,7 @@ const LecturerManagementPage = () => {
                                         <td colSpan={isAdmin ? 7 : 6} className="px-8 py-20 text-center">
                                             <div className="flex flex-col items-center gap-4 opacity-40">
                                                 <span className="material-symbols-outlined text-6xl">person_search</span>
-                                                <p className="font-bold">No lecturers found matching your criteria</p>
+                                                <p className="text-lg font-bold">No lecturers found matching your criteria</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -251,27 +257,58 @@ const LecturerManagementPage = () => {
                                     displayLecturers.map((l) => (
                                         <tr key={l.lecturerId} className="hover:bg-orange-50/30 transition-colors group">
                                             <td className="px-8 py-5">
-                                                <div className="flex items-center gap-4">
-                                                    <MemberAvatar
-                                                        email={l.email}
-                                                        fullName={l.fullName || l.email}
-                                                        avatarUrl={l.avatar || undefined}
-                                                        className="w-12 h-12 min-w-[3rem] min-h-[3rem] max-w-[3rem] max-h-[3rem] rounded-full object-cover shadow-sm ring-2 ring-white ring-offset-2 ring-offset-gray-50 flex-shrink-0 aspect-square"
-                                                    />
+                                                <div 
+                                                    className={`flex items-center gap-4 ${l.userId ? 'cursor-pointer group/lecturer' : ''}`}
+                                                    onClick={() => l.userId && navigate(`/profile/${l.userId}`)}
+                                                >
+                                                    <div className="relative">
+                                                        <MemberAvatar
+                                                            email={l.email}
+                                                            fullName={l.fullName || l.email}
+                                                            avatarUrl={l.avatar || undefined}
+                                                            className={`w-12 h-12 min-w-[3rem] min-h-[3rem] max-w-[3rem] max-h-[3rem] rounded-full object-cover shadow-sm ring-2 ring-white ring-offset-2 ring-offset-gray-50 flex-shrink-0 aspect-square transition-all duration-300 ${l.userId ? 'group-hover/lecturer:ring-orange-200 group-hover/lecturer:scale-105' : ''}`}
+                                                        />
+                                                        {l.userId && (
+                                                            <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm opacity-0 group-hover/lecturer:opacity-100 transition-opacity">
+                                                                <span className="material-symbols-outlined text-[12px] text-orange-600 font-bold">visibility</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-gray-900">{l.fullName || 'Unnamed Lecturer'}</span>
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lecturer ID: #{l.lecturerId}</span>
+                                                        {l.userId ? (
+                                                            <button
+                                                                className="text-base font-black text-gray-900 group-hover/lecturer:text-orange-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-left"
+                                                            >
+                                                                {l.fullName || 'Unnamed Lecturer'}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-base font-black text-gray-900">{l.fullName || 'Unnamed Lecturer'}</span>
+                                                        )}
+                                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider group-hover/lecturer:text-gray-500 transition-colors">Lecturer ID: #{l.lecturerId}</span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5">
-                                                <div className="flex items-center gap-2 group/email cursor-pointer">
-                                                    <span className="material-symbols-outlined text-gray-300 text-lg">mail</span>
-                                                    <span className="text-sm font-medium text-gray-600 group-hover/email:text-orange-600 transition-colors">{l.email}</span>
+                                                <div 
+                                                    className={`flex items-center gap-2 group/email shadow-xs px-3 py-1.5 rounded-lg border border-transparent transition-all w-fit ${l.userId ? 'cursor-pointer hover:border-orange-100 hover:bg-orange-50/30' : ''}`}
+                                                    onClick={() => l.userId && navigate(`/profile/${l.userId}`)}
+                                                >
+                                                    <span className={`material-symbols-outlined text-lg transition-colors ${l.userId ? 'text-gray-300 group-hover/email:text-orange-400' : 'text-gray-300'}`}>mail</span>
+                                                    <div className="flex flex-col">
+                                                        {l.userId ? (
+                                                            <button
+                                                                className="text-sm font-medium text-gray-600 group-hover/email:text-orange-600 transition-colors cursor-pointer bg-transparent border-none p-0 text-left"
+                                                            >
+                                                                {l.email}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-sm font-medium text-gray-600">{l.email}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-8 py-5 text-center">
-                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-black uppercase">{l.campus || 'Global'}</span>
+                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-sm font-black uppercase tracking-wide">{l.campus || 'Global'}</span>
                                             </td>
                                             {isAdmin && (
                                                 <td className="px-8 py-5 text-center">

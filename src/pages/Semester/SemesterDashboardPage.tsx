@@ -143,18 +143,21 @@ const SemesterDashboardPage = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
-            <main className="max-w-[1200px] mx-auto w-full px-6 py-6 space-y-8">
-                {/* Breadcrumb */}
-                <div className="mb-6">
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="bg-white border-b border-gray-200 mb-8">
+                <div className="max-w-[1200px] mx-auto w-full px-6 py-5">
+                    {/* Breadcrumb */}
                     <PremiumBreadcrumb items={breadcrumbItems} />
                 </div>
+            </div>
+
+            <main className="max-w-[1200px] mx-auto w-full px-6 pb-12 flex flex-col gap-10">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <div className="flex flex-col gap-1">
-                        <h2 className="text-3xl font-black tracking-tight text-gray-900">Semester Management</h2>
-                        <p className="text-gray-500 text-base font-normal">Manage and track academic cycles for the department</p>
+                        <h2 className="text-2xl font-black tracking-tight text-gray-900">Semester Management</h2>
+                        <p className="text-gray-500 text-sm font-normal">Manage and track academic cycles for the department</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                         {canManage && (

@@ -5,6 +5,7 @@ import { useMentorInvitations } from '../../hooks/useMentorInvitations';
 import MentorInvitationCard from '../../components/mentor/MentorInvitationCard';
 import Swal from '../../utils/swal';
 import axios from 'axios';
+import PremiumBreadcrumb from '../../components/Common/PremiumBreadcrumb';
 
 const MAX_TEAMS = 4;
 
@@ -80,40 +81,42 @@ const MentorInvitationsPage: React.FC = () => {
             Swal.fire({ icon: 'error', title: 'Error', text: message, backdrop: false });
         }
     };
-
     return (
-        <div className="p-6 lg:p-10 font-sans text-gray-800">
-            {/* Page Header */}
-            <section className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-                {/* Left: Breadcrumb + Title */}
-                <div className="space-y-1">
-                    <nav className="flex items-center space-x-2 text-sm text-slate-500 mb-2">
-                        <Link to="/home" className="hover:text-orange-500 transition-colors">Home</Link>
-                        <span>›</span>
-                        <span className="font-medium text-slate-900">Mentor Invitations</span>
-                    </nav>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Mentor Invitations</h1>
-                    <p className="text-base text-slate-500">Review and respond to team mentor requests</p>
-                </div>
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="bg-white border-b border-gray-200 mb-8">
+                <div className="max-w-[1200px] mx-auto w-full px-6 py-5">
+                    <PremiumBreadcrumb items={[
+                        { label: 'Home', to: '/home' },
+                        { label: 'Mentor Invitations' }
+                    ]} />
 
-                {/* Right: Capacity Pill */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-3 px-4 shadow-sm w-full md:w-64 shrink-0">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-semibold text-slate-700">
-                            🎓 Mentoring {activeTeamCount} / {MAX_TEAMS} teams
-                        </span>
-                        <span className={`text-xs font-medium ${isAtMaxTeams ? 'text-red-500' : 'text-sky-500'}`}>
-                            {isAtMaxTeams ? 'Full' : `${MAX_TEAMS - activeTeamCount} left`}
-                        </span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div
-                            className={`h-1.5 rounded-full transition-all ${isAtMaxTeams ? 'bg-red-400' : 'bg-sky-500'}`}
-                            style={{ width: `${capacityPercent}%` }}
-                        />
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mt-4 gap-4">
+                        <div className="flex flex-col gap-1">
+                            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Mentor Invitations</h1>
+                            <p className="text-sm font-medium text-slate-500">Review and respond to team mentor requests</p>
+                        </div>
+
+                        <div className="bg-orange-50/50 rounded-2xl border border-orange-100 p-3 px-4 shadow-sm w-full md:w-64 shrink-0">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-sm font-bold text-orange-700">
+                                    🎓 Mentoring {activeTeamCount} / {MAX_TEAMS} teams
+                                </span>
+                                <span className={`text-xs font-black uppercase ${isAtMaxTeams ? 'text-red-500' : 'text-orange-600'}`}>
+                                    {isAtMaxTeams ? 'Full' : `${MAX_TEAMS - activeTeamCount} left`}
+                                </span>
+                            </div>
+                            <div className="w-full bg-orange-200/30 rounded-full h-1.5">
+                                <div
+                                    className={`h-1.5 rounded-full transition-all ${isAtMaxTeams ? 'bg-red-400' : 'bg-orange-500'}`}
+                                    style={{ width: `${capacityPercent}%` }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
+
+            <main className="max-w-[1200px] mx-auto w-full px-6 pb-12 flex flex-col gap-10">
 
             {/* Invitation List */}
             <section className="flex flex-col gap-4">
@@ -145,8 +148,9 @@ const MentorInvitationsPage: React.FC = () => {
                     ))
                 )}
             </section>
-        </div>
-    );
+        </main>
+    </div>
+);
 };
 
 export default MentorInvitationsPage;

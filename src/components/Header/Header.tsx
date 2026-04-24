@@ -209,6 +209,12 @@ const Header = () => {
                             </div>
                         )}
 
+                        {(isHOD || isLecturer || isStudent) && (
+                            <div onClick={() => navigate('/review')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/review') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
+                                <i className="pi pi-verified text-xl"></i>
+                                <span>Mid-term Review</span>
+                            </div>
+                        )}
                         {user?.roleName !== 'Admin' && (isReviewer || isHOD) && (
                             <div onClick={() => navigate('/ai-settings')} className={`flex items-center gap-3 font-medium px-4 py-3 rounded-xl hover:bg-orange-50 hover:text-orange-600 transition-all duration-200 cursor-pointer ${location.pathname.startsWith('/ai-settings') ? 'text-orange-600 bg-orange-50' : 'text-gray-700'}`}>
                                 <i className="pi pi-bolt text-xl"></i>
@@ -272,6 +278,7 @@ const Header = () => {
                             { id: 'invitations', label: 'Invitations', icon: 'pi pi-envelope', path: '/mentor-invitations', show: isLecturer || isHOD },
                             { id: 'application-review', label: 'Assign Review', icon: 'pi pi-file-edit', path: '/application-review', show: isLecturer || isHOD },
                             { id: 'my-thesis', label: 'My Thesis', icon: 'pi pi-book', path: '/my-thesis', show: true },
+                            { id: 'review', label: 'Mid-term Review', icon: 'pi pi-verified', path: '/review', show: isHOD || isLecturer || isStudent },
                             { id: 'ai-studio', label: 'AI Studio', icon: 'pi pi-bolt', path: '/ai-settings', show: isReviewer || isHOD },
                             { id: 'thesis-list', label: 'Thesis List', icon: 'pi pi-list', path: '/thesis', show: isHOD || isReviewer },
                         ].filter(item => item.show);
